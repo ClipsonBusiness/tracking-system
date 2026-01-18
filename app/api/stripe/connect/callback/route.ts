@@ -3,7 +3,7 @@ import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2023-10-16',
 })
 
 const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3000'
