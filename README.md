@@ -272,6 +272,23 @@ npm run build
 npm start
 ```
 
+## Deployment
+
+### Railway Deployment
+
+This app is configured for Railway deployment. See `DEPLOY_RAILWAY.md` for detailed instructions.
+
+**Quick steps:**
+1. Push code to GitHub
+2. Connect Railway to your GitHub repository
+3. Add PostgreSQL service in Railway
+4. Set environment variables
+5. Railway will auto-deploy on every push!
+
+**Current deployment:**
+- Repository: https://github.com/ClipsonBusiness/tracking-system
+- Railway Project: tracking-system
+
 ## Future Improvements
 
 - Full authentication system (replace password gate)
