@@ -11,7 +11,15 @@ export default async function AdminLinksPage() {
     },
   })
   const links = await prisma.link.findMany({
-    include: { 
+    select: {
+      id: true,
+      clientId: true,
+      campaignId: true,
+      clipperId: true,
+      handle: true,
+      slug: true,
+      destinationUrl: true,
+      createdAt: true,
       client: {
         select: {
           id: true,
