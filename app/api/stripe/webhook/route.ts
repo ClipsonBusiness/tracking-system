@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'invoice.paid':
-        await handleInvoicePaid(event.data.object as Stripe.Invoice)
+        await handleInvoicePaid(event.data.object as Stripe.Invoice, client, accountId)
         break
 
       case 'charge.refunded':
@@ -167,7 +167,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   console.log('Checkout session completed:', session.id)
 }
 
-async function handleInvoicePaid(invoice: Stripe.Invoice) {
+async function handleInvoicePaid(
+  invoice: Stripe.Invoice,
+  client: { id: string; stripeAccountId: string | null } | null,
+  accountId: string | null
+) {
   if (!invoice.customer || typeof invoice.customer !== 'string') {
     console.log('Invoice has no customer ID')
     return
@@ -212,27 +216,21 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   // Get client - use the one found from webhook verification above, or find by account ID
   // If client wasn't found during webhook verification, try to find it now
-  if (!client) {
+  let foundClient = client
+  if (!foundClient) {
     if (accountId) {
-      client = await prisma.client.findFirst({
+      foundClient = await prisma.client.findFirst({
         where: { stripeAccountId: accountId },
       })
     }
     
-    if (!client && event.account) {
-      // Try to find client from event account
-      client = await prisma.client.findFirst({
-        where: { stripeAccountId: event.account },
-      })
-    }
-    
-    if (!client) {
+    if (!foundClient) {
       // Last resort: use first client (for backward compatibility)
-      client = await prisma.client.findFirst()
+      foundClient = await prisma.client.findFirst()
     }
   }
   
-  if (!client) {
+  if (!foundClient) {
     console.error('No client found for conversion')
     return
   }
@@ -255,7 +253,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         status: 'paid',
       },
       create: {
-        clientId: client.id,
+        clientId: foundClient.id,
         affiliateCode,
         stripeCustomerId: invoice.customer as string,
         stripeSubscriptionId: subscriptionId,
