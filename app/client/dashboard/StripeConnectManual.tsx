@@ -112,7 +112,7 @@ export default function StripeConnectManual({
             </p>
             <ol className="text-blue-400 text-xs space-y-1 list-decimal list-inside">
               <li>Go to your Stripe Dashboard → Webhooks</li>
-              <li>Click "Add endpoint"</li>
+              <li>Click &quot;Add endpoint&quot;</li>
               <li>Enter URL: <code className="bg-blue-900/30 px-1 rounded">https://your-app.railway.app/api/stripe/webhook</code></li>
               <li>Select events: invoice.paid, checkout.session.completed, etc.</li>
               <li>Copy the &quot;Signing secret&quot; (starts with whsec_)</li>
