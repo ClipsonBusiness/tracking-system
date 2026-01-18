@@ -40,7 +40,7 @@ export default async function GetStartedPage({
             Welcome, {client.name}! 👋
           </h1>
           <p className="text-gray-400 mb-8">
-            Let's get you set up in just a few minutes
+            Let&apos;s get you set up in just a few minutes
           </p>
 
           <GetStartedGuide

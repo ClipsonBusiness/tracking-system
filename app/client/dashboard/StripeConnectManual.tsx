@@ -95,7 +95,7 @@ export default function StripeConnectManual({
             </p>
           </div>
           <div className="text-sm text-gray-400">
-            <p className="mb-2">What's tracked automatically:</p>
+            <p className="mb-2">What&apos;s tracked automatically:</p>
             <ul className="list-disc list-inside space-y-1 text-xs">
               <li>Subscription payments</li>
               <li>One-time payments</li>
@@ -115,7 +115,7 @@ export default function StripeConnectManual({
               <li>Click "Add endpoint"</li>
               <li>Enter URL: <code className="bg-blue-900/30 px-1 rounded">https://your-app.railway.app/api/stripe/webhook</code></li>
               <li>Select events: invoice.paid, checkout.session.completed, etc.</li>
-              <li>Copy the "Signing secret" (starts with whsec_)</li>
+              <li>Copy the &quot;Signing secret&quot; (starts with whsec_)</li>
               <li>Paste it below</li>
             </ol>
           </div>

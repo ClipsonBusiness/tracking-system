@@ -65,7 +65,7 @@ export default function StripeConnect({
             </p>
           </div>
           <div className="text-sm text-gray-400">
-            <p className="mb-2">What's tracked automatically:</p>
+            <p className="mb-2">What&apos;s tracked automatically:</p>
             <ul className="list-disc list-inside space-y-1 text-xs">
               <li>Subscription payments</li>
               <li>One-time payments</li>
@@ -107,7 +107,7 @@ export default function StripeConnect({
             )}
           </button>
           <p className="text-xs text-gray-500 text-center">
-            You'll be redirected to Stripe to authorize the connection
+            You&apos;ll be redirected to Stripe to authorize the connection
           </p>
         </div>
       )}

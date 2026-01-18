@@ -135,7 +135,7 @@ export default function GetStartedGuide({
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-blue-300">2.</span>
-                  <span>Click <strong>"Add endpoint"</strong></span>
+                  <span>Click <strong>&quot;Add endpoint&quot;</strong></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-blue-300">3.</span>
@@ -171,15 +171,15 @@ export default function GetStartedGuide({
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-blue-300">5.</span>
-                  <span>Click <strong>"Add endpoint"</strong></span>
+                  <span>Click <strong>&quot;Add endpoint&quot;</strong></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-blue-300">6.</span>
-                  <span>Copy the <strong>"Signing secret"</strong> (starts with <code>whsec_</code>)</span>
+                  <span>Copy the <strong>&quot;Signing secret&quot;</strong> (starts with <code>whsec_</code>)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-blue-300">7.</span>
-                  <span>Paste it below and click "Save"</span>
+                  <span>Paste it below and click &quot;Save&quot;</span>
                 </li>
               </ol>
             </div>

@@ -93,7 +93,7 @@ export default function ClientLoginPage() {
 
           <div className="mt-6 pt-6 border-t border-gray-700">
             <p className="text-xs text-gray-500 text-center">
-              Don't have an access token? Contact your administrator.
+              Don&apos;t have an access token? Contact your administrator.
             </p>
           </div>
         </div>
