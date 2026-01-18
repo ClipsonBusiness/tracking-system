@@ -89,11 +89,11 @@ export default async function AdminAnalyticsPage() {
         clicksLast30Days={clicksLast30Days}
         clicksByCountry={clicksByCountry.map((c) => ({
           country: c.country || 'Unknown',
-          count: c._count.country || 0,
+          count: c._count || 0,
         }))}
         clicksByLink={clicksByLink.map((c) => ({
           linkSlug: linkMap.get(c.linkId) || 'Unknown',
-          count: c._count.linkId || 0,
+          count: c._count || 0,
         }))}
         totalRevenue={totalRevenue._sum.amountPaid || 0}
         revenueByAffiliate={revenueByAffiliate.map((r) => ({
