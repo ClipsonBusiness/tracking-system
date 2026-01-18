@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id                  String   @id @default(cuid())
+  name                String
+  stripeAccountId     String?  @map("stripe_account_id")
+  stripeWebhookSecret String?  @map("stripe_webhook_secret")
+  stripeConnectedAt   DateTime? @map("stripe_connected_at")
+  customDomain        String?  @map("custom_domain") // e.g., "lowbackability.com"
+  clientAccessToken   String?  @unique @map("client_access_token") // For client dashboard access
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  links       Link[]
+  clicks      Click[]
+  affiliates  Affiliate[]
+  conversions Conversion[]
+  campaigns   Campaign[]
+
+  @@map("clients")
+}
+
+model Link {
+  id             String   @id @default(cuid())
+  clientId       String   @map("client_id")
+  campaignId     String?  @map("campaign_id")
+  clipperId      String?  @map("clipper_id")
+  handle         String
+  slug           String   @unique
+  destinationUrl String   @map("destination_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  clipper  Clipper?  @relation(fields: [clipperId], references: [id], onDelete: SetNull)
+  clicks   Click[]
+
+  @@map("links")
+}
+
+model Click {
+  id            String   @id @default(cuid())
+  linkId        String   @map("link_id")
+  clientId      String   @map("client_id")
+  ts            DateTime @default(now())
+  referer       String?
+  userAgent     String?  @map("user_agent")
+  ipHash        String?  @map("ip_hash")
+  country       String?
+  utmSource     String?  @map("utm_source")
+  utmMedium     String?  @map("utm_medium")
+  utmCampaign   String?  @map("utm_campaign")
+  affiliateCode String?  @map("affiliate_code")
+
+  link   Link   @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("clicks")
+}
+
+model Affiliate {
+  id            String   @id @default(cuid())
+  clientId      String   @map("client_id")
+  code          String
+  status        String   @default("active") // active, inactive
+  payoutPercent Float?   @map("payout_percent")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, code])
+  @@map("affiliates")
+}
+
+model StripeEvent {
+  id      String   @id // Stripe event ID
+  type    String
+  created DateTime
+  rawJson String   @map("raw_json") // SQLite doesn't need @db.Text
+
+  @@map("stripe_events")
+}
+
+model Conversion {
+  id                   String   @id @default(cuid())
+  clientId             String   @map("client_id")
+  affiliateCode        String?  @map("affiliate_code")
+  stripeCustomerId     String   @map("stripe_customer_id")
+  stripeSubscriptionId String?  @map("stripe_subscription_id")
+  stripeInvoiceId      String   @unique @map("stripe_invoice_id")
+  amountPaid           Int      @map("amount_paid") // in cents
+  currency             String
+  paidAt               DateTime @map("paid_at")
+  status               String   @default("paid") // paid, refunded
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("conversions")
+}
+
+model Campaign {
+  id             String   @id @default(cuid())
+  clientId       String   @map("client_id")
+  name           String
+  destinationUrl String   @map("destination_url")
+  customDomain   String?  @map("custom_domain") // e.g., "lowbackability.com"
+  status         String   @default("active") // active, inactive
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  links  Link[]
+
+  @@map("campaigns")
+}
+
+model Clipper {
+  id            String   @id @default(cuid())
+  dashboardCode String   @unique // Unique 4-letter code like "abcd"
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  links Link[]
+
+  @@map("clippers")
+}
