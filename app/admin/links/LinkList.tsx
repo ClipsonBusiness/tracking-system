@@ -8,6 +8,7 @@ interface Link {
   slug: string
   handle: string
   destinationUrl: string
+  createdAt: Date
   client: {
     name: string
     customDomain: string | null
