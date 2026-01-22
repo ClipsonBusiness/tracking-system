@@ -27,16 +27,36 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { clientId, name, destinationUrl, customDomain, status } = body
 
-    if (!clientId || !name || !destinationUrl) {
+    if (!name || !destinationUrl) {
       return NextResponse.json(
-        { error: 'Missing required fields: clientId, name, and destinationUrl are required' },
+        { error: 'Missing required fields: name and destinationUrl are required' },
         { status: 400 }
       )
     }
 
+    // Auto-create or use default client if no clientId provided
+    let finalClientId = clientId
+    
+    if (!finalClientId) {
+      // Get or create a default client
+      let defaultClient = await prisma.client.findFirst({
+        where: { name: 'Default Client' },
+      })
+      
+      if (!defaultClient) {
+        defaultClient = await prisma.client.create({
+          data: {
+            name: 'Default Client',
+          },
+        })
+      }
+      
+      finalClientId = defaultClient.id
+    }
+
     const campaign = await prisma.campaign.create({
       data: {
-        clientId,
+        clientId: finalClientId,
         name,
         destinationUrl,
         customDomain: customDomain || null,

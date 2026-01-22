@@ -11,7 +11,7 @@ interface Client {
 export default function CampaignForm({ clients }: { clients: Client[] }) {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    clientId: clients[0]?.id || '',
+    clientId: '',
     name: '',
     destinationUrl: '',
     customDomain: '',
@@ -38,7 +38,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
       if (res.ok) {
         router.refresh()
         setFormData({
-          clientId: clients[0]?.id || '',
+          clientId: '',
           name: '',
           destinationUrl: '',
           customDomain: '',
@@ -58,25 +58,6 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="clientId" className="block text-sm font-medium text-gray-300 mb-2">
-            Client
-          </label>
-          <select
-            id="clientId"
-            value={formData.clientId}
-            onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            {clients.map((client) => (
-              <option key={client.id} value={client.id}>
-                {client.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
             Campaign Name
