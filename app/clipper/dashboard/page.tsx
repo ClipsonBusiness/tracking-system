@@ -108,10 +108,10 @@ export default async function ClipperDashboardPage({
       totalClicks={totalClicks}
       clicksLast7Days={clicksLast7Days}
       clicksLast30Days={clicksLast30Days}
-      clicksByCountry={clicksByCountry.map((c) => ({
-        country: c.country || 'Unknown',
-        count: c._count.country || 0,
-      }))}
+        clicksByCountry={clicksByCountry.map((c) => ({
+          country: c.country || 'Unknown',
+          count: c._count || 0,
+        }))}
       totalRevenue={totalRevenue}
       totalSales={totalSales}
       recentClicks={recentClicks}
