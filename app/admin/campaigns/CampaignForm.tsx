@@ -20,9 +20,17 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showAffiliateProgram, setShowAffiliateProgram] = useState(false)
+  const [showDNSForm, setShowDNSForm] = useState(false)
   const [affiliateData, setAffiliateData] = useState({
     stripeWebhookSecret: '',
     stripeAccountId: '',
+  })
+  const [dnsData, setDnsData] = useState({
+    dnsType: 'CNAME',
+    dnsName: '@',
+    dnsValue: process.env.NEXT_PUBLIC_APP_BASE_URL?.replace(/https?:\/\//, '') || 'tracking-system-production-d23c.up.railway.app',
+    dnsTtl: '3600',
+    notes: '',
   })
 
   async function handleSubmit(e: React.FormEvent) {
@@ -75,21 +83,23 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
 
       if (res.ok) {
         const campaign = await res.json()
-        router.refresh()
         
-        // If custom domain was entered, redirect to DNS config
+        // If custom domain was entered, show DNS form inline or redirect
         if (formData.customDomain && formData.customDomain.trim() && formData.clientId) {
-          router.push(`/admin/clients/${formData.clientId}/dns?domain=${encodeURIComponent(formData.customDomain.trim())}`)
-          return
+          // Show DNS form inline instead of redirecting
+          setShowDNSForm(true)
+          // Don't reset form yet - keep it visible
+        } else {
+          // No custom domain, reset form normally
+          router.refresh()
+          setFormData({
+            clientId: '',
+            name: '',
+            destinationUrl: '',
+            customDomain: '',
+            status: 'active',
+          })
         }
-        
-        setFormData({
-          clientId: '',
-          name: '',
-          destinationUrl: '',
-          customDomain: '',
-          status: 'active',
-        })
       } else {
         const data = await res.json()
         setError(data.error || 'Failed to create campaign')
@@ -282,6 +292,169 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
       >
         {loading ? 'Creating...' : 'Create Campaign'}
       </button>
+
+      {/* DNS Configuration Form - Shows after campaign creation with custom domain */}
+      {showDNSForm && formData.customDomain && formData.clientId && (
+        <div className="mt-6 bg-purple-900/20 border border-purple-700 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-semibold text-white">🔧 Configure DNS</h3>
+              <p className="text-sm text-gray-400 mt-1">
+                Campaign created! Now configure DNS for <code className="text-purple-300">{formData.customDomain}</code>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowDNSForm(false)
+                router.refresh()
+                setFormData({
+                  clientId: '',
+                  name: '',
+                  destinationUrl: '',
+                  customDomain: '',
+                  status: 'active',
+                })
+              }}
+              className="text-gray-400 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              setLoading(true)
+              setError('')
+
+              try {
+                const res = await fetch(`/api/admin/clients/${formData.clientId}/dns`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    customDomain: formData.customDomain.trim(),
+                    ...dnsData,
+                  }),
+                })
+
+                if (res.ok) {
+                  // Success! Refresh and reset
+                  router.refresh()
+                  setShowDNSForm(false)
+                  setFormData({
+                    clientId: '',
+                    name: '',
+                    destinationUrl: '',
+                    customDomain: '',
+                    status: 'active',
+                  })
+                  alert('✅ DNS configured successfully! Custom domain is now active.')
+                } else {
+                  const data = await res.json()
+                  setError(data.error || 'Failed to save DNS configuration')
+                }
+              } catch (err) {
+                setError('Network error')
+              } finally {
+                setLoading(false)
+              }
+            }}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  DNS Type *
+                </label>
+                <select
+                  value={dnsData.dnsType}
+                  onChange={(e) => setDnsData({ ...dnsData, dnsType: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="CNAME">CNAME</option>
+                  <option value="A">A Record</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  DNS Name *
+                </label>
+                <input
+                  type="text"
+                  value={dnsData.dnsName}
+                  onChange={(e) => setDnsData({ ...dnsData, dnsName: e.target.value })}
+                  placeholder="@"
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+                <p className="text-xs text-gray-400 mt-1">Usually &quot;@&quot; for root domain</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                DNS Value / Target * (Your Railway Domain)
+              </label>
+              <input
+                type="text"
+                value={dnsData.dnsValue}
+                onChange={(e) => setDnsData({ ...dnsData, dnsValue: e.target.value })}
+                placeholder="tracking-system-production-d23c.up.railway.app"
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
+              />
+              <p className="text-xs text-gray-400 mt-1">Your Railway app domain</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                TTL (Time To Live)
+              </label>
+              <input
+                type="text"
+                value={dnsData.dnsTtl}
+                onChange={(e) => setDnsData({ ...dnsData, dnsTtl: e.target.value })}
+                placeholder="3600"
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Notes (Optional)
+              </label>
+              <textarea
+                value={dnsData.notes}
+                onChange={(e) => setDnsData({ ...dnsData, notes: e.target.value })}
+                placeholder="Client sent DNS record on..."
+                rows={2}
+                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Saving DNS...' : '✅ Save DNS Configuration'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  router.push(`/admin/clients/${formData.clientId}/dns?domain=${encodeURIComponent(formData.customDomain.trim())}`)
+                }}
+                className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
+              >
+                Open Full DNS Page →
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </form>
   )
 }
