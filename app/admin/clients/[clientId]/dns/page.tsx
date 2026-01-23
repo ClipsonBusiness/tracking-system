@@ -2,11 +2,14 @@ import { prisma } from '@/lib/prisma'
 import { requireAdminAuth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import DNSConfigForm from './DNSConfigForm'
+import { Suspense } from 'react'
 
 export default async function ClientDNSPage({
   params,
+  searchParams,
 }: {
   params: { clientId: string }
+  searchParams: { domain?: string }
 }) {
   await requireAdminAuth()
 
@@ -23,6 +26,9 @@ export default async function ClientDNSPage({
     redirect('/admin/clients')
   }
 
+  // If domain is passed in query, use it (from campaign creation)
+  const domainFromQuery = searchParams.domain
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -38,7 +44,7 @@ export default async function ClientDNSPage({
         </a>
       </div>
 
-      <DNSConfigForm client={client} />
+      <DNSConfigForm client={client} initialDomain={domainFromQuery} />
     </div>
   )
 }

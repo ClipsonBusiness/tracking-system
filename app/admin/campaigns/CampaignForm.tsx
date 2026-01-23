@@ -30,6 +30,32 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
     setLoading(true)
     setError('')
 
+    // Validate: If custom domain is entered, DNS must be configured
+    if (formData.customDomain && formData.customDomain.trim()) {
+      // Check if client has DNS configured
+      if (formData.clientId) {
+        try {
+          const checkRes = await fetch(`/api/admin/clients/${formData.clientId}/dns/check`)
+          if (checkRes.ok) {
+            const dnsData = await checkRes.json()
+            if (!dnsData.dnsConfigured) {
+              setError('Custom domain requires DNS configuration. Please configure DNS for this client first.')
+              setLoading(false)
+              return
+            }
+          }
+        } catch (err) {
+          // If check fails, still allow but warn
+          console.error('DNS check failed:', err)
+        }
+      } else {
+        // No client selected, can't check DNS - require client selection
+        setError('Please select a client first to configure custom domain DNS.')
+        setLoading(false)
+        return
+      }
+    }
+
     try {
       const res = await fetch('/api/admin/campaigns', {
         method: 'POST',
@@ -47,7 +73,15 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
       })
 
       if (res.ok) {
+        const campaign = await res.json()
         router.refresh()
+        
+        // If custom domain was entered, redirect to DNS config
+        if (formData.customDomain && formData.customDomain.trim() && formData.clientId) {
+          router.push(`/admin/clients/${formData.clientId}/dns?domain=${encodeURIComponent(formData.customDomain.trim())}`)
+          return
+        }
+        
         setFormData({
           clientId: '',
           name: '',
@@ -102,7 +136,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
 
       <div>
         <label htmlFor="customDomain" className="block text-sm font-medium text-gray-300 mb-2">
-          Custom Domain (Optional)
+          Custom Domain {formData.customDomain && formData.customDomain.trim() && <span className="text-red-400">*</span>}
         </label>
         <input
           id="customDomain"
@@ -112,6 +146,11 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
           placeholder="lowbackability.com"
           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {formData.customDomain && formData.customDomain.trim() && !formData.clientId && (
+          <p className="text-xs text-yellow-400 mt-1">
+            ⚠️ Please select a client first. DNS configuration is required for custom domains.
+          </p>
+        )}
         {formData.customDomain && (
           <div className="mt-2 p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
             <p className="text-xs text-yellow-300 font-medium mb-2">

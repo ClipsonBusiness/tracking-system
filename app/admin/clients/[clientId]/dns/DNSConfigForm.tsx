@@ -9,10 +9,16 @@ interface Client {
   customDomain: string | null
 }
 
-export default function DNSConfigForm({ client }: { client: Client }) {
+export default function DNSConfigForm({ 
+  client, 
+  initialDomain 
+}: { 
+  client: Client
+  initialDomain?: string 
+}) {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    customDomain: client.customDomain || '',
+    customDomain: initialDomain || client.customDomain || '',
     dnsType: 'CNAME',
     dnsValue: 'tracking-system-production-d23c.up.railway.app',
     dnsName: '@',
