@@ -115,8 +115,30 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
+          <label htmlFor="clientId" className="block text-sm font-medium text-gray-300 mb-2">
+            Client *
+          </label>
+          <select
+            id="clientId"
+            value={formData.clientId}
+            onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="">Select a client...</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-400 mt-1">
+            Select the client this campaign belongs to
+          </p>
+        </div>
+        <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-            Campaign Name
+            Campaign Name *
           </label>
           <input
             id="name"
