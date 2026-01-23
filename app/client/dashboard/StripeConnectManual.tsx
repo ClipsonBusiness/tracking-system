@@ -18,6 +18,8 @@ export default function StripeConnectManual({
   const [webhookSecret, setWebhookSecret] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
+  const [isRemoving, setIsRemoving] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,6 +43,8 @@ export default function StripeConnectManual({
       })
 
       if (res.ok) {
+        setIsEditing(false)
+        setWebhookSecret('')
         router.refresh()
       } else {
         const data = await res.json()
@@ -50,6 +54,34 @@ export default function StripeConnectManual({
       setError('Network error')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRemove = async () => {
+    if (!confirm('Are you sure you want to remove the Stripe webhook? Sales tracking will stop working.')) {
+      return
+    }
+
+    setIsRemoving(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/client/stripe/webhook-secret', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId }),
+      })
+
+      if (res.ok) {
+        router.refresh()
+      } else {
+        const data = await res.json()
+        setError(data.error || 'Failed to remove webhook secret')
+        setIsRemoving(false)
+      }
+    } catch (err) {
+      setError('Network error')
+      setIsRemoving(false)
     }
   }
 
@@ -81,7 +113,7 @@ export default function StripeConnectManual({
         )}
       </div>
 
-      {isConnected ? (
+      {isConnected && !isEditing ? (
         <div className="space-y-4">
           <div className="p-4 bg-green-900/10 border border-green-700/50 rounded-lg">
             <p className="text-green-300 text-sm font-medium mb-1">
@@ -102,6 +134,21 @@ export default function StripeConnectManual({
               <li>Refunds</li>
               <li>Affiliate attribution</li>
             </ul>
+          </div>
+          <div className="flex items-center gap-3 pt-4 border-t border-gray-600">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+            >
+              Edit Webhook Secret
+            </button>
+            <button
+              onClick={handleRemove}
+              disabled={isRemoving}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
+            >
+              {isRemoving ? 'Removing...' : 'Remove'}
+            </button>
           </div>
         </div>
       ) : (
@@ -144,13 +191,28 @@ export default function StripeConnectManual({
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Saving...' : 'Save Webhook Secret'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Saving...' : isEditing ? 'Update Webhook Secret' : 'Save Webhook Secret'}
+            </button>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(false)
+                  setWebhookSecret('')
+                  setError('')
+                }}
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-500 text-white font-medium rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
       )}
     </div>

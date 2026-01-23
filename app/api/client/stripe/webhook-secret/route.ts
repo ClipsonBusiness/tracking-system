@@ -43,3 +43,37 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { clientId } = body
+
+    if (!clientId) {
+      return NextResponse.json(
+        { error: 'Client ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Remove webhook secret from client
+    await prisma.client.update({
+      where: { id: clientId },
+      data: {
+        stripeWebhookSecret: null,
+        stripeConnectedAt: null,
+      },
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Webhook secret removed successfully',
+    })
+  } catch (error: any) {
+    console.error('Error removing webhook secret:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to remove webhook secret' },
+      { status: 500 }
+    )
+  }
+}
+
