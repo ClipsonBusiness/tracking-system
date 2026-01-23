@@ -44,6 +44,10 @@ export default function DNSConfigForm({
 
       if (res.ok) {
         setSuccess('DNS configuration saved successfully!')
+        // Redirect back to campaigns or client dashboard after a moment
+        setTimeout(() => {
+          router.push(`/admin/clients/${client.id}/dashboard`)
+        }, 1500)
         router.refresh()
       } else {
         const data = await res.json()
