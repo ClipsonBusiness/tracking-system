@@ -34,6 +34,12 @@ export default async function ClientsPage() {
                   </p>
                 )}
               </div>
+              <Link
+                href={`/admin/clients/${client.id}/dns`}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                ⚙️ Configure DNS
+              </Link>
             </div>
 
             {/* Campaigns Grid */}
