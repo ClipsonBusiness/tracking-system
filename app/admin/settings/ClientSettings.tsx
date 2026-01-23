@@ -17,7 +17,7 @@ export default function ClientSettings({ clients }: { clients: Client[] }) {
   const router = useRouter()
   const [updating, setUpdating] = useState<string | null>(null)
   const [generatingToken, setGeneratingToken] = useState<string | null>(null)
-  const [generatedToken, setGeneratedToken] = useState<Record<string, string>>({})
+  const [generatedToken, setGeneratedToken] = useState<Record<string, { dashboardUrl: string; getStartedUrl: string }>>({})
 
   async function handleUpdate(clientId: string, customDomain: string) {
     setUpdating(clientId)
@@ -49,10 +49,13 @@ export default function ClientSettings({ clients }: { clients: Client[] }) {
 
       if (res.ok) {
         const data = await res.json()
-        // Store both URLs - use getStartedUrl as primary, fallback to dashboardUrl
+        // Store both URLs
         setGeneratedToken({ 
           ...generatedToken, 
-          [clientId]: data.getStartedUrl || data.dashboardUrl 
+          [clientId]: {
+            dashboardUrl: data.dashboardUrl,
+            getStartedUrl: data.getStartedUrl,
+          }
         })
         router.refresh()
       } else {
@@ -164,12 +167,11 @@ export default function ClientSettings({ clients }: { clients: Client[] }) {
                       <p className="text-xs text-green-300 mb-2 font-medium">🎯 Get Started URL (Recommended):</p>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 text-xs text-green-400 bg-gray-800 px-2 py-1 rounded break-all">
-                          {generatedToken[client.id].replace('/dashboard', '/get-started')}
+                          {generatedToken[client.id].getStartedUrl}
                         </code>
                         <button
                           onClick={() => {
-                            const getStartedUrl = generatedToken[client.id].replace('/dashboard', '/get-started')
-                            navigator.clipboard.writeText(getStartedUrl)
+                            navigator.clipboard.writeText(generatedToken[client.id].getStartedUrl)
                             alert('Get Started URL copied!')
                           }}
                           className="px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded"
@@ -185,11 +187,11 @@ export default function ClientSettings({ clients }: { clients: Client[] }) {
                       <p className="text-xs text-green-300 mb-2 font-medium">Dashboard URL:</p>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 text-xs text-green-400 bg-gray-800 px-2 py-1 rounded break-all">
-                          {generatedToken[client.id]}
+                          {generatedToken[client.id].dashboardUrl}
                         </code>
                         <button
                           onClick={() => {
-                            navigator.clipboard.writeText(generatedToken[client.id])
+                            navigator.clipboard.writeText(generatedToken[client.id].dashboardUrl)
                             alert('Dashboard URL copied!')
                           }}
                           className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded"
