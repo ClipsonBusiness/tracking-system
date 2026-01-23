@@ -108,7 +108,8 @@ export function ClientCampaignDashboard({
 
               {/* Data lines */}
               {dailyData.map((day, index) => {
-                const x = 50 + (index / (dailyData.length - 1)) * (typeof window !== 'undefined' ? window.innerWidth - 200 : 800)
+                const chartWidth = 900 // Fixed width for chart
+                const x = 50 + (index / (dailyData.length - 1)) * chartWidth
                 const clicksY = 20 + (1 - day.clicks / maxClicks) * 360
                 const salesY = 20 + (1 - day.sales / maxSales) * 360
                 const revenueY = 20 + (1 - day.revenue / maxRevenue) * 360
@@ -151,8 +152,10 @@ export function ClientCampaignDashboard({
               <polyline
                 points={dailyData
                   .map(
-                    (day, index) =>
-                      `${50 + (index / (dailyData.length - 1)) * (typeof window !== 'undefined' ? window.innerWidth - 200 : 800)},${20 + (1 - day.clicks / maxClicks) * 360}`
+                    (day, index) => {
+                      const chartWidth = 900
+                      return `${50 + (index / (dailyData.length - 1)) * chartWidth},${20 + (1 - day.clicks / maxClicks) * 360}`
+                    }
                   )
                   .join(' ')}
                 fill="none"
@@ -164,8 +167,10 @@ export function ClientCampaignDashboard({
               <polyline
                 points={dailyData
                   .map(
-                    (day, index) =>
-                      `${50 + (index / (dailyData.length - 1)) * (typeof window !== 'undefined' ? window.innerWidth - 200 : 800)},${20 + (1 - day.sales / maxSales) * 360}`
+                    (day, index) => {
+                      const chartWidth = 900
+                      return `${50 + (index / (dailyData.length - 1)) * chartWidth},${20 + (1 - day.sales / maxSales) * 360}`
+                    }
                   )
                   .join(' ')}
                 fill="none"
@@ -177,8 +182,10 @@ export function ClientCampaignDashboard({
               <polyline
                 points={dailyData
                   .map(
-                    (day, index) =>
-                      `${50 + (index / (dailyData.length - 1)) * (typeof window !== 'undefined' ? window.innerWidth - 200 : 800)},${20 + (1 - day.revenue / maxRevenue) * 360}`
+                    (day, index) => {
+                      const chartWidth = 900
+                      return `${50 + (index / (dailyData.length - 1)) * chartWidth},${20 + (1 - day.revenue / maxRevenue) * 360}`
+                    }
                   )
                   .join(' ')}
                 fill="none"
@@ -189,9 +196,10 @@ export function ClientCampaignDashboard({
               {/* X-axis labels */}
               {dailyData
                 .filter((_, index) => index % 5 === 0)
-                .map((day, idx) => {
+                .map((day) => {
                   const index = dailyData.findIndex((d) => d.date === day.date)
-                  const x = 50 + (index / (dailyData.length - 1)) * (typeof window !== 'undefined' ? window.innerWidth - 200 : 800)
+                  const chartWidth = 900
+                  const x = 50 + (index / (dailyData.length - 1)) * chartWidth
                   return (
                     <text
                       key={day.date}
