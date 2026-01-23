@@ -19,6 +19,12 @@ export default async function ClientDashboardPage({
     include: {
       campaigns: true,
     },
+    select: {
+      id: true,
+      name: true,
+      customDomain: true,
+      campaigns: true,
+    },
   })
 
   if (!client) {
@@ -160,8 +166,8 @@ export default async function ClientDashboardPage({
           <div>
             <h3 className="text-lg font-semibold text-white">DNS Configuration</h3>
             <p className="text-sm text-gray-400 mt-1">
-              {customDomain 
-                ? `Custom domain: ${customDomain}` 
+              {client.customDomain 
+                ? `Custom domain: ${client.customDomain}` 
                 : 'No custom domain configured'}
             </p>
           </div>
