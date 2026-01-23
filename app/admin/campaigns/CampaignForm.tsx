@@ -118,19 +118,27 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
               ⚠️ Custom Domain Setup Required
             </p>
             <p className="text-xs text-yellow-400 mb-2">
-              For <code className="bg-yellow-900/30 px-1 rounded">{formData.customDomain}</code> to work, you need to configure DNS or use one of these options:
+              For <code className="bg-yellow-900/30 px-1 rounded">{formData.customDomain}</code> to work, you need ONE of these from your client:
             </p>
-            <ul className="text-xs text-yellow-400 space-y-1 list-disc list-inside mb-2">
-              <li><strong>DNS:</strong> Point domain to tracking server (requires DNS access)</li>
-              <li><strong>Reverse Proxy:</strong> Add nginx/apache config (requires server access)</li>
-              <li><strong>JavaScript:</strong> Add redirect script to website (easiest)</li>
-              <li><strong>Subdomain:</strong> Use links.{formData.customDomain} instead (easier DNS)</li>
-            </ul>
+            <div className="space-y-2 mb-2">
+              <div className="bg-green-900/20 border border-green-700 rounded p-2">
+                <p className="text-xs text-green-300 font-medium">✅ EASIEST: JavaScript Redirect</p>
+                <p className="text-xs text-green-400">Client adds a small script to their website. No DNS needed!</p>
+              </div>
+              <div className="bg-blue-900/20 border border-blue-700 rounded p-2">
+                <p className="text-xs text-blue-300 font-medium">🔧 DNS Access</p>
+                <p className="text-xs text-blue-400">Point domain to tracking server (requires DNS access)</p>
+              </div>
+              <div className="bg-purple-900/20 border border-purple-700 rounded p-2">
+                <p className="text-xs text-purple-300 font-medium">🔗 Subdomain (Easier DNS)</p>
+                <p className="text-xs text-purple-400">Use links.{formData.customDomain} instead</p>
+              </div>
+            </div>
             <p className="text-xs text-yellow-300 font-medium mt-2">
               Link Format: <code className="bg-yellow-900/30 px-1 rounded">{formData.customDomain}/ref=xxxx</code>
             </p>
             <p className="text-xs text-yellow-400 mt-1">
-              Until configured, links will show custom domain but won&apos;t work. Use Railway URL instead.
+              💡 <strong>Recommendation:</strong> Ask client if they can add code to their website. If yes, use JavaScript redirect (easiest!).
             </p>
           </div>
         )}
