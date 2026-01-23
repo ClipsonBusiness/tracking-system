@@ -39,9 +39,10 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
           if (checkRes.ok) {
             const dnsData = await checkRes.json()
             if (!dnsData.dnsConfigured) {
-              setError('Custom domain requires DNS configuration. Please configure DNS for this client first.')
-              setLoading(false)
-              return
+              // Don't block, just redirect to DNS config
+              // setError('Custom domain requires DNS configuration. Please configure DNS for this client first.')
+              // setLoading(false)
+              // return
             }
           }
         } catch (err) {
