@@ -183,7 +183,14 @@ export default function LinkList({
                     className="px-3 py-1.5 text-sm text-gray-400 hover:text-white"
                     title="Edit link"
                   >
-                    ⋮
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(link.id)}
+                    className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                    title="Delete link"
+                  >
+                    Delete
                   </button>
                 </div>
                 {/* Show affiliate link format */}
