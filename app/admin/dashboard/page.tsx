@@ -60,13 +60,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <QuickActionCard
-          title="Create Link"
-          description="Create a new tracking link"
-          href="/admin/links"
-          icon="🔗"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <QuickActionCard
           title="Create Campaign"
           description="Set up a new campaign"
