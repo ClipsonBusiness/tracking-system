@@ -4,7 +4,7 @@ import { requireAdminAuth } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { clientId: string } }
+  { params }: { params: { id: string } }
 ) {
   await requireAdminAuth()
 
@@ -23,7 +23,7 @@ export async function POST(
     // Note: We're storing DNS details in notes for now
     // In the future, you could add DNS fields to the Client model
     const client = await prisma.client.update({
-      where: { id: params.clientId },
+      where: { id: params.id },
       data: {
         customDomain: customDomain.trim(),
         // Store DNS details in a JSON field or notes

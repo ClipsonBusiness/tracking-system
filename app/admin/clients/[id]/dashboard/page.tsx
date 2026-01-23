@@ -7,10 +7,10 @@ export default async function ClientDashboardPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
+  params: { clientId: string }
   searchParams: { campaignId?: string }
 }) {
-  const clientId = params.id
+  const { clientId } = params
   const campaignId = searchParams.campaignId
 
   // Get client with campaigns

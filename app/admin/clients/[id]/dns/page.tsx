@@ -8,13 +8,13 @@ export default async function ClientDNSPage({
   params,
   searchParams,
 }: {
-  params: { clientId: string }
+  params: { id: string }
   searchParams: { domain?: string }
 }) {
   await requireAdminAuth()
 
   const client = await prisma.client.findUnique({
-    where: { id: params.clientId },
+    where: { id: params.id },
     select: {
       id: true,
       name: true,

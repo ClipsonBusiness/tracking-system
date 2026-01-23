@@ -4,13 +4,13 @@ import { requireAdminAuth } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { clientId: string } }
+  { params }: { params: { id: string } }
 ) {
   await requireAdminAuth()
 
   try {
     const client = await prisma.client.findUnique({
-      where: { id: params.clientId },
+      where: { id: params.id },
       select: {
         id: true,
         customDomain: true,
