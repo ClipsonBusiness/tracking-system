@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import GenerateClientLink from './GenerateClientLink'
 
 export default async function ClientDashboardPage({
   params,
@@ -76,6 +77,15 @@ export default async function ClientDashboardPage({
           )}
         </div>
       </div>
+
+      {/* Generate Client Dashboard Link */}
+      {selectedCampaign && (
+        <GenerateClientLink
+          clientId={client.id}
+          campaignId={selectedCampaign.id}
+          campaignName={selectedCampaign.name}
+        />
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
