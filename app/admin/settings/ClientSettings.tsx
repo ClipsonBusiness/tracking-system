@@ -108,12 +108,20 @@ export default function ClientSettings({ clients }: { clients: Client[] }) {
                 </div>
                 {client.customDomain && (
                   <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
-                    <p className="text-xs text-yellow-300 mb-2">
-                      <strong>DNS Setup Required:</strong> Domain must point to this server
+                    <p className="text-xs text-yellow-300 mb-2 font-medium">
+                      ⚠️ Custom Domain Setup Required
                     </p>
-                    <p className="text-xs text-yellow-400">
-                      Client needs to configure DNS or provide DNS credentials. 
-                      See DNS_SETUP_GUIDE.md for instructions.
+                    <p className="text-xs text-yellow-400 mb-2">
+                      For <code className="bg-yellow-900/30 px-1 rounded">{client.customDomain}</code> to work, client needs to:
+                    </p>
+                    <ul className="text-xs text-yellow-400 space-y-1 list-disc list-inside mb-2">
+                      <li><strong>DNS Access:</strong> Point domain to Railway (requires DNS records)</li>
+                      <li><strong>OR Server Access:</strong> Add reverse proxy config (nginx/apache)</li>
+                      <li><strong>OR Website Access:</strong> Add JavaScript redirect script</li>
+                      <li><strong>OR Subdomain:</strong> Use links.{client.customDomain} instead</li>
+                    </ul>
+                    <p className="text-xs text-yellow-300">
+                      Until configured, links show custom domain but won&apos;t work. See CUSTOM_DOMAIN_REQUIREMENTS.md for details.
                     </p>
                   </div>
                 )}
