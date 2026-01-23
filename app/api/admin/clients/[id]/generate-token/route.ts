@@ -32,7 +32,11 @@ export async function POST(
       },
     })
 
-    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
+    // Get base URL from request headers (works in production)
+    const protocol = request.headers.get('x-forwarded-proto') || 'https'
+    const host = request.headers.get('host') || request.headers.get('x-forwarded-host') || 'localhost:3000'
+    const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
+    
     return NextResponse.json({
       token,
       dashboardUrl: `${baseUrl}/client/dashboard?token=${token}`,

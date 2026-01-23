@@ -49,7 +49,11 @@ export default function ClientSettings({ clients }: { clients: Client[] }) {
 
       if (res.ok) {
         const data = await res.json()
-        setGeneratedToken({ ...generatedToken, [clientId]: data.dashboardUrl })
+        // Store both URLs - use getStartedUrl as primary, fallback to dashboardUrl
+        setGeneratedToken({ 
+          ...generatedToken, 
+          [clientId]: data.getStartedUrl || data.dashboardUrl 
+        })
         router.refresh()
       } else {
         alert('Failed to generate token')
