@@ -183,7 +183,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
               </div>
             </div>
             <p className="text-xs text-yellow-300 font-medium mt-2">
-              Link Format: <code className="bg-yellow-900/30 px-1 rounded">{formData.customDomain}/ref=xxxx</code>
+              Link Format: <code className="bg-yellow-900/30 px-1 rounded">{formData.customDomain}/xxxxx</code>
             </p>
             <p className="text-xs text-yellow-400 mt-1">
               💡 <strong>Recommendation:</strong> Ask client if they can add code to their website. If yes, use JavaScript redirect (easiest!).

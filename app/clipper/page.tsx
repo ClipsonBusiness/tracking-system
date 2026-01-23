@@ -203,6 +203,13 @@ export default function ClipperPage() {
                 <div className="p-4 bg-green-900/20 border border-green-700 rounded-lg">
                   <p className="text-sm text-green-300 mb-2 font-semibold">✅ Link Generated!</p>
                   <p className="text-xs text-green-400 mb-3">Campaign: {generatedLink.campaignName}</p>
+                  {generatedLink.link.includes('tracking-system-production') && (
+                    <div className="mb-3 p-2 bg-yellow-900/20 border border-yellow-700 rounded">
+                      <p className="text-xs text-yellow-300">
+                        ⚠️ <strong>Note:</strong> This link uses the Railway domain. For a professional custom domain (e.g., lowbackability.com/xxxxx), set a custom domain in the campaign settings.
+                      </p>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 mb-3">
                     <code className="flex-1 px-3 py-2 bg-gray-800 rounded text-green-400 text-sm break-all">
                       {generatedLink.link}

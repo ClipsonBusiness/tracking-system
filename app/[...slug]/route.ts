@@ -15,11 +15,11 @@ export async function GET(
     const hostname = host.split(':')[0] // Remove port if present
     
     // Get the slug from the path
-    // Support both /slug and /ref=xxxx formats
+    // Support both /slug and /ref=xxxx formats for backward compatibility
     const pathSlug = params.slug?.[0] || ''
     const searchParams = request.nextUrl.searchParams
     
-    // Check if it's a ref= format (e.g., /ref=xxxx)
+    // Check if it's a ref= format (e.g., /ref=xxxx) - for backward compatibility
     let actualSlug = pathSlug
     if (pathSlug.startsWith('ref=')) {
       actualSlug = pathSlug.replace('ref=', '')
@@ -27,6 +27,7 @@ export async function GET(
       // Also support ?ref=xxxx format
       actualSlug = searchParams.get('ref') || pathSlug
     }
+    // Otherwise, use the path directly as the slug (clean format: /xxxxx)
     
     // Debug logging
     console.log('Catch-all route hit:', { hostname, pathSlug, actualSlug, slugArray: params.slug })

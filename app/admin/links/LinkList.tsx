@@ -81,9 +81,9 @@ export default function LinkList({
         // Clean up baseUrl - remove /l/ prefix and trailing slashes
         const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/\/l$/, '')
         const customDomainUrl = customDomain && customDomain.trim() !== ''
-          ? `https://${customDomain}/ref=${link.slug}`
+          ? `https://${customDomain}/${link.slug}`
           : null
-        const workingUrl = `${cleanBaseUrl}/ref=${link.slug}` // Clean URL: yourserver.com/ref=slug
+        const workingUrl = `${cleanBaseUrl}/${link.slug}` // Clean URL: yourserver.com/slug
         const timeAgo = getTimeAgo(new Date(link.createdAt))
         
         return (

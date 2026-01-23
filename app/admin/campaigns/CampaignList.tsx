@@ -54,8 +54,8 @@ export default function CampaignList({ campaigns, baseUrl }: { campaigns: Campai
         const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/\/l$/, '')
         const domain = campaign.customDomain || cleanBaseUrl.replace(/https?:\/\//, '')
         const exampleLink = campaign.customDomain
-          ? `https://${campaign.customDomain}/ref=xxxx`
-          : `${cleanBaseUrl}/ref=xxxx`
+          ? `https://${campaign.customDomain}/xxxxx`
+          : `${cleanBaseUrl}/xxxxx`
 
         return (
           <div

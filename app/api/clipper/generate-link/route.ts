@@ -120,17 +120,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate the tracking link with ref= format
+    // Generate the tracking link with clean format (just /slug, not /ref=slug)
     // Dynamically determine base URL from request headers
     const protocol = request.headers.get('x-forwarded-proto') || 'https'
     const host = request.headers.get('host') || request.headers.get('x-forwarded-host') || 'localhost:3000'
     const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
     const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/\/l$/, '')
     
+    // Prioritize custom domain - this is what makes links professional
     const customDomain = campaign.customDomain || campaign.client.customDomain
     const trackingUrl = customDomain && customDomain.trim() !== ''
-      ? `https://${customDomain}/ref=${link.slug}`
-      : `${cleanBaseUrl}/ref=${link.slug}`
+      ? `https://${customDomain}/${link.slug}`
+      : `${cleanBaseUrl}/${link.slug}`
 
     return NextResponse.json({
       link: trackingUrl,
