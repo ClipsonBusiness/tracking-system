@@ -1,8 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+
+interface Campaign {
+  id: string
+  name: string
+  customDomain: string | null
+}
 
 export default function ClipperPage() {
   const router = useRouter()
@@ -15,21 +21,23 @@ export default function ClipperPage() {
     dashboardCode: string
   } | null>(null)
   const [error, setError] = useState('')
-  const [campaigns, setCampaigns] = useState<Array<{ id: string; name: string }>>([])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [loadingCampaigns, setLoadingCampaigns] = useState(true)
 
   // Load campaigns on mount
-  useState(() => {
+  useEffect(() => {
     fetch('/api/clipper/campaigns')
       .then((res) => res.json())
       .then((data) => {
         if (data.error) {
           setError(data.error)
-        } else {
-          setCampaigns(data)
+        } else if (data.campaigns) {
+          setCampaigns(data.campaigns)
         }
       })
       .catch(() => setError('Failed to load campaigns'))
-  })
+      .finally(() => setLoadingCampaigns(false))
+  }, [])
 
   async function handleGenerateLink() {
     if (!selectedCampaignId) {
@@ -93,13 +101,14 @@ export default function ClipperPage() {
                 id="campaign"
                 value={selectedCampaignId}
                 onChange={(e) => setSelectedCampaignId(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={loadingCampaigns}
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 required
               >
-                <option value="">Choose a campaign...</option>
+                <option value="">{loadingCampaigns ? 'Loading campaigns...' : 'Choose a campaign...'}</option>
                 {campaigns.map((campaign) => (
                   <option key={campaign.id} value={campaign.id}>
-                    {campaign.name}
+                    {campaign.name} {campaign.customDomain && `(${campaign.customDomain})`}
                   </option>
                 ))}
               </select>
