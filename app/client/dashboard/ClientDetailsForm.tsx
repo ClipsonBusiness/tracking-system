@@ -84,9 +84,30 @@ export default function ClientDetailsForm({
           placeholder="lowbackability.com"
           className="w-full px-4 py-2 bg-gray-600 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <p className="text-xs text-gray-400 mt-1">
-          Links will use this domain (e.g., lowbackability.com/xxxxx). Make sure DNS is configured to point to your tracking server.
-        </p>
+        {customDomain && (
+          <div className="mt-2 p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+            <p className="text-xs text-yellow-300 font-medium mb-2">
+              ⚠️ Custom Domain Setup Required
+            </p>
+            <p className="text-xs text-yellow-400 mb-2">
+              For <code className="bg-yellow-900/30 px-1 rounded">{customDomain}</code> to work, you need to configure DNS or use one of these options:
+            </p>
+            <ul className="text-xs text-yellow-400 space-y-1 list-disc list-inside">
+              <li><strong>DNS:</strong> Point domain to tracking server (requires DNS access)</li>
+              <li><strong>Reverse Proxy:</strong> Add nginx/apache config (requires server access)</li>
+              <li><strong>JavaScript:</strong> Add redirect script to website (easiest)</li>
+              <li><strong>Subdomain:</strong> Use links.{customDomain} instead (easier DNS)</li>
+            </ul>
+            <p className="text-xs text-yellow-300 mt-2">
+              Until configured, links will show your custom domain but won&apos;t work. Use the Railway URL instead.
+            </p>
+          </div>
+        )}
+        {!customDomain && (
+          <p className="text-xs text-gray-400 mt-1">
+            Links will use your tracking server domain. Custom domain requires DNS/server configuration.
+          </p>
+        )}
       </div>
 
       {error && (
