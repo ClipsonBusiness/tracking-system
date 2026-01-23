@@ -34,24 +34,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Auto-create or use default client if no clientId provided
+    // Auto-create client from campaign name if no clientId provided
     let finalClientId = clientId
     
     if (!finalClientId) {
-      // Get or create a default client
-      let defaultClient = await prisma.client.findFirst({
-        where: { name: 'Default Client' },
+      // Create a new client using the campaign name
+      // Extract a clean client name from campaign name (remove common suffixes)
+      const clientName = name.trim() || 'New Client'
+      
+      // Check if a client with this name already exists
+      let newClient = await prisma.client.findFirst({
+        where: { name: clientName },
       })
       
-      if (!defaultClient) {
-        defaultClient = await prisma.client.create({
+      if (!newClient) {
+        // Create new client with the campaign name
+        newClient = await prisma.client.create({
           data: {
-            name: 'Default Client',
+            name: clientName,
           },
         })
       }
       
-      finalClientId = defaultClient.id
+      finalClientId = newClient.id
     }
 
     const campaign = await prisma.campaign.create({

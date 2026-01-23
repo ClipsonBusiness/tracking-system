@@ -116,16 +116,15 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="clientId" className="block text-sm font-medium text-gray-300 mb-2">
-            Client *
+            Client
           </label>
           <select
             id="clientId"
             value={formData.clientId}
             onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
             className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           >
-            <option value="">Select a client...</option>
+            <option value="">Create new client automatically</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
                 {client.name}
@@ -133,7 +132,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
             ))}
           </select>
           <p className="text-xs text-gray-400 mt-1">
-            Select the client this campaign belongs to
+            Select existing client or leave blank to auto-create from campaign name
           </p>
         </div>
         <div>
