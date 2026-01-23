@@ -38,32 +38,9 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
     setLoading(true)
     setError('')
 
-    // Validate: If custom domain is entered, DNS must be configured
-    if (formData.customDomain && formData.customDomain.trim()) {
-      // Check if client has DNS configured
-      if (formData.clientId) {
-        try {
-          const checkRes = await fetch(`/api/admin/clients/${formData.clientId}/dns/check`)
-          if (checkRes.ok) {
-            const dnsData = await checkRes.json()
-            if (!dnsData.dnsConfigured) {
-              // Don't block, just redirect to DNS config
-              // setError('Custom domain requires DNS configuration. Please configure DNS for this client first.')
-              // setLoading(false)
-              // return
-            }
-          }
-        } catch (err) {
-          // If check fails, still allow but warn
-          console.error('DNS check failed:', err)
-        }
-      } else {
-        // No client selected, can't check DNS - require client selection
-        setError('Please select a client first to configure custom domain DNS.')
-        setLoading(false)
-        return
-      }
-    }
+    // If custom domain is entered but no client selected, that's fine
+    // The system will auto-create a client from the campaign name
+    // DNS can be configured after campaign creation
 
     try {
       const res = await fetch('/api/admin/campaigns', {
@@ -179,8 +156,8 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {formData.customDomain && formData.customDomain.trim() && !formData.clientId && (
-          <p className="text-xs text-yellow-400 mt-1">
-            ⚠️ Please select a client first. DNS configuration is required for custom domains.
+          <p className="text-xs text-blue-400 mt-1">
+            💡 A new client will be auto-created from the campaign name. DNS can be configured after creation.
           </p>
         )}
         {formData.customDomain && (
