@@ -19,12 +19,6 @@ export default async function ClientDashboardPage({
     include: {
       campaigns: true,
     },
-    select: {
-      id: true,
-      name: true,
-      customDomain: true,
-      campaigns: true,
-    },
   })
 
   if (!client) {
