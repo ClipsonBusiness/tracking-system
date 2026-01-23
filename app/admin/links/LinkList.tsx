@@ -190,7 +190,7 @@ export default function LinkList({
                 <div className="mt-2 pt-2 border-t border-gray-600">
                   <p className="text-xs text-gray-500 mb-1">With affiliate code:</p>
                   <code className="text-xs text-blue-400 break-all">
-                    {shortUrl}?aff=CODE
+                    {workingUrl}?aff=CODE
                   </code>
                 </div>
               </div>
