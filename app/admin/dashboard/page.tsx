@@ -196,6 +196,51 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
+      {/* Top Clippers by Traffic */}
+      {clipperStats.length > 0 && (
+        <div className="bg-gray-800 rounded-lg border border-gray-700">
+          <div className="p-6 border-b border-gray-700">
+            <h2 className="text-xl font-semibold text-white">Top Clippers by Traffic</h2>
+            <p className="text-sm text-gray-400 mt-1">See who&apos;s driving the most clicks</p>
+          </div>
+          <div className="p-6">
+            <div className="space-y-3">
+              {clipperStats.map((clipper, index) => (
+                <div
+                  key={clipper.id}
+                  className="bg-gray-700 rounded-lg p-4 border border-gray-600"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-lg font-bold text-white">#{index + 1}</span>
+                        <div>
+                          <p className="text-white font-semibold">
+                            {clipper.discordUsername || `Clipper ${clipper.dashboardCode}`}
+                          </p>
+                          {clipper.socialMediaPage && (
+                            <p className="text-xs text-gray-400">
+                              {clipper.socialMediaPage}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
+                          Code: {clipper.dashboardCode}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-400">
+                        <span>👆 {clipper.totalClicks.toLocaleString()} clicks</span>
+                        <span>🔗 {clipper.linkCount} link{clipper.linkCount !== 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Clients & Campaigns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-gray-800 rounded-lg border border-gray-700">
