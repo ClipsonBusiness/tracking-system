@@ -125,8 +125,8 @@ model Campaign {
 model Clipper {
   id              String   @id @default(cuid())
   dashboardCode   String   @unique // Unique 4-letter code like "abcd"
-  discordUsername String   @map("discord_username")
-  socialMediaPage String   @map("social_media_page") // e.g., Twitter/X, Instagram, TikTok handle or URL
+  discordUsername String?  @map("discord_username") // Required for new clippers, optional for migration
+  socialMediaPage String?  @map("social_media_page") // Required for new clippers, optional for migration
   createdAt       DateTime @default(now()) @map("created_at")
 
   links Link[]
