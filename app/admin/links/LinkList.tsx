@@ -13,6 +13,11 @@ interface Link {
     name: string
     customDomain: string | null
   }
+  clipper: {
+    dashboardCode: string
+    discordUsername: string | null
+    socialMediaPage: string | null
+  } | null
 }
 
 interface Client {
@@ -130,12 +135,24 @@ export default function LinkList({
             ) : (
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <h3 className="text-white font-medium truncate">
                       {link.destinationUrl.length > 60
                         ? link.destinationUrl.substring(0, 60) + '...'
                         : link.destinationUrl}
                     </h3>
+                    {link.clipper && (
+                      <>
+                        <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
+                          {link.clipper.discordUsername || `Clipper ${link.clipper.dashboardCode}`}
+                        </span>
+                        {link.clipper.socialMediaPage && (
+                          <span className="text-xs text-purple-400 bg-purple-900/30 px-2 py-1 rounded">
+                            {link.clipper.socialMediaPage}
+                          </span>
+                        )}
+                      </>
+                    )}
                   </div>
                   <div className="flex flex-col gap-2 text-sm">
                     {customDomainUrl && (
