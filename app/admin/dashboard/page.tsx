@@ -21,9 +21,40 @@ export default async function AdminDashboardPage() {
     include: {
       client: { select: { name: true, customDomain: true } },
       campaign: { select: { name: true } },
+      clipper: { select: { dashboardCode: true, discordUsername: true, socialMediaPage: true } },
       _count: { select: { clicks: true } },
     },
   })
+
+  // Get top clippers by clicks
+  const topClippers = await prisma.clipper.findMany({
+    include: {
+      links: {
+        include: {
+          _count: {
+            select: { clicks: true },
+          },
+        },
+      },
+    },
+  })
+
+  // Calculate total clicks per clipper
+  const clipperStats = topClippers
+    .map((clipper) => {
+      const totalClicks = clipper.links.reduce(
+        (sum, link) => sum + link._count.clicks,
+        0
+      )
+      return {
+        ...clipper,
+        totalClicks,
+        linkCount: clipper.links.length,
+      }
+    })
+    .filter((c) => c.totalClicks > 0)
+    .sort((a, b) => b.totalClicks - a.totalClicks)
+    .slice(0, 10)
 
   // Get clients with campaigns
   const clients = await prisma.client.findMany({
@@ -122,6 +153,18 @@ export default async function AdminDashboardPage() {
                             <span className="text-xs text-gray-400 bg-gray-600 px-2 py-1 rounded">
                               {link.client.name}
                             </span>
+                          )}
+                          {link.clipper && (
+                            <>
+                              <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
+                                {link.clipper.discordUsername || link.clipper.dashboardCode}
+                              </span>
+                              {link.clipper.socialMediaPage && (
+                                <span className="text-xs text-purple-400 bg-purple-900/30 px-2 py-1 rounded">
+                                  {link.clipper.socialMediaPage}
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
                         <p className="text-sm text-gray-300 mb-2 truncate">
