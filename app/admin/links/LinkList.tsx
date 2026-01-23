@@ -15,8 +15,8 @@ interface Link {
   }
   clipper: {
     dashboardCode: string
-    discordUsername: string | null
-    socialMediaPage: string | null
+    discordUsername: string
+    socialMediaPage: string
   } | null
 }
 
@@ -144,13 +144,11 @@ export default function LinkList({
                     {link.clipper && (
                       <>
                         <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
-                          {link.clipper.discordUsername || `Clipper ${link.clipper.dashboardCode}`}
+                          {link.clipper.discordUsername}
                         </span>
-                        {link.clipper.socialMediaPage && (
-                          <span className="text-xs text-purple-400 bg-purple-900/30 px-2 py-1 rounded">
-                            {link.clipper.socialMediaPage}
-                          </span>
-                        )}
+                        <span className="text-xs text-purple-400 bg-purple-900/30 px-2 py-1 rounded">
+                          {link.clipper.socialMediaPage}
+                        </span>
                       </>
                     )}
                   </div>

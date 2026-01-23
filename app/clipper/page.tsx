@@ -63,6 +63,11 @@ export default function ClipperPage() {
       return
     }
 
+    if (!socialMediaPage.trim()) {
+      setError('Please enter your social media page')
+      return
+    }
+
     setGenerating(true)
     setError('')
 
@@ -73,7 +78,7 @@ export default function ClipperPage() {
         body: JSON.stringify({
           campaignId: selectedCampaignId,
           discordUsername: discordUsername.trim(),
-          socialMediaPage: socialMediaPage.trim() || null,
+          socialMediaPage: socialMediaPage.trim(),
         }),
       })
       const data = await res.json()
@@ -163,7 +168,7 @@ export default function ClipperPage() {
 
             <div>
               <label htmlFor="socialMediaPage" className="block text-sm font-medium text-gray-300 mb-2">
-                Social Media Page (Optional)
+                Social Media Page *
               </label>
               <input
                 id="socialMediaPage"
@@ -172,6 +177,7 @@ export default function ClipperPage() {
                 onChange={(e) => setSocialMediaPage(e.target.value)}
                 placeholder="e.g., @twitterhandle, instagram.com/username, or tiktok.com/@username"
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               />
               <p className="text-xs text-gray-400 mt-1">
                 Your Twitter/X, Instagram, TikTok, or other social media handle/URL
@@ -186,7 +192,7 @@ export default function ClipperPage() {
 
             <button
               onClick={handleGenerateLink}
-              disabled={generating || !selectedCampaignId}
+              disabled={generating || !selectedCampaignId || !discordUsername.trim() || !socialMediaPage.trim()}
               className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {generating ? 'Generating...' : 'Generate Link'}

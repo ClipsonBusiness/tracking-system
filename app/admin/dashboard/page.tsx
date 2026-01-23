@@ -218,11 +218,9 @@ export default async function AdminDashboardPage() {
                           <p className="text-white font-semibold">
                             {clipper.discordUsername || `Clipper ${clipper.dashboardCode}`}
                           </p>
-                          {clipper.socialMediaPage && (
-                            <p className="text-xs text-gray-400">
-                              {clipper.socialMediaPage}
-                            </p>
-                          )}
+                          <p className="text-xs text-gray-400">
+                            {clipper.socialMediaPage}
+                          </p>
                         </div>
                         <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
                           Code: {clipper.dashboardCode}

@@ -20,6 +20,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!socialMediaPage || !socialMediaPage.trim()) {
+      return NextResponse.json(
+        { error: 'Social media page is required' },
+        { status: 400 }
+      )
+    }
+
     // Find campaign
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId },
@@ -59,7 +66,7 @@ export async function POST(request: NextRequest) {
           data: { 
             dashboardCode,
             discordUsername: discordUsername.trim(),
-            socialMediaPage: socialMediaPage?.trim() || null,
+            socialMediaPage: socialMediaPage.trim(),
           },
         })
       }
