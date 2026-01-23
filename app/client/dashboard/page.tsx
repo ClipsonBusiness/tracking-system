@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import StripeConnect from './StripeConnect'
 import StripeConnectManual from './StripeConnectManual'
+import ClientDetailsForm from './ClientDetailsForm'
 
 export default async function ClientDashboardPage({
   searchParams,
@@ -104,21 +105,15 @@ export default async function ClientDashboardPage({
             />
             */}
 
-            {/* Settings Section */}
+            {/* Client Details Section */}
             <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
-              <h2 className="text-xl font-semibold text-white mb-4">Settings</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Custom Domain
-                  </label>
-                  <p className="text-sm text-gray-400">
-                    {client.customDomain 
-                      ? `https://${client.customDomain}`
-                      : 'Using default tracking domain'}
-                  </p>
-                </div>
-              </div>
+              <h2 className="text-xl font-semibold text-white mb-4">Your Details</h2>
+              <ClientDetailsForm
+                clientId={client.id}
+                currentName={client.name}
+                currentCustomDomain={client.customDomain}
+                token={token}
+              />
             </div>
           </div>
         </div>
