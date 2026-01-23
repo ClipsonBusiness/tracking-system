@@ -39,8 +39,8 @@ export default async function LinkInBioPage({
             const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
             const customDomain = link.client?.customDomain
             const linkUrl = customDomain && customDomain.trim() !== ''
-              ? `https://${customDomain}/${link.slug}`
-              : `${baseUrl.replace(/\/l$/, '')}/${link.slug}`
+              ? `https://${customDomain}/ref=${link.slug}`
+              : `${baseUrl.replace(/\/l$/, '')}/ref=${link.slug}`
             
             return (
               <a
