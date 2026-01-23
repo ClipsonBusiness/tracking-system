@@ -1,8 +1,14 @@
 import { prisma } from '@/lib/prisma'
+import { headers } from 'next/headers'
 import LinkForm from './LinkForm'
 import LinkList from './LinkList'
 
 export default async function AdminLinksPage() {
+  // Dynamically determine base URL from request headers
+  const headersList = await headers()
+  const protocol = headersList.get('x-forwarded-proto') || 'https'
+  const host = headersList.get('host') || headersList.get('x-forwarded-host') || 'localhost:3000'
+  const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
   const clients = await prisma.client.findMany({
     select: {
       id: true,
@@ -46,8 +52,6 @@ export default async function AdminLinksPage() {
       },
     },
   })
-
-  const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
 
   return (
     <div className="space-y-6">

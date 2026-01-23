@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import GenerateClientLink from './GenerateClientLink'
 import LinkCard from './LinkCard'
@@ -67,6 +68,12 @@ export default async function ClientDashboardPage({
   const selectedCampaign = campaignId
     ? client.campaigns.find((c) => c.id === campaignId)
     : null
+
+  // Dynamically determine base URL from request headers
+  const headersList = await headers()
+  const protocol = headersList.get('x-forwarded-proto') || 'https'
+  const host = headersList.get('host') || headersList.get('x-forwarded-host') || 'localhost:3000'
+  const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
 
   return (
     <div className="space-y-6">

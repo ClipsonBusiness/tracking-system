@@ -15,7 +15,7 @@ interface Campaign {
   }
 }
 
-export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
+export default function CampaignList({ campaigns, baseUrl }: { campaigns: Campaign[]; baseUrl: string }) {
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -51,11 +51,11 @@ export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
   return (
     <div className="space-y-3">
       {campaigns.map((campaign) => {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3000'
-        const domain = campaign.customDomain || baseUrl.replace(/https?:\/\//, '').replace(/\/l$/, '')
+        const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/\/l$/, '')
+        const domain = campaign.customDomain || cleanBaseUrl.replace(/https?:\/\//, '')
         const exampleLink = campaign.customDomain
-          ? `https://${campaign.customDomain}/xxxxx`
-          : `${baseUrl.replace(/\/l$/, '')}/xxxxx`
+          ? `https://${campaign.customDomain}/ref=xxxx`
+          : `${cleanBaseUrl}/ref=xxxx`
 
         return (
           <div

@@ -1,8 +1,14 @@
 import { prisma } from '@/lib/prisma'
+import { headers } from 'next/headers'
 import CampaignForm from './CampaignForm'
 import CampaignList from './CampaignList'
 
 export default async function AdminCampaignsPage() {
+  // Dynamically determine base URL from request headers
+  const headersList = await headers()
+  const protocol = headersList.get('x-forwarded-proto') || 'https'
+  const host = headersList.get('host') || headersList.get('x-forwarded-host') || 'localhost:3000'
+  const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
   try {
     const clients = await prisma.client.findMany()
     const campaigns = await prisma.campaign.findMany({
@@ -26,7 +32,7 @@ export default async function AdminCampaignsPage() {
             <h2 className="text-xl font-semibold text-white">Existing Campaigns</h2>
           </div>
           <div className="p-6">
-            <CampaignList campaigns={campaigns} />
+            <CampaignList campaigns={campaigns} baseUrl={baseUrl} />
           </div>
         </div>
       </div>
