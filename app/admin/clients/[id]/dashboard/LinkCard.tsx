@@ -64,9 +64,6 @@ export default function LinkCard({ link, customDomainUrl, workingUrl }: LinkCard
             )}
             {link.clipper && (
               <>
-                <span className="text-xs text-gray-400 bg-gray-600 px-2 py-1 rounded">
-                  Clipper: {link.clipper.dashboardCode}
-                </span>
                 {link.clipper.discordUsername && (
                   <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
                     Discord: {link.clipper.discordUsername}
