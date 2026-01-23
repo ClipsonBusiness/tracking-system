@@ -7,11 +7,8 @@ export default function SidebarNav() {
   const pathname = usePathname()
 
   const navItems = [
-    { href: '/admin/links', label: 'Links' },
-    { href: '/admin/campaigns', label: 'Campaigns' },
-    { href: '/admin/affiliates', label: 'Affiliates' },
-    { href: '/admin/analytics', label: 'Statistics' },
-    { href: '/admin/clients', label: 'Clients' },
+    { href: '/admin/dashboard', label: 'Dashboard' },
+    { href: '/admin/clients', label: 'Admin' },
   ]
 
   return (
