@@ -194,9 +194,9 @@ export default async function ClientDashboardPage({
                 <div className="space-y-3">
                   {pageLinks.map((link) => {
                     const customDomainUrl = customDomain
-                      ? `https://${customDomain}/${link.slug}`
+                      ? `https://${customDomain}/ref=${link.slug}`
                       : null
-                    const workingUrl = `${baseUrl}/${link.slug}`
+                    const workingUrl = `${baseUrl}/ref=${link.slug}`
 
                     return (
                       <div

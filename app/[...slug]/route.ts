@@ -15,12 +15,23 @@ export async function GET(
     const hostname = host.split(':')[0] // Remove port if present
     
     // Get the slug from the path
+    // Support both /slug and /ref=xxxx formats
     const pathSlug = params.slug?.[0] || ''
+    const searchParams = request.nextUrl.searchParams
+    
+    // Check if it's a ref= format (e.g., /ref=xxxx)
+    let actualSlug = pathSlug
+    if (pathSlug.startsWith('ref=')) {
+      actualSlug = pathSlug.replace('ref=', '')
+    } else if (searchParams.has('ref')) {
+      // Also support ?ref=xxxx format
+      actualSlug = searchParams.get('ref') || pathSlug
+    }
     
     // Debug logging
-    console.log('Catch-all route hit:', { hostname, pathSlug, slugArray: params.slug })
+    console.log('Catch-all route hit:', { hostname, pathSlug, actualSlug, slugArray: params.slug })
     
-    if (!pathSlug) {
+    if (!actualSlug) {
       return new NextResponse('Not found', { status: 404 })
     }
 
@@ -39,13 +50,13 @@ export async function GET(
     // This allows clean URLs on your tracking server domain
     // e.g., yourserver.com/pynhl instead of yourserver.com/l/pynhl
     if (!foundClient) {
-      console.log('No custom domain match, trying direct slug lookup for:', pathSlug)
+      console.log('No custom domain match, trying direct slug lookup for:', actualSlug)
       const directLink = await prisma.link.findFirst({
-        where: { slug: pathSlug },
+        where: { slug: actualSlug },
       })
       
       if (directLink) {
-        console.log('Found link by slug:', pathSlug)
+        console.log('Found link by slug:', actualSlug)
         return handleLinkRedirect(request, directLink)
       }
       
@@ -55,12 +66,12 @@ export async function GET(
     // Find link by slug for this client
     const link = await prisma.link.findFirst({
       where: {
-        slug: pathSlug,
+        slug: actualSlug,
         clientId: foundClient.id,
       },
     })
     
-    console.log('Link lookup:', { pathSlug, clientId: foundClient.id, found: !!link })
+    console.log('Link lookup:', { actualSlug, clientId: foundClient.id, found: !!link })
 
     if (!link) {
       return new NextResponse('Link not found', { status: 404 })

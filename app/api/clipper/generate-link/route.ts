@@ -102,12 +102,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Generate the tracking link (no affiliate code needed)
+    // Generate the tracking link with ref= format
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
     const customDomain = campaign.customDomain || campaign.client.customDomain
     const trackingUrl = customDomain && customDomain.trim() !== ''
-      ? `https://${customDomain}/${link.slug}`
-      : `${baseUrl.replace(/\/l$/, '')}/${link.slug}`
+      ? `https://${customDomain}/ref=${link.slug}`
+      : `${baseUrl.replace(/\/l$/, '')}/ref=${link.slug}`
 
     return NextResponse.json({
       link: trackingUrl,

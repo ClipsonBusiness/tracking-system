@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { clientId, name, destinationUrl, customDomain, status } = body
+    const { clientId, name, destinationUrl, customDomain, status, stripeWebhookSecret, stripeAccountId } = body
 
     if (!name || !destinationUrl) {
       return NextResponse.json(
@@ -63,6 +63,18 @@ export async function POST(request: NextRequest) {
         status: status || 'active',
       },
     })
+
+    // If affiliate program data provided, update the client with Stripe info
+    if (stripeWebhookSecret || stripeAccountId) {
+      await prisma.client.update({
+        where: { id: finalClientId },
+        data: {
+          ...(stripeWebhookSecret && { stripeWebhookSecret }),
+          ...(stripeAccountId && { stripeAccountId }),
+          ...(stripeWebhookSecret && { stripeConnectedAt: new Date() }),
+        },
+      })
+    }
 
     return NextResponse.json(campaign)
   } catch (error: any) {
