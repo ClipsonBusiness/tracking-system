@@ -26,6 +26,7 @@ interface ClipperDashboardProps {
     country: string | null
     link: { slug: string }
   }>
+  dailyClicksData: Array<{ date: string; dateLabel: string; clicks: number }>
 }
 
 export default function ClipperDashboard({
@@ -38,6 +39,7 @@ export default function ClipperDashboard({
   totalRevenue,
   totalSales,
   recentClicks,
+  dailyClicksData,
 }: ClipperDashboardProps) {
   // Calculate country percentages
   const totalCountryClicks = clicksByCountry.reduce((sum, c) => sum + c.count, 0)
@@ -54,6 +56,9 @@ export default function ClipperDashboard({
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const linksLast7Days = links.filter(l => new Date(l.createdAt) >= sevenDaysAgo).length
+
+  // Find max clicks for chart scaling
+  const maxClicks = Math.max(...dailyClicksData.map((d) => d.clicks), 1)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
@@ -102,6 +107,107 @@ export default function ClipperDashboard({
             change={`+${clicksLast7Days} last 7 days`}
             icon="📊"
           />
+        </div>
+
+        {/* Daily Clicks Chart */}
+        <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 mb-6">
+          <h2 className="text-2xl font-bold text-white mb-6">Daily Clicks (Last 30 Days)</h2>
+          
+          {/* Chart */}
+          <div className="relative" style={{ height: '300px' }}>
+            <svg width="100%" height="100%" className="overflow-visible">
+              {/* Y-axis labels */}
+              <g>
+                {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                  const value = Math.round(maxClicks * ratio)
+                  const y = 20 + (1 - ratio) * 260
+                  return (
+                    <g key={`y-axis-${ratio}`}>
+                      <text
+                        x="30"
+                        y={y}
+                        className="text-xs fill-gray-400"
+                        textAnchor="end"
+                      >
+                        {value.toLocaleString()}
+                      </text>
+                      <line
+                        x1="40"
+                        y1={y}
+                        x2="100%"
+                        y2={y}
+                        stroke="currentColor"
+                        strokeWidth="0.5"
+                        className="text-gray-700"
+                        strokeDasharray="2,2"
+                      />
+                    </g>
+                  )
+                })}
+              </g>
+
+              {/* Data points and line */}
+              {dailyClicksData.map((day, index) => {
+                const chartWidth = typeof window !== 'undefined' ? Math.max(window.innerWidth - 200, 800) : 800
+                const x = 50 + (index / Math.max(dailyClicksData.length - 1, 1)) * (chartWidth - 100)
+                const clicksY = 20 + (1 - day.clicks / maxClicks) * 260
+
+                return (
+                  <g key={day.date}>
+                    {/* Click point */}
+                    <circle
+                      cx={x}
+                      cy={clicksY}
+                      r="3"
+                      fill="#3b82f6"
+                      className="hover:r-5 transition-all cursor-pointer"
+                    />
+                  </g>
+                )
+              })}
+
+              {/* Clicks line */}
+              <polyline
+                points={dailyClicksData
+                  .map((day, index) => {
+                    const chartWidth = typeof window !== 'undefined' ? Math.max(window.innerWidth - 200, 800) : 800
+                    return `${50 + (index / Math.max(dailyClicksData.length - 1, 1)) * (chartWidth - 100)},${20 + (1 - day.clicks / maxClicks) * 260}`
+                  })
+                  .join(' ')}
+                fill="none"
+                stroke="#3b82f6"
+                strokeWidth="2"
+              />
+
+              {/* X-axis labels */}
+              {dailyClicksData
+                .filter((_, index) => index % 5 === 0 || index === dailyClicksData.length - 1)
+                .map((day) => {
+                  const index = dailyClicksData.findIndex((d) => d.date === day.date)
+                  const chartWidth = typeof window !== 'undefined' ? Math.max(window.innerWidth - 200, 800) : 800
+                  const x = 50 + (index / Math.max(dailyClicksData.length - 1, 1)) * (chartWidth - 100)
+                  return (
+                    <text
+                      key={day.date}
+                      x={x}
+                      y={290}
+                      className="text-xs fill-gray-400"
+                      textAnchor="middle"
+                    >
+                      {day.dateLabel}
+                    </text>
+                  )
+                })}
+            </svg>
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-gray-700">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-blue-500 rounded"></div>
+              <span className="text-sm text-gray-300">Clicks</span>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

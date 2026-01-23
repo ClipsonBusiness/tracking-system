@@ -101,6 +101,47 @@ export default async function ClipperDashboardPage({
     take: 10,
   }) : []
 
+  // Get daily clicks data for the last 30 days
+  const dailyClicksData: Array<{ date: string; dateLabel: string; clicks: number }> = []
+  if (linkIds.length > 0) {
+    // Generate dates for last 30 days
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now)
+      date.setDate(date.getDate() - i)
+      date.setHours(0, 0, 0, 0)
+      
+      const nextDay = new Date(date)
+      nextDay.setDate(nextDay.getDate() + 1)
+      
+      const dayClicks = await prisma.click.count({
+        where: {
+          linkId: { in: linkIds },
+          ts: {
+            gte: date,
+            lt: nextDay,
+          },
+        },
+      })
+      
+      dailyClicksData.push({
+        date: date.toISOString().split('T')[0],
+        dateLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        clicks: dayClicks,
+      })
+    }
+  } else {
+    // If no links, create empty data for 30 days
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now)
+      date.setDate(date.getDate() - i)
+      dailyClicksData.push({
+        date: date.toISOString().split('T')[0],
+        dateLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        clicks: 0,
+      })
+    }
+  }
+
   return (
     <ClipperDashboard
       dashboardCode={clipper.dashboardCode}
@@ -115,6 +156,7 @@ export default async function ClipperDashboardPage({
       totalRevenue={totalRevenue}
       totalSales={totalSales}
       recentClicks={recentClicks}
+      dailyClicksData={dailyClicksData}
     />
   )
 }
