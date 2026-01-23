@@ -34,7 +34,14 @@ export default async function ClientDashboardPage({
     },
     include: {
       campaign: true,
-      clipper: true,
+      clipper: {
+        select: {
+          id: true,
+          dashboardCode: true,
+          discordUsername: true,
+          socialMediaPage: true,
+        },
+      },
       _count: {
         select: { clicks: true },
       },

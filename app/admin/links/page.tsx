@@ -26,7 +26,14 @@ export default async function AdminLinksPage() {
           name: true,
           customDomain: true,
         }
-      }
+      },
+      clipper: {
+        select: {
+          dashboardCode: true,
+          discordUsername: true,
+          socialMediaPage: true,
+        },
+      },
     },
     orderBy: { createdAt: 'desc' },
   })

@@ -10,7 +10,11 @@ interface LinkCardProps {
     destinationUrl: string
     createdAt: Date
     campaign: { name: string } | null
-    clipper: { dashboardCode: string } | null
+    clipper: { 
+      dashboardCode: string
+      discordUsername: string | null
+      socialMediaPage: string | null
+    } | null
     _count: { clicks: number }
   }
   customDomainUrl: string | null
@@ -59,9 +63,21 @@ export default function LinkCard({ link, customDomainUrl, workingUrl }: LinkCard
               </span>
             )}
             {link.clipper && (
-              <span className="text-xs text-gray-400 bg-gray-600 px-2 py-1 rounded">
-                Clipper: {link.clipper.dashboardCode}
-              </span>
+              <>
+                <span className="text-xs text-gray-400 bg-gray-600 px-2 py-1 rounded">
+                  Clipper: {link.clipper.dashboardCode}
+                </span>
+                {link.clipper.discordUsername && (
+                  <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
+                    Discord: {link.clipper.discordUsername}
+                  </span>
+                )}
+                {link.clipper.socialMediaPage && (
+                  <span className="text-xs text-purple-400 bg-purple-900/30 px-2 py-1 rounded">
+                    Social: {link.clipper.socialMediaPage}
+                  </span>
+                )}
+              </>
             )}
           </div>
           <p className="text-sm text-gray-300 mb-2 truncate">

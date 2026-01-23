@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const campaignId = searchParams.get('campaignId')
+    const body = await request.json()
+    const { campaignId, discordUsername, socialMediaPage } = body
 
     if (!campaignId) {
       return NextResponse.json(
         { error: 'Campaign is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!discordUsername || !discordUsername.trim()) {
+      return NextResponse.json(
+        { error: 'Discord username is required' },
         { status: 400 }
       )
     }
@@ -49,7 +56,11 @@ export async function GET(request: NextRequest) {
 
       if (!existing) {
         clipper = await prisma.clipper.create({
-          data: { dashboardCode },
+          data: { 
+            dashboardCode,
+            discordUsername: discordUsername.trim(),
+            socialMediaPage: socialMediaPage?.trim() || null,
+          },
         })
       }
       attempts++

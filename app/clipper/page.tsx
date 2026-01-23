@@ -14,6 +14,8 @@ export default function ClipperPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedCampaignId, setSelectedCampaignId] = useState('')
+  const [discordUsername, setDiscordUsername] = useState('')
+  const [socialMediaPage, setSocialMediaPage] = useState('')
   const [generating, setGenerating] = useState(false)
   const [generatedLink, setGeneratedLink] = useState<{
     link: string
@@ -56,11 +58,24 @@ export default function ClipperPage() {
       return
     }
 
+    if (!discordUsername.trim()) {
+      setError('Please enter your Discord username')
+      return
+    }
+
     setGenerating(true)
     setError('')
 
     try {
-      const res = await fetch(`/api/clipper/generate-link?campaignId=${selectedCampaignId}`)
+      const res = await fetch(`/api/clipper/generate-link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignId: selectedCampaignId,
+          discordUsername: discordUsername.trim(),
+          socialMediaPage: socialMediaPage.trim() || null,
+        }),
+      })
       const data = await res.json()
 
       if (res.ok) {
@@ -125,6 +140,41 @@ export default function ClipperPage() {
               </select>
               <p className="text-xs text-gray-400 mt-1">
                 Select the campaign you want to generate a link for
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="discordUsername" className="block text-sm font-medium text-gray-300 mb-2">
+                Discord Username *
+              </label>
+              <input
+                id="discordUsername"
+                type="text"
+                value={discordUsername}
+                onChange={(e) => setDiscordUsername(e.target.value)}
+                placeholder="e.g., username#1234 or @username"
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Your Discord username so we can identify you
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="socialMediaPage" className="block text-sm font-medium text-gray-300 mb-2">
+                Social Media Page (Optional)
+              </label>
+              <input
+                id="socialMediaPage"
+                type="text"
+                value={socialMediaPage}
+                onChange={(e) => setSocialMediaPage(e.target.value)}
+                placeholder="e.g., @twitterhandle, instagram.com/username, or tiktok.com/@username"
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Your Twitter/X, Instagram, TikTok, or other social media handle/URL
               </p>
             </div>
 
