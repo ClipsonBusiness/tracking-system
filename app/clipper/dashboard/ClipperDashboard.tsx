@@ -148,7 +148,7 @@ export default function ClipperDashboard({
 
               {/* Data points and line */}
               {dailyClicksData.map((day, index) => {
-                const chartWidth = typeof window !== 'undefined' ? Math.max(window.innerWidth - 200, 800) : 800
+                const chartWidth = 900 // Fixed width for consistent rendering
                 const x = 50 + (index / Math.max(dailyClicksData.length - 1, 1)) * (chartWidth - 100)
                 const clicksY = 20 + (1 - day.clicks / maxClicks) * 260
 
@@ -170,7 +170,7 @@ export default function ClipperDashboard({
               <polyline
                 points={dailyClicksData
                   .map((day, index) => {
-                    const chartWidth = typeof window !== 'undefined' ? Math.max(window.innerWidth - 200, 800) : 800
+                    const chartWidth = 900 // Fixed width for consistent rendering
                     return `${50 + (index / Math.max(dailyClicksData.length - 1, 1)) * (chartWidth - 100)},${20 + (1 - day.clicks / maxClicks) * 260}`
                   })
                   .join(' ')}
@@ -184,7 +184,7 @@ export default function ClipperDashboard({
                 .filter((_, index) => index % 5 === 0 || index === dailyClicksData.length - 1)
                 .map((day) => {
                   const index = dailyClicksData.findIndex((d) => d.date === day.date)
-                  const chartWidth = typeof window !== 'undefined' ? Math.max(window.innerWidth - 200, 800) : 800
+                  const chartWidth = 900 // Fixed width for consistent rendering
                   const x = 50 + (index / Math.max(dailyClicksData.length - 1, 1)) * (chartWidth - 100)
                   return (
                     <text
