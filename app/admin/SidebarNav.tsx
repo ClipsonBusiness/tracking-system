@@ -11,7 +11,7 @@ export default function SidebarNav() {
     { href: '/admin/campaigns', label: 'Campaigns' },
     { href: '/admin/affiliates', label: 'Affiliates' },
     { href: '/admin/analytics', label: 'Statistics' },
-    { href: '/admin/settings', label: 'Settings' },
+    { href: '/admin/clients', label: 'Clients' },
   ]
 
   return (
