@@ -154,6 +154,26 @@ export default async function ClientDashboardPage({
       )}
 
       {/* Links by Page */}
+      {/* DNS Configuration Button */}
+      <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-white">DNS Configuration</h3>
+            <p className="text-sm text-gray-400 mt-1">
+              {customDomain 
+                ? `Custom domain: ${customDomain}` 
+                : 'No custom domain configured'}
+            </p>
+          </div>
+          <a
+            href={`/admin/clients/${client.id}/dns`}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Configure DNS
+          </a>
+        </div>
+      </div>
+
       <div className="space-y-6">
         {Object.entries(linksByHandle).map(([handle, pageLinks]) => {
           const pageClicks = pageLinks.reduce(
