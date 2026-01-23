@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 interface Campaign {
@@ -12,6 +12,7 @@ interface Campaign {
 
 export default function ClipperPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedCampaignId, setSelectedCampaignId] = useState('')
   const [generating, setGenerating] = useState(false)
   const [generatedLink, setGeneratedLink] = useState<{
@@ -23,6 +24,16 @@ export default function ClipperPage() {
   const [error, setError] = useState('')
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loadingCampaigns, setLoadingCampaigns] = useState(true)
+
+  // Check for error in URL params on mount
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam === 'invalid_code') {
+      setError('Invalid dashboard code. Please check your code and try again.')
+      // Clean up URL by removing error param
+      router.replace('/clipper', { scroll: false })
+    }
+  }, [searchParams, router])
 
   // Load campaigns on mount
   useEffect(() => {
