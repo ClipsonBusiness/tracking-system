@@ -75,9 +75,10 @@ export default function LinkList({
         const customDomain = link.client?.customDomain
         // Clean up baseUrl - remove /l/ prefix and trailing slashes
         const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/\/l$/, '')
-        const shortUrl = customDomain && customDomain.trim() !== ''
+        const customDomainUrl = customDomain && customDomain.trim() !== ''
           ? `https://${customDomain}/${link.slug}`
-          : `${cleanBaseUrl}/${link.slug}` // Clean URL: yourserver.com/slug (not /l/slug)
+          : null
+        const workingUrl = `${cleanBaseUrl}/${link.slug}` // Clean URL: yourserver.com/slug (not /l/slug)
         const timeAgo = getTimeAgo(new Date(link.createdAt))
         
         return (
@@ -136,26 +137,41 @@ export default function LinkList({
                         : link.destinationUrl}
                     </h3>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-400">
-                    <a
-                      href={shortUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 font-mono"
-                    >
-                      {shortUrl}
-                    </a>
-                    <span>•</span>
-                    <span>{timeAgo}</span>
+                  <div className="flex flex-col gap-2 text-sm">
+                    {customDomainUrl && (
+                      <div>
+                        <span className="text-yellow-400 text-xs">⚠️ Custom Domain (may not work):</span>
+                        <a
+                          href={customDomainUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-yellow-400 hover:text-yellow-300 font-mono block break-all"
+                        >
+                          {customDomainUrl}
+                        </a>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-green-400 text-xs">✅ Working URL:</span>
+                      <a
+                        href={workingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-green-400 hover:text-green-300 font-mono block break-all"
+                      >
+                        {workingUrl}
+                      </a>
+                    </div>
+                    <span className="text-gray-500 text-xs">• {timeAgo}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(shortUrl)
+                      navigator.clipboard.writeText(workingUrl)
                     }}
                     className="px-3 py-1.5 text-sm bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors"
-                    title="Copy tracking link"
+                    title="Copy working link"
                   >
                     Copy
                   </button>

@@ -193,9 +193,10 @@ export default async function ClientDashboardPage({
               <div className="p-6">
                 <div className="space-y-3">
                   {pageLinks.map((link) => {
-                    const linkUrl = customDomain
+                    const customDomainUrl = customDomain
                       ? `https://${customDomain}/${link.slug}`
-                      : `${baseUrl}/${link.slug}`
+                      : null
+                    const workingUrl = `${baseUrl}/${link.slug}`
 
                     return (
                       <div
@@ -233,15 +234,35 @@ export default async function ClientDashboardPage({
                               </span>
                             </div>
                           </div>
-                          <div className="ml-4">
-                            <a
-                              href={linkUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-400 hover:text-blue-300 text-sm"
-                            >
-                              {linkUrl}
-                            </a>
+                          <div className="ml-4 flex flex-col items-end gap-2">
+                            {customDomainUrl && (
+                              <div className="text-right">
+                                <p className="text-xs text-yellow-400 mb-1">
+                                  Custom Domain (may not work):
+                                </p>
+                                <a
+                                  href={customDomainUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-yellow-400 hover:text-yellow-300 text-sm break-all max-w-xs"
+                                >
+                                  {customDomainUrl}
+                                </a>
+                              </div>
+                            )}
+                            <div className="text-right">
+                              <p className="text-xs text-green-400 mb-1">
+                                ✅ Working URL:
+                              </p>
+                              <a
+                                href={workingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-green-400 hover:text-green-300 text-sm break-all max-w-xs"
+                              >
+                                {workingUrl}
+                              </a>
+                            </div>
                           </div>
                         </div>
                       </div>
