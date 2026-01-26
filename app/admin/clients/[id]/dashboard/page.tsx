@@ -217,7 +217,7 @@ export default async function ClientDashboardPage({
                     <p className="text-sm text-gray-400">Link-in-Bio URL:</p>
                     <code className="text-xs text-blue-400">
                       {customDomain
-                        ? `https://${customDomain}/p/${handle}`
+                        ? `https://${customDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '')}/p/${handle}`
                         : `${baseUrl}/p/${handle}`}
                     </code>
                   </div>
@@ -226,8 +226,16 @@ export default async function ClientDashboardPage({
               <div className="p-6">
                 <div className="space-y-3">
                   {pageLinks.map((link) => {
-                    const customDomainUrl = customDomain
-                      ? `https://${customDomain}/ref=${link.slug}`
+                    // Clean custom domain
+                    let cleanCustomDomain = customDomain
+                    if (cleanCustomDomain) {
+                      cleanCustomDomain = cleanCustomDomain.replace(/^https?:\/\//, '')
+                      cleanCustomDomain = cleanCustomDomain.replace(/\/+$/, '')
+                      cleanCustomDomain = cleanCustomDomain.replace(/^\/+/, '')
+                    }
+                    
+                    const customDomainUrl = cleanCustomDomain
+                      ? `https://${cleanCustomDomain}/ref=${link.slug}`
                       : null
                     const workingUrl = `${baseUrl}/ref=${link.slug}`
 
