@@ -163,8 +163,44 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  // Could store checkout session data if needed
   console.log('Checkout session completed:', session.id)
+  
+  // If affiliate code is in checkout session metadata, propagate it to customer and subscription
+  const affiliateCode = session.metadata?.affiliate_code
+  
+  if (affiliateCode) {
+    // Update customer metadata if customer exists
+    if (session.customer && typeof session.customer === 'string') {
+      try {
+        await stripe.customers.update(session.customer, {
+          metadata: {
+            affiliate_code: affiliateCode,
+          },
+        })
+        console.log(`Updated customer ${session.customer} with affiliate code: ${affiliateCode}`)
+      } catch (err) {
+        console.error('Error updating customer metadata:', err)
+      }
+    }
+    
+    // Update subscription metadata if subscription exists
+    if (session.subscription) {
+      const subscriptionId = typeof session.subscription === 'string' 
+        ? session.subscription 
+        : session.subscription.id
+      
+      try {
+        await stripe.subscriptions.update(subscriptionId, {
+          metadata: {
+            affiliate_code: affiliateCode,
+          },
+        })
+        console.log(`Updated subscription ${subscriptionId} with affiliate code: ${affiliateCode}`)
+      } catch (err) {
+        console.error('Error updating subscription metadata:', err)
+      }
+    }
+  }
 }
 
 async function handleInvoicePaid(
