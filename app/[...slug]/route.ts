@@ -121,9 +121,9 @@ async function handleLinkRedirect(
   const utmMedium = searchParams.get('utm_medium') || null
   const utmCampaign = searchParams.get('utm_campaign') || null
 
-  // Store click (fire and forget - don't block redirect)
-  prisma.click
-    .create({
+  // Store click - await to ensure it's saved before redirect
+  try {
+    await prisma.click.create({
       data: {
         linkId: link.id,
         clientId: link.clientId,
@@ -137,9 +137,11 @@ async function handleLinkRedirect(
         affiliateCode,
       },
     })
-    .catch((err) => {
-      console.error('Error storing click:', err)
-    })
+    console.log('Click stored successfully for link:', link.id)
+  } catch (err) {
+    console.error('Error storing click:', err)
+    // Continue with redirect even if click storage fails
+  }
 
   // Redirect to destination
   return NextResponse.redirect(link.destinationUrl, { status: 302 })
