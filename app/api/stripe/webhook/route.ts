@@ -224,9 +224,25 @@ async function handleInvoicePaid(
       })
     }
     
+    // If using default webhook secret, try to find client by matching webhook secret
+    if (!foundClient && webhookSecret === process.env.STRIPE_WEBHOOK_SECRET) {
+      // Find client that has this webhook secret stored
+      foundClient = await prisma.client.findFirst({
+        where: { stripeWebhookSecret: webhookSecret },
+      })
+    }
+    
     if (!foundClient) {
-      // Last resort: use first client (for backward compatibility)
-      foundClient = await prisma.client.findFirst()
+      // Last resort: use first client with webhook secret configured
+      foundClient = await prisma.client.findFirst({
+        where: { stripeWebhookSecret: { not: null } },
+        orderBy: { createdAt: 'asc' },
+      })
+      
+      // If still no client, use first client (for backward compatibility)
+      if (!foundClient) {
+        foundClient = await prisma.client.findFirst()
+      }
     }
   }
   
