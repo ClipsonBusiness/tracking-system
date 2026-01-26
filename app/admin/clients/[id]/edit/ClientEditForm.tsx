@@ -287,6 +287,7 @@ export default function ClientEditForm({ client }: { client: Client }) {
           </button>
         </div>
       </form>
+      </div>
     </div>
   )
 }
