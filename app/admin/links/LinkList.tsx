@@ -87,8 +87,8 @@ export default function LinkList({
         // Clean up baseUrl - remove /l/ prefix and trailing slashes
         const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/\/l$/, '')
         
-        // Determine if this is a clipper link (has clipperId)
-        const isClipperLink = !!link.clipperId
+        // Determine if this is a clipper link (has clipper relation)
+        const isClipperLink = !!link.clipper
         
         // Use ref= format for clipper links, clean format for others
         const linkFormat = isClipperLink ? `ref=${link.slug}` : link.slug
