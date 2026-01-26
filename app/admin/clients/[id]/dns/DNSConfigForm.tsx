@@ -91,9 +91,121 @@ export default function DNSConfigForm({
   }
 
   const railwayUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || 'tracking-system-production-d23c.up.railway.app'
+  const trackingServerUrl = railwayUrl.startsWith('http') ? railwayUrl : `https://${railwayUrl}`
+  
+  // Generate JavaScript code for redirect
+  const customDomain = formData.customDomain || client.customDomain || ''
+  const cleanDomain = customDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/^\/+/, '')
+  const jsCode = `<!-- Tracking Link Redirect Script -->
+<!-- Add this to your website's <head> or before </body> -->
+<script>
+(function() {
+  // Only run on your custom domain
+  if (window.location.hostname !== '${cleanDomain}' && 
+      window.location.hostname !== 'www.${cleanDomain}') {
+    return;
+  }
+
+  // Get the current path (e.g., /ref=xxxx or /xxxxx)
+  const path = window.location.pathname;
+  
+  // Skip if it's a root path or common paths
+  if (path === '/' || path.startsWith('/api/') || path.startsWith('/_next/')) {
+    return;
+  }
+
+  // Extract slug from path (remove leading slash)
+  const slug = path.substring(1);
+  
+  // If there's a slug, redirect to tracking server
+  if (slug && slug.length > 0) {
+    const trackingUrl = '${trackingServerUrl}/' + slug + window.location.search;
+    window.location.href = trackingUrl;
+  }
+})();
+</script>`
+
+  const [jsCopied, setJsCopied] = useState(false)
+
+  function handleCopyJS() {
+    navigator.clipboard.writeText(jsCode)
+    setJsCopied(true)
+    setTimeout(() => setJsCopied(false), 2000)
+  }
 
   return (
     <div className="space-y-6">
+      {/* JavaScript Redirect Option - EASIEST */}
+      {customDomain && (
+        <div className="bg-green-900/20 border border-green-700 rounded-lg p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-2">✨ JavaScript Redirect (EASIEST - No DNS!)</h2>
+              <p className="text-sm text-gray-300">
+                Have your client add this script to their website. Works immediately, no DNS changes needed!
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-green-700 text-white text-xs font-bold rounded-full">RECOMMENDED</span>
+          </div>
+          
+          <div className="bg-gray-900 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-gray-400">JavaScript Code for {cleanDomain}:</p>
+              <button
+                type="button"
+                onClick={handleCopyJS}
+                className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition-colors"
+              >
+                {jsCopied ? '✅ Copied!' : '📋 Copy Code'}
+              </button>
+            </div>
+            <div className="bg-black rounded p-4 font-mono text-xs text-green-400 overflow-x-auto">
+              <pre className="whitespace-pre-wrap">{jsCode}</pre>
+            </div>
+          </div>
+
+          <div className="bg-blue-900/20 border border-blue-700 rounded p-4">
+            <p className="text-sm font-medium text-blue-300 mb-2">📧 Email Template for Client:</p>
+            <div className="bg-gray-900 rounded p-3 mb-3">
+              <p className="text-xs text-gray-300 mb-2">Hi,</p>
+              <p className="text-xs text-gray-300 mb-2">
+                To enable custom domain tracking on <strong>{cleanDomain}</strong>, please add the JavaScript code above to your website.
+              </p>
+              <p className="text-xs text-gray-300 mb-2">
+                <strong>Where to add it:</strong>
+              </p>
+              <ul className="text-xs text-gray-400 list-disc list-inside space-y-1 mb-2">
+                <li><strong>WordPress:</strong> Appearance → Theme Editor → header.php (or use a plugin like &quot;Insert Headers and Footers&quot;)</li>
+                <li><strong>Squarespace:</strong> Settings → Code Injection → Header</li>
+                <li><strong>Wix:</strong> Settings → Custom Code → Add to Head</li>
+                <li><strong>Any website:</strong> Add to the <code className="bg-gray-800 px-1 rounded">&lt;head&gt;</code> section</li>
+              </ul>
+              <p className="text-xs text-gray-300">
+                Once added, your links like <code className="bg-gray-800 px-1 rounded">{cleanDomain}/ref=xxxx</code> will work automatically!
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const emailText = `Hi,\n\nTo enable custom domain tracking on ${cleanDomain}, please add this JavaScript code to your website:\n\n${jsCode}\n\nWhere to add it:\n- WordPress: Appearance → Theme Editor → header.php (or use a plugin)\n- Squarespace: Settings → Code Injection → Header\n- Wix: Settings → Custom Code → Add to Head\n- Any website: Add to the <head> section\n\nOnce added, your links like ${cleanDomain}/ref=xxxx will work automatically!\n\nThanks!`
+                navigator.clipboard.writeText(emailText)
+                alert('Email template copied to clipboard!')
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+            >
+              📧 Copy Email Template
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* DNS Setup Option */}
+      <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4 mb-6">
+        <p className="text-sm text-yellow-300">
+          <strong>Alternative:</strong> If JavaScript redirect doesn&apos;t work, use DNS setup below (requires DNS access from client).
+        </p>
+      </div>
+
       {/* Instructions */}
       <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-6">
         <h2 className="text-xl font-semibold text-white mb-4">📋 Setup Instructions</h2>
