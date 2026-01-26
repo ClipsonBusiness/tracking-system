@@ -234,6 +234,42 @@ async function handleInvoicePaid(
       if (subscription.metadata?.affiliate_code) {
         affiliateCode = subscription.metadata.affiliate_code
       }
+      
+      // If still no affiliate code, check the subscription's latest invoice's checkout session
+      if (!affiliateCode && subscription.latest_invoice) {
+        const latestInvoiceId = typeof subscription.latest_invoice === 'string'
+          ? subscription.latest_invoice
+          : subscription.latest_invoice.id
+        
+        if (latestInvoiceId === invoice.id) {
+          // This is the subscription's latest invoice, try to find checkout session
+          try {
+            const checkoutSessions = await stripe.checkout.sessions.list({
+              subscription: subscriptionId,
+              limit: 1,
+            })
+            
+            if (checkoutSessions.data.length > 0) {
+              const session = checkoutSessions.data[0]
+              if (session.metadata?.affiliate_code) {
+                affiliateCode = session.metadata.affiliate_code
+                // Update subscription with the affiliate code for future invoices
+                try {
+                  await stripe.subscriptions.update(subscriptionId, {
+                    metadata: {
+                      affiliate_code: affiliateCode,
+                    },
+                  })
+                } catch (err) {
+                  console.error('Error updating subscription metadata:', err)
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Error retrieving checkout session:', err)
+          }
+        }
+      }
     } catch (err) {
       console.error('Error retrieving subscription:', err)
     }
