@@ -61,6 +61,11 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
       if (res.ok) {
         const campaign = await res.json()
         
+        // Show client portal URL if available
+        if (campaign.clientPortalUrl) {
+          alert(`✅ Campaign created!\n\nClient Portal URL:\n${campaign.clientPortalUrl}\n\nThis link allows your client to:\n- Connect Stripe\n- Configure DNS\n- View their dashboard\n\nCopy this link and send it to your client!`)
+        }
+        
         // If custom domain was entered, show DNS form inline or redirect
         if (formData.customDomain && formData.customDomain.trim() && formData.clientId) {
           // Show DNS form inline instead of redirecting

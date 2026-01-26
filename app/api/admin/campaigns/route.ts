@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdminAuth } from '@/lib/auth'
+import crypto from 'crypto'
 
 export async function GET() {
   await requireAdminAuth()
@@ -48,11 +49,20 @@ export async function POST(request: NextRequest) {
       })
       
       if (!newClient) {
-        // Create new client with the campaign name
+        // Create new client with the campaign name and auto-generate access token
+        const clientToken = crypto.randomBytes(32).toString('hex')
         newClient = await prisma.client.create({
           data: {
             name: clientName,
+            clientAccessToken: clientToken,
           },
+        })
+      } else if (!newClient.clientAccessToken) {
+        // If client exists but has no token, generate one
+        const clientToken = crypto.randomBytes(32).toString('hex')
+        newClient = await prisma.client.update({
+          where: { id: newClient.id },
+          data: { clientAccessToken: clientToken },
         })
       }
       
@@ -81,7 +91,27 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json(campaign)
+    // Get client to return portal URL
+    const client = await prisma.client.findUnique({
+      where: { id: finalClientId },
+      select: {
+        clientAccessToken: true,
+      },
+    })
+
+    // Generate portal URL if client has access token
+    const protocol = request.headers.get('x-forwarded-proto') || 'https'
+    const host = request.headers.get('host') || request.headers.get('x-forwarded-host') || 'localhost:3000'
+    const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
+    
+    const portalUrl = client?.clientAccessToken
+      ? `${baseUrl}/client/dashboard?token=${client.clientAccessToken}`
+      : null
+
+    return NextResponse.json({
+      ...campaign,
+      clientPortalUrl: portalUrl,
+    })
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'Failed to create campaign' },

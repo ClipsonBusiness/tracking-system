@@ -105,6 +105,41 @@ export default async function ClientDashboardPage({
             />
             */}
 
+            {/* DNS Configuration Section */}
+            <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-white">DNS Configuration</h2>
+                <Link
+                  href={`/client/dns?token=${token}`}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                >
+                  {client.customDomain ? 'Edit DNS' : 'Configure DNS'}
+                </Link>
+              </div>
+              {client.customDomain ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Custom Domain:</span>
+                    <span className="text-white font-mono">{client.customDomain}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Link Format:</span>
+                    <span className="text-white font-mono">{client.customDomain}/xxxxx</span>
+                  </div>
+                  <p className="text-xs text-green-400 mt-2">✅ Custom domain configured</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-gray-400 text-sm mb-2">
+                    Configure your custom domain to use professional tracking links
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Example: yourdomain.com/xxxxx instead of tracking-system.railway.app/xxxxx
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Client Details Section */}
             <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
               <h2 className="text-xl font-semibold text-white mb-4">Your Details</h2>
