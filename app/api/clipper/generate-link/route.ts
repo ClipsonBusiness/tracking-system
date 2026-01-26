@@ -128,10 +128,30 @@ export async function POST(request: NextRequest) {
     const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/\/l$/, '')
     
     // Prioritize custom domain - this is what makes links professional
-    const customDomain = campaign.customDomain || campaign.client.customDomain
-    const trackingUrl = customDomain && customDomain.trim() !== ''
-      ? `https://${customDomain}/${link.slug}`
-      : `${cleanBaseUrl}/${link.slug}`
+    // Clean the custom domain: remove protocol, www, trailing slashes
+    let customDomain = campaign.customDomain || campaign.client.customDomain
+    if (customDomain && customDomain.trim() !== '') {
+      // Remove protocol if present
+      customDomain = customDomain.replace(/^https?:\/\//, '')
+      // Remove www. if present (optional - you can keep it if needed)
+      // customDomain = customDomain.replace(/^www\./, '')
+      // Remove trailing slashes
+      customDomain = customDomain.replace(/\/+$/, '')
+      // Remove leading slashes
+      customDomain = customDomain.replace(/^\/+/, '')
+      // Construct clean URL
+      const trackingUrl = `https://${customDomain}/${link.slug}`
+      
+      return NextResponse.json({
+        link: trackingUrl,
+        campaignName: campaign.name,
+        slug: link.slug,
+        dashboardCode: clipper.dashboardCode,
+      })
+    }
+    
+    // Fallback to Railway domain if no custom domain
+    const trackingUrl = `${cleanBaseUrl}/${link.slug}`
 
     return NextResponse.json({
       link: trackingUrl,

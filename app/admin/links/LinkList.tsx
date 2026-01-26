@@ -77,7 +77,13 @@ export default function LinkList({
       {links.map((link) => {
         // Use custom domain if available, otherwise use base URL with clean path
         // Always prefer custom domain for the client
-        const customDomain = link.client?.customDomain
+        let customDomain = link.client?.customDomain
+        // Clean the custom domain: remove protocol, trailing slashes
+        if (customDomain && customDomain.trim() !== '') {
+          customDomain = customDomain.replace(/^https?:\/\//, '') // Remove protocol
+          customDomain = customDomain.replace(/\/+$/, '') // Remove trailing slashes
+          customDomain = customDomain.replace(/^\/+/, '') // Remove leading slashes
+        }
         // Clean up baseUrl - remove /l/ prefix and trailing slashes
         const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/\/l$/, '')
         const customDomainUrl = customDomain && customDomain.trim() !== ''
