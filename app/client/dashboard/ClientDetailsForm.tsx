@@ -93,9 +93,9 @@ export default function ClientDetailsForm({
               For <code className="bg-yellow-900/30 px-1 rounded">{customDomain}</code> to work, you need to configure DNS or use one of these options:
             </p>
             <ul className="text-xs text-yellow-400 space-y-1 list-disc list-inside">
+              <li><strong>JavaScript Redirect:</strong> Add script to website (easiest - no DNS!) <a href={`/client/dns/javascript-redirect?token=${token}`} className="text-blue-400 hover:text-blue-300 underline">Get code →</a></li>
               <li><strong>DNS:</strong> Point domain to tracking server (requires DNS access)</li>
               <li><strong>Reverse Proxy:</strong> Add nginx/apache config (requires server access)</li>
-              <li><strong>JavaScript:</strong> Add redirect script to website (easiest)</li>
               <li><strong>Subdomain:</strong> Use links.{customDomain} instead (easier DNS)</li>
             </ul>
             <p className="text-xs text-yellow-300 mt-2">
