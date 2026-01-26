@@ -7,6 +7,7 @@ interface Client {
   id: string
   name: string
   customDomain: string | null
+  dnsScreenshot?: string | null
 }
 
 export default function DNSConfigForm({ 
@@ -25,9 +26,35 @@ export default function DNSConfigForm({
     dnsTtl: '3600',
     notes: '',
   })
+  const [screenshot, setScreenshot] = useState<string | null>(client.dnsScreenshot || null)
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(client.dnsScreenshot || null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  function handleScreenshotChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please upload an image file')
+        return
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size must be less than 5MB')
+        return
+      }
+      
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setScreenshot(base64String)
+        setScreenshotPreview(base64String)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -39,7 +66,10 @@ export default function DNSConfigForm({
       const res = await fetch(`/api/admin/clients/${client.id}/dns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          dnsScreenshot: screenshot,
+        }),
       })
 
       if (res.ok) {
@@ -219,6 +249,44 @@ export default function DNSConfigForm({
         </div>
 
         <div>
+          <label htmlFor="screenshot" className="block text-sm font-medium text-gray-300 mb-2">
+            DNS Screenshot (Optional)
+          </label>
+          <input
+            id="screenshot"
+            type="file"
+            accept="image/*"
+            onChange={handleScreenshotChange}
+            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Upload a screenshot of the DNS configuration from your client (max 5MB)
+          </p>
+          {screenshotPreview && (
+            <div className="mt-4">
+              <p className="text-xs text-gray-400 mb-2">Preview:</p>
+              <img
+                src={screenshotPreview}
+                alt="DNS Screenshot Preview"
+                className="max-w-full max-h-64 rounded-lg border border-gray-600"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setScreenshot(null)
+                  setScreenshotPreview(null)
+                  const input = document.getElementById('screenshot') as HTMLInputElement
+                  if (input) input.value = ''
+                }}
+                className="mt-2 px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
+              >
+                Remove Screenshot
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div>
           <label htmlFor="notes" className="block text-sm font-medium text-gray-300 mb-2">
             Notes (Optional)
           </label>
@@ -260,15 +328,27 @@ export default function DNSConfigForm({
       {client.customDomain && (
         <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
           <h2 className="text-xl font-semibold text-white mb-4">Current Configuration</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-400">Domain:</span>
-              <span className="text-white font-mono">{client.customDomain}</span>
+          <div className="space-y-4">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Domain:</span>
+                <span className="text-white font-mono">{client.customDomain}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Link Format:</span>
+                <span className="text-white font-mono">{client.customDomain}/xxxxx</span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Link Format:</span>
-              <span className="text-white font-mono">{client.customDomain}/ref=xxxx</span>
-            </div>
+            {client.dnsScreenshot && (
+              <div className="mt-4 pt-4 border-t border-gray-700">
+                <p className="text-sm font-medium text-gray-300 mb-2">Uploaded Screenshot:</p>
+                <img
+                  src={client.dnsScreenshot}
+                  alt="DNS Configuration Screenshot"
+                  className="max-w-full max-h-64 rounded-lg border border-gray-600"
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

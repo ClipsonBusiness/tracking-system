@@ -18,6 +18,7 @@ model Client {
   stripeConnectedAt   DateTime? @map("stripe_connected_at")
   customDomain        String?  @map("custom_domain") // e.g., "lowbackability.com"
   clientAccessToken   String?  @unique @map("client_access_token") // For client dashboard access
+  dnsScreenshot       String?    @map("dns_screenshot") // Base64 encoded screenshot or URL
   createdAt           DateTime @default(now()) @map("created_at")
 
   links       Link[]

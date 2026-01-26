@@ -19,6 +19,7 @@ export default async function ClientDNSPage({
       id: true,
       name: true,
       customDomain: true,
+      dnsScreenshot: true,
     },
   })
 

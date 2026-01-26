@@ -10,7 +10,7 @@ export async function POST(
 
   try {
     const body = await request.json()
-    const { customDomain, dnsType, dnsValue, dnsName, dnsTtl, notes } = body
+    const { customDomain, dnsType, dnsValue, dnsName, dnsTtl, notes, dnsScreenshot } = body
 
     if (!customDomain) {
       return NextResponse.json(
@@ -19,16 +19,12 @@ export async function POST(
       )
     }
 
-    // Update client with custom domain
-    // Note: We're storing DNS details in notes for now
-    // In the future, you could add DNS fields to the Client model
+    // Update client with custom domain and screenshot
     const client = await prisma.client.update({
       where: { id: params.id },
       data: {
         customDomain: customDomain.trim(),
-        // Store DNS details in a JSON field or notes
-        // For now, we'll just update customDomain
-        // You could extend the schema to store DNS details separately
+        dnsScreenshot: dnsScreenshot || null, // Store base64 screenshot or null
       },
     })
 
