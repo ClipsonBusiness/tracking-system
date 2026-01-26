@@ -140,6 +140,32 @@ export default async function ClientDashboardPage({
               )}
             </div>
 
+            {/* Campaigns Section */}
+            {campaigns.length > 0 && (
+              <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
+                <h2 className="text-xl font-semibold text-white mb-4">Your Campaigns</h2>
+                <div className="space-y-3">
+                  {campaigns.map((campaign) => (
+                    <Link
+                      key={campaign.id}
+                      href={`/client/campaign-dashboard?token=${token}&campaignId=${campaign.id}`}
+                      className="block p-4 bg-gray-800 hover:bg-gray-750 rounded-lg border border-gray-600 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-white font-medium">{campaign.name}</h3>
+                          <p className="text-sm text-gray-400 mt-1">
+                            {campaign._count.links} {campaign._count.links === 1 ? 'link' : 'links'}
+                          </p>
+                        </div>
+                        <span className="text-blue-400">→</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Client Details Section */}
             <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
               <h2 className="text-xl font-semibold text-white mb-4">Your Details</h2>

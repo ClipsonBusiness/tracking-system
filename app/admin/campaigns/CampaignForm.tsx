@@ -21,6 +21,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
   const [error, setError] = useState('')
   const [showAffiliateProgram, setShowAffiliateProgram] = useState(false)
   const [showDNSForm, setShowDNSForm] = useState(false)
+  const [clientPortalUrl, setClientPortalUrl] = useState<string | null>(null)
   const [affiliateData, setAffiliateData] = useState({
     stripeWebhookSecret: '',
     stripeAccountId: '',
@@ -61,9 +62,9 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
       if (res.ok) {
         const campaign = await res.json()
         
-        // Show client portal URL if available
+        // Store client portal URL to display
         if (campaign.clientPortalUrl) {
-          alert(`✅ Campaign created!\n\nClient Portal URL:\n${campaign.clientPortalUrl}\n\nThis link allows your client to:\n- Connect Stripe\n- Configure DNS\n- View their dashboard\n\nCopy this link and send it to your client!`)
+          setClientPortalUrl(campaign.clientPortalUrl)
         }
         
         // If custom domain was entered, show DNS form inline or redirect
