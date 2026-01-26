@@ -14,7 +14,7 @@ export default function SidebarNav() {
   return (
     <nav className="flex-1 p-4 space-y-2">
       {navItems.map((item) => {
-        const isActive = pathname === item.href
+        const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
         return (
           <Link
             key={item.href}
@@ -29,6 +29,16 @@ export default function SidebarNav() {
           </Link>
         )
       })}
+      <Link
+        href="/admin/test-stripe"
+        className={`block px-4 py-2 rounded-lg transition-colors ${
+          pathname === '/admin/test-stripe'
+            ? 'bg-blue-600 text-white'
+            : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+        }`}
+      >
+        🧪 Test Stripe
+      </Link>
     </nav>
   )
 }
