@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate the tracking link with clean format (just /slug, not /ref=slug)
+    // Generate the tracking link with ref= format for clippers
     // Dynamically determine base URL from request headers
     const protocol = request.headers.get('x-forwarded-proto') || 'https'
     const host = request.headers.get('host') || request.headers.get('x-forwarded-host') || 'localhost:3000'
@@ -133,14 +133,12 @@ export async function POST(request: NextRequest) {
     if (customDomain && customDomain.trim() !== '') {
       // Remove protocol if present
       customDomain = customDomain.replace(/^https?:\/\//, '')
-      // Remove www. if present (optional - you can keep it if needed)
-      // customDomain = customDomain.replace(/^www\./, '')
       // Remove trailing slashes
       customDomain = customDomain.replace(/\/+$/, '')
       // Remove leading slashes
       customDomain = customDomain.replace(/^\/+/, '')
-      // Construct clean URL
-      const trackingUrl = `https://${customDomain}/${link.slug}`
+      // Construct URL with ref= format for clippers
+      const trackingUrl = `https://${customDomain}/ref=${link.slug}`
       
       return NextResponse.json({
         link: trackingUrl,
@@ -150,8 +148,8 @@ export async function POST(request: NextRequest) {
       })
     }
     
-    // Fallback to Railway domain if no custom domain
-    const trackingUrl = `${cleanBaseUrl}/${link.slug}`
+    // Fallback to Railway domain if no custom domain (also use ref= format)
+    const trackingUrl = `${cleanBaseUrl}/ref=${link.slug}`
 
     return NextResponse.json({
       link: trackingUrl,
