@@ -106,6 +106,17 @@ export default function DNSConfigForm({
     return;
   }
 
+  // Check for ?ref= query parameter first (e.g., /?ref=xxxx)
+  const urlParams = new URLSearchParams(window.location.search);
+  const refParam = urlParams.get('ref');
+  
+  if (refParam) {
+    // Redirect with ?ref= parameter
+    const trackingUrl = '${trackingServerUrl}/?ref=' + refParam;
+    window.location.href = trackingUrl;
+    return;
+  }
+
   // Get the current path (e.g., /ref=xxxx or /xxxxx)
   const path = window.location.pathname;
   
