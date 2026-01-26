@@ -86,10 +86,17 @@ export default function LinkList({
         }
         // Clean up baseUrl - remove /l/ prefix and trailing slashes
         const cleanBaseUrl = baseUrl.replace(/\/$/, '').replace(/\/l$/, '')
+        
+        // Determine if this is a clipper link (has clipperId)
+        const isClipperLink = !!link.clipperId
+        
+        // Use ref= format for clipper links, clean format for others
+        const linkFormat = isClipperLink ? `ref=${link.slug}` : link.slug
+        
         const customDomainUrl = customDomain && customDomain.trim() !== ''
-          ? `https://${customDomain}/${link.slug}`
+          ? `https://${customDomain}/${linkFormat}`
           : null
-        const workingUrl = `${cleanBaseUrl}/${link.slug}` // Clean URL: yourserver.com/slug
+        const workingUrl = `${cleanBaseUrl}/${linkFormat}` // Use ref= format for clippers
         const timeAgo = getTimeAgo(new Date(link.createdAt))
         
         return (

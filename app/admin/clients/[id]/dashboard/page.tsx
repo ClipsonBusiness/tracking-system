@@ -195,8 +195,6 @@ export default async function ClientDashboardPage({
             (sum, link) => sum + link._count.clicks,
             0
           )
-          const baseUrl =
-            process.env.APP_BASE_URL || 'http://localhost:3000'
           const customDomain = client.customDomain
 
           return (
