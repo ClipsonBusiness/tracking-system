@@ -289,9 +289,61 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
+      {/* Client Portal URL Display */}
+      {clientPortalUrl && (
+        <div className="p-6 bg-green-900/20 border-2 border-green-600 rounded-lg mb-4">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="text-2xl">🎉</div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-green-300 mb-2">
+                Campaign Created Successfully!
+              </h3>
+              <p className="text-sm text-green-400 mb-4">
+                Send this portal link to your client. They can use it to:
+              </p>
+              <ul className="text-sm text-green-300 space-y-1 mb-4 list-disc list-inside">
+                <li>Connect their Stripe account</li>
+                <li>Configure DNS for custom domain</li>
+                <li>View their dashboard and analytics</li>
+              </ul>
+            </div>
+          </div>
+          <div className="bg-gray-900 rounded-lg p-4 mb-4">
+            <label className="block text-xs font-medium text-gray-400 mb-2">
+              Client Portal URL:
+            </label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-sm text-green-400 break-all bg-gray-800 px-3 py-2 rounded">
+                {clientPortalUrl}
+              </code>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(clientPortalUrl)
+                  alert('✅ Portal link copied to clipboard!')
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+              >
+                📋 Copy Link
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setClientPortalUrl(null)
+              router.refresh()
+            }}
+            className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+          >
+            Create Another Campaign
+          </button>
+        </div>
+      )}
+
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !!clientPortalUrl}
         className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Creating...' : 'Create Campaign'}
