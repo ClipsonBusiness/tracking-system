@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'invoice.paid':
-        await handleInvoicePaid(event.data.object as Stripe.Invoice, client, accountId)
+        await handleInvoicePaid(event.data.object as Stripe.Invoice, client, accountId, webhookSecret)
         break
 
       case 'charge.refunded':
@@ -170,7 +170,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 async function handleInvoicePaid(
   invoice: Stripe.Invoice,
   client: { id: string; stripeAccountId: string | null } | null,
-  accountId: string | null
+  accountId: string | null,
+  webhookSecret: string | null
 ) {
   if (!invoice.customer || typeof invoice.customer !== 'string') {
     console.log('Invoice has no customer ID')
