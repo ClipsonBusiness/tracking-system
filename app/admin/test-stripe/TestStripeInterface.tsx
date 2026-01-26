@@ -92,6 +92,26 @@ export default function TestStripeInterface({
 
   return (
     <div className="space-y-6">
+      {/* Webhook Status Warning */}
+      {recentEvents.length === 0 && (
+        <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-yellow-300 mb-2">⚠️ No Webhook Events Received</h2>
+          <p className="text-yellow-400 text-sm mb-4">
+            If you&apos;ve completed test checkouts but see no conversions, your webhook may not be configured.
+          </p>
+          <div className="space-y-2 text-sm text-yellow-300">
+            <p><strong>Quick Fix:</strong></p>
+            <ol className="list-decimal list-inside space-y-1 ml-2 text-yellow-400">
+              <li>Go to <a href="https://dashboard.stripe.com/test/webhooks" target="_blank" rel="noopener noreferrer" className="underline">Stripe Dashboard → Webhooks</a></li>
+              <li>Add endpoint: <code className="bg-yellow-900/30 px-1 rounded">https://tracking-system-production-d23c.up.railway.app/api/stripe/webhook</code></li>
+              <li>Select events: <code className="bg-yellow-900/30 px-1 rounded">invoice.paid</code>, <code className="bg-yellow-900/30 px-1 rounded">checkout.session.completed</code></li>
+              <li>Copy webhook secret (starts with <code className="bg-yellow-900/30 px-1 rounded">whsec_</code>)</li>
+              <li>Add to Railway Variables: <code className="bg-yellow-900/30 px-1 rounded">STRIPE_WEBHOOK_SECRET</code></li>
+            </ol>
+          </div>
+        </div>
+      )}
+
       {/* Instructions */}
       <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-6">
         <h2 className="text-xl font-semibold text-white mb-4">🧪 How to Test Stripe Tracking</h2>
