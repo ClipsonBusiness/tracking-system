@@ -91,7 +91,7 @@ export default function LinkList({
         const isClipperLink = !!link.clipper
         
         // Use ref= format for clipper links, clean format for others
-        const linkFormat = isClipperLink ? `ref=${link.slug}` : link.slug
+        const linkFormat = isClipperLink ? `?ref=${link.slug}` : link.slug
         
         const customDomainUrl = customDomain && customDomain.trim() !== ''
           ? `https://${customDomain}/${linkFormat}`

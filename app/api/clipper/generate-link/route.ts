@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       // Remove leading slashes
       customDomain = customDomain.replace(/^\/+/, '')
       // Construct URL with ref= format for clippers
-      const trackingUrl = `https://${customDomain}/ref=${link.slug}`
+      const trackingUrl = `https://${customDomain}/?ref=${link.slug}`
       
       return NextResponse.json({
         link: trackingUrl,
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Fallback to Railway domain if no custom domain (also use ref= format)
-    const trackingUrl = `${cleanBaseUrl}/ref=${link.slug}`
+    const trackingUrl = `${cleanBaseUrl}/?ref=${link.slug}`
 
     return NextResponse.json({
       link: trackingUrl,

@@ -235,9 +235,9 @@ export default async function ClientDashboardPage({
                     }
                     
                     const customDomainUrl = cleanCustomDomain
-                      ? `https://${cleanCustomDomain}/ref=${link.slug}`
+                      ? `https://${cleanCustomDomain}/?ref=${link.slug}`
                       : null
-                    const workingUrl = `${baseUrl}/ref=${link.slug}`
+                    const workingUrl = `${baseUrl}/?ref=${link.slug}`
 
                     return (
                       <LinkCard
