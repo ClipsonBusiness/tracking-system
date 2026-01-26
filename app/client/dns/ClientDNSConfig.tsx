@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface Client {
   id: string
@@ -91,30 +92,52 @@ export default function ClientDNSConfig({
     <div className="space-y-6">
       {/* Instructions */}
       <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">📋 Setup Instructions</h2>
-        <ol className="space-y-3 text-sm text-gray-300">
-          <li className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-            <div>
-              <p className="font-medium">Add DNS record at your domain registrar</p>
-              <p className="text-gray-400 mt-1">Use the details shown below</p>
+        <h2 className="text-xl font-semibold text-white mb-4">📋 Setup Options</h2>
+        <div className="space-y-4">
+          <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+            <div className="flex items-start gap-3 mb-2">
+              <span className="text-2xl">✨</span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-green-300 mb-1">Option 1: JavaScript Redirect (Easiest - No DNS!)</h3>
+                <p className="text-sm text-green-400 mb-3">
+                  Add a simple script to your website. Works immediately, no DNS changes needed!
+                </p>
+                <a
+                  href={`/client/dns/javascript-redirect?token=${token}`}
+                  className="inline-block px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Get JavaScript Code →
+                </a>
+              </div>
             </div>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-            <div>
-              <p className="font-medium">Enter your custom domain below</p>
-              <p className="text-gray-400 mt-1">This enables tracking links on your domain</p>
-            </div>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-            <div>
-              <p className="font-medium">Wait for DNS propagation (1-24 hours)</p>
-              <p className="text-gray-400 mt-1">Usually works within a few hours</p>
-            </div>
-          </li>
-        </ol>
+          </div>
+          <div className="border-t border-blue-800 pt-4">
+            <h3 className="font-semibold text-white mb-3">Option 2: DNS Configuration (Traditional)</h3>
+            <ol className="space-y-3 text-sm text-gray-300">
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                <div>
+                  <p className="font-medium">Add DNS record at your domain registrar</p>
+                  <p className="text-gray-400 mt-1">Use the details shown below</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                <div>
+                  <p className="font-medium">Enter your custom domain below</p>
+                  <p className="text-gray-400 mt-1">This enables tracking links on your domain</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                <div>
+                  <p className="font-medium">Wait for DNS propagation (1-24 hours)</p>
+                  <p className="text-gray-400 mt-1">Usually works within a few hours</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
       </div>
 
       {/* DNS Record Template */}
