@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { hashIP, getIPFromHeaders, getCountryFromHeaders } from '@/lib/utils'
 import { cookies } from 'next/headers'
 
-// Route handler for root path with ?ref= query parameters
-// Handles: tracking-server.com/?ref=xxxx
+// Route handler for tracking links with ?ref= query parameters
+// Handles: tracking-server.com/track?ref=xxxx
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -13,18 +13,13 @@ export async function GET(request: NextRequest) {
     const refParam = searchParams.get('ref')
     
     if (!refParam) {
-      // No ref parameter, rewrite to the page (show homepage)
-      // Route handlers override pages, so we need to rewrite internally
-      const url = request.nextUrl.clone()
-      url.pathname = '/'
-      url.search = '' // Remove query params for homepage
-      return NextResponse.rewrite(url)
+      return new NextResponse('Missing ref parameter', { status: 400 })
     }
 
     const actualSlug = refParam
     
     // Debug logging
-    console.log('Root route hit with ref:', { actualSlug })
+    console.log('Track route hit with ref:', { actualSlug })
     
     // Find link by slug (direct lookup, no custom domain filtering needed here)
     const link = await prisma.link.findFirst({
@@ -33,19 +28,14 @@ export async function GET(request: NextRequest) {
     
     if (!link) {
       console.log('Link not found for slug:', actualSlug)
-      // Link not found, show 404 or rewrite to homepage
       return new NextResponse('Link not found', { status: 404 })
     }
 
     console.log('Found link by slug:', actualSlug)
     return handleLinkRedirect(request, link)
   } catch (error) {
-    console.error('Error in root route redirect:', error)
-    // On error, rewrite to homepage
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    url.search = ''
-    return NextResponse.rewrite(url)
+    console.error('Error in track route redirect:', error)
+    return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
 
