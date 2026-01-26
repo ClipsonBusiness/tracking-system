@@ -36,6 +36,17 @@ export default async function ClientDashboardPage({
   // Connected if they have either account ID (OAuth) or webhook secret (manual)
   const isStripeConnected = !!(client.stripeAccountId || client.stripeWebhookSecret)
 
+  // Get client's campaigns
+  const campaigns = await prisma.campaign.findMany({
+    where: { clientId: client.id },
+    include: {
+      _count: {
+        select: { links: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
       <div className="max-w-4xl mx-auto">
