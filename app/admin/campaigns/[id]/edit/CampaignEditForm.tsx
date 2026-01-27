@@ -122,7 +122,7 @@ export default function CampaignEditForm({
           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="text-xs text-gray-400 mt-1">
-          Custom domain for this campaign's tracking links
+          Custom domain for this campaign&apos;s tracking links
         </p>
       </div>
 
