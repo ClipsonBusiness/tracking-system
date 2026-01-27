@@ -77,6 +77,75 @@ export default async function AdminAnalyticsPage() {
     where: { ...clientFilter, status: 'paid' },
   })
 
+  // Traffic Sources Analysis
+  // Top referrers (where traffic is coming from)
+  const clicksByReferer = await prisma.click.groupBy({
+    by: ['referer'],
+    where: {
+      ...clientFilter,
+      referer: { not: null },
+      ts: { gte: thirtyDaysAgo },
+    },
+    _count: true,
+    orderBy: { _count: { referer: 'desc' } },
+    take: 15,
+  })
+
+  // Traffic by UTM Source
+  const clicksByUtmSource = await prisma.click.groupBy({
+    by: ['utmSource'],
+    where: {
+      ...clientFilter,
+      utmSource: { not: null },
+      ts: { gte: thirtyDaysAgo },
+    },
+    _count: true,
+    orderBy: { _count: { utmSource: 'desc' } },
+    take: 15,
+  })
+
+  // Traffic by UTM Medium
+  const clicksByUtmMedium = await prisma.click.groupBy({
+    by: ['utmMedium'],
+    where: {
+      ...clientFilter,
+      utmMedium: { not: null },
+      ts: { gte: thirtyDaysAgo },
+    },
+    _count: true,
+    orderBy: { _count: { utmMedium: 'desc' } },
+    take: 15,
+  })
+
+  // Traffic by UTM Campaign
+  const clicksByUtmCampaign = await prisma.click.groupBy({
+    by: ['utmCampaign'],
+    where: {
+      ...clientFilter,
+      utmCampaign: { not: null },
+      ts: { gte: thirtyDaysAgo },
+    },
+    _count: true,
+    orderBy: { _count: { utmCampaign: 'desc' } },
+    take: 15,
+  })
+
+  // Direct vs Referred traffic
+  const directClicks = await prisma.click.count({
+    where: {
+      ...clientFilter,
+      referer: null,
+      ts: { gte: thirtyDaysAgo },
+    },
+  })
+  const referredClicks = await prisma.click.count({
+    where: {
+      ...clientFilter,
+      referer: { not: null },
+      ts: { gte: thirtyDaysAgo },
+    },
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -100,6 +169,24 @@ export default async function AdminAnalyticsPage() {
           affiliateCode: r.affiliateCode || 'Unknown',
           amount: r._sum.amountPaid || 0,
         }))}
+        clicksByReferer={clicksByReferer.map((c) => ({
+          referer: c.referer || 'Unknown',
+          count: c._count || 0,
+        }))}
+        clicksByUtmSource={clicksByUtmSource.map((c) => ({
+          source: c.utmSource || 'Unknown',
+          count: c._count || 0,
+        }))}
+        clicksByUtmMedium={clicksByUtmMedium.map((c) => ({
+          medium: c.utmMedium || 'Unknown',
+          count: c._count || 0,
+        }))}
+        clicksByUtmCampaign={clicksByUtmCampaign.map((c) => ({
+          campaign: c.utmCampaign || 'Unknown',
+          count: c._count || 0,
+        }))}
+        directClicks={directClicks}
+        referredClicks={referredClicks}
       />
     </div>
   )
