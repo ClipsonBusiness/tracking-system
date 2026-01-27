@@ -7,8 +7,8 @@ interface Link {
   slug: string
   destinationUrl: string
   createdAt: Date
-  campaign: { name: string } | null
-  client: { name: string }
+  campaign: { name: string; customDomain: string | null } | null
+  client: { name: string; customDomain: string | null }
 }
 
 interface ClipperDashboardProps {
@@ -261,20 +261,37 @@ export default function ClipperDashboard({
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <code className="text-xs text-blue-400 bg-gray-800 px-2 py-1 rounded">
-                        /{link.slug}
-                      </code>
-                      <button
-                        onClick={() => {
-                          const fullUrl = `${baseUrl}/${link.slug}`
-                          navigator.clipboard.writeText(fullUrl)
-                          alert('Link copied!')
-                        }}
-                        className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
-                      >
-                        Copy
-                      </button>
+                    <div className="flex flex-col gap-2 mt-2">
+                      {/* Full tracking link */}
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-xs text-green-400 bg-gray-800 px-2 py-1 rounded break-all">
+                          {(() => {
+                            const customDomain = link.campaign?.customDomain || link.client.customDomain
+                            if (customDomain && customDomain.trim() !== '') {
+                              const cleanDomain = customDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '')
+                              return `https://${cleanDomain}/?ref=${link.slug}`
+                            }
+                            return `${baseUrl}/?ref=${link.slug}`
+                          })()}
+                        </code>
+                        <button
+                          onClick={() => {
+                            const customDomain = link.campaign?.customDomain || link.client.customDomain
+                            let fullUrl
+                            if (customDomain && customDomain.trim() !== '') {
+                              const cleanDomain = customDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '')
+                              fullUrl = `https://${cleanDomain}/?ref=${link.slug}`
+                            } else {
+                              fullUrl = `${baseUrl}/?ref=${link.slug}`
+                            }
+                            navigator.clipboard.writeText(fullUrl)
+                            alert('Link copied!')
+                          }}
+                          className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded whitespace-nowrap"
+                        >
+                          Copy Link
+                        </button>
+                      </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
                       Created {new Date(link.createdAt).toLocaleDateString()}

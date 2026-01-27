@@ -29,10 +29,10 @@ export default async function ClipperDashboardPage({
     where: { clipperId: clipper.id },
     include: {
       campaign: {
-        select: { name: true },
+        select: { name: true, customDomain: true },
       },
       client: {
-        select: { name: true },
+        select: { name: true, customDomain: true },
       },
     },
     orderBy: { createdAt: 'desc' },
