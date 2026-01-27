@@ -234,10 +234,14 @@ export default async function ClientDashboardPage({
                       cleanCustomDomain = cleanCustomDomain.replace(/^\/+/, '')
                     }
                     
+                    // If custom domain exists, it's the working URL (since JS redirect is set up)
+                    // Railway URL is the fallback
                     const customDomainUrl = cleanCustomDomain
                       ? `https://${cleanCustomDomain}/?ref=${link.slug}`
                       : null
-                    const workingUrl = `${baseUrl}/?ref=${link.slug}`
+                    const railwayUrl = `${baseUrl}/?ref=${link.slug}`
+                    // Custom domain is the working URL if it exists, otherwise use Railway
+                    const workingUrl = customDomainUrl || railwayUrl
 
                     return (
                       <LinkCard
@@ -245,6 +249,7 @@ export default async function ClientDashboardPage({
                         link={link}
                         customDomainUrl={customDomainUrl}
                         workingUrl={workingUrl}
+                        railwayUrl={railwayUrl}
                       />
                     )
                   })}

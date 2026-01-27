@@ -19,9 +19,10 @@ interface LinkCardProps {
   }
   customDomainUrl: string | null
   workingUrl: string
+  railwayUrl?: string
 }
 
-export default function LinkCard({ link, customDomainUrl, workingUrl }: LinkCardProps) {
+export default function LinkCard({ link, customDomainUrl, workingUrl, railwayUrl }: LinkCardProps) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
 
@@ -91,21 +92,6 @@ export default function LinkCard({ link, customDomainUrl, workingUrl }: LinkCard
           </div>
         </div>
         <div className="ml-4 flex flex-col items-end gap-2">
-          {customDomainUrl && (
-            <div className="text-right">
-              <p className="text-xs text-yellow-400 mb-1">
-                Custom Domain (may not work):
-              </p>
-              <a
-                href={customDomainUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-yellow-400 hover:text-yellow-300 text-sm break-all max-w-xs"
-              >
-                {customDomainUrl}
-              </a>
-            </div>
-          )}
           <div className="text-right">
             <p className="text-xs text-green-400 mb-1">
               ✅ Working URL:
@@ -119,6 +105,21 @@ export default function LinkCard({ link, customDomainUrl, workingUrl }: LinkCard
               {workingUrl}
             </a>
           </div>
+          {railwayUrl && customDomainUrl && railwayUrl !== workingUrl && (
+            <div className="text-right">
+              <p className="text-xs text-gray-400 mb-1">
+                Fallback URL:
+              </p>
+              <a
+                href={railwayUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-gray-300 text-sm break-all max-w-xs"
+              >
+                {railwayUrl}
+              </a>
+            </div>
+          )}
           <button
             onClick={handleDelete}
             disabled={deleting}
