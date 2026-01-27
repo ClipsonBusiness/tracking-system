@@ -9,6 +9,7 @@ export default function SidebarNav() {
   const navItems = [
     { href: '/admin/dashboard', label: 'Dashboard' },
     { href: '/admin/clients', label: 'Admin' },
+    { href: '/admin/clippers', label: 'Clippers' },
   ]
 
   return (
