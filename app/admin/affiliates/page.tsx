@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import AffiliateForm from './AffiliateForm'
 import AffiliateList from './AffiliateList'
+import ApplyCommissionButton from './ApplyCommissionButton'
 
 export default async function AdminAffiliatesPage() {
   const clients = await prisma.client.findMany()
@@ -13,7 +14,10 @@ export default async function AdminAffiliatesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-white">Affiliates</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-white">Affiliates</h1>
+        {affiliates.length > 0 && <ApplyCommissionButton affiliates={affiliates} />}
+      </div>
       
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
         <h2 className="text-xl font-semibold text-white mb-4">Create New Affiliate</h2>
