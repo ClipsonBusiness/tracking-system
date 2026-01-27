@@ -393,6 +393,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
                   name: '',
                   destinationUrl: '',
                   customDomain: '',
+                  commissionPercent: '',
                   status: 'active',
                 })
               }}
@@ -427,6 +428,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
                     name: '',
                     destinationUrl: '',
                     customDomain: '',
+                    commissionPercent: '',
                     status: 'active',
                   })
                   alert('✅ DNS configured successfully! Custom domain is now active.')
