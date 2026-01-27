@@ -29,7 +29,7 @@ export default async function ClipperDashboardPage({
     where: { clipperId: clipper.id },
     include: {
       campaign: {
-        select: { name: true, customDomain: true },
+        select: { name: true, customDomain: true, commissionPercent: true },
       },
       client: {
         select: { name: true, customDomain: true },
@@ -37,6 +37,22 @@ export default async function ClipperDashboardPage({
     },
     orderBy: { createdAt: 'desc' },
   })
+  
+  // Get commission percentage from campaigns
+  // If multiple campaigns, use the first one with a commission set
+  // If all campaigns have the same commission, use that; otherwise use the first one
+  let commissionPercent: number | null = null
+  if (links.length > 0) {
+    const campaignsWithCommission = links
+      .map(l => l.campaign?.commissionPercent)
+      .filter((cp): cp is number => cp !== null && cp !== undefined)
+    
+    if (campaignsWithCommission.length > 0) {
+      // Use the first commission percentage found
+      // If all are the same, it doesn't matter; if different, we use the first
+      commissionPercent = campaignsWithCommission[0]
+    }
+  }
 
   // Get stats for this clipper
   const now = new Date()
@@ -158,6 +174,7 @@ export default async function ClipperDashboardPage({
         }))}
       totalRevenue={totalRevenue}
       totalSales={totalSales}
+      commissionPercent={commissionPercent}
       recentClicks={recentClicks}
       dailyClicksData={dailyClicksData}
     />

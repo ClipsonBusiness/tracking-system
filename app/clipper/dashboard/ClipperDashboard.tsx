@@ -7,7 +7,7 @@ interface Link {
   slug: string
   destinationUrl: string
   createdAt: Date
-  campaign: { name: string; customDomain: string | null } | null
+  campaign: { name: string; customDomain: string | null; commissionPercent: number | null } | null
   client: { name: string; customDomain: string | null }
 }
 
@@ -20,6 +20,7 @@ interface ClipperDashboardProps {
   clicksByCountry: Array<{ country: string; count: number }>
   totalRevenue: number
   totalSales: number
+  commissionPercent: number | null
   recentClicks: Array<{
     id: string
     ts: Date
@@ -38,6 +39,7 @@ export default function ClipperDashboard({
   clicksByCountry,
   totalRevenue,
   totalSales,
+  commissionPercent,
   recentClicks,
   dailyClicksData,
 }: ClipperDashboardProps) {
@@ -98,7 +100,9 @@ export default function ClipperDashboard({
           <StatCard
             title="Total Revenue"
             value={`$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            change="Tracked via conversions"
+            change={commissionPercent !== null && commissionPercent !== undefined 
+              ? `${commissionPercent}% you get` 
+              : "Tracked via conversions"}
             icon="💵"
           />
           <StatCard
