@@ -15,6 +15,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
     name: '',
     destinationUrl: '',
     customDomain: '',
+    commissionPercent: '',
     status: 'active',
   })
   const [loading, setLoading] = useState(false)
@@ -50,6 +51,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
         body: JSON.stringify({
           ...formData,
           customDomain: formData.customDomain.trim() || null,
+          commissionPercent: formData.commissionPercent ? parseFloat(formData.commissionPercent) : null,
           ...(showAffiliateProgram && affiliateData.stripeWebhookSecret && {
             stripeWebhookSecret: affiliateData.stripeWebhookSecret.trim(),
           }),
@@ -80,6 +82,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
             name: '',
             destinationUrl: '',
             customDomain: '',
+            commissionPercent: '',
             status: 'active',
           })
         }
@@ -203,19 +206,40 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
         )}
       </div>
 
-      <div>
-        <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-2">
-          Status
-        </label>
-        <select
-          id="status"
-          value={formData.status}
-          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-          className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="commissionPercent" className="block text-sm font-medium text-gray-300 mb-2">
+            Commission % for Clippers (optional)
+          </label>
+          <input
+            id="commissionPercent"
+            type="number"
+            step="0.01"
+            min="0"
+            max="100"
+            value={formData.commissionPercent}
+            onChange={(e) => setFormData({ ...formData, commissionPercent: e.target.value })}
+            placeholder="e.g., 10 for 10%"
+            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Percentage commission clippers earn from this campaign (e.g., 10 = 10%)
+          </p>
+        </div>
+        <div>
+          <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-2">
+            Status
+          </label>
+          <select
+            id="status"
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
       </div>
 
       {/* Affiliate Program Section */}

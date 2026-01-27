@@ -114,6 +114,7 @@ model Campaign {
   name           String
   destinationUrl String   @map("destination_url")
   customDomain   String?  @map("custom_domain") // e.g., "lowbackability.com"
+  commissionPercent Float?  @map("commission_percent") // Commission % for clippers
   status         String   @default("active") // active, inactive
   createdAt      DateTime @default(now()) @map("created_at")
 

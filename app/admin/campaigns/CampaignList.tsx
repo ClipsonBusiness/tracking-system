@@ -8,6 +8,7 @@ interface Campaign {
   name: string
   destinationUrl: string
   customDomain: string | null
+  commissionPercent: number | null
   status: string
   createdAt: Date
   client: {
@@ -88,6 +89,12 @@ export default function CampaignList({ campaigns, baseUrl }: { campaigns: Campai
                     <span className="text-gray-500">Domain:</span>{' '}
                     <span className="text-green-400">{domain}</span>
                   </p>
+                  {campaign.commissionPercent !== null && campaign.commissionPercent !== undefined && (
+                    <p>
+                      <span className="text-gray-500">Commission:</span>{' '}
+                      <span className="text-yellow-400 font-semibold">{campaign.commissionPercent}%</span>
+                    </p>
+                  )}
                   <p className="mt-2">
                     <span className="text-gray-500">Example Link:</span>{' '}
                     <code className="text-blue-400 text-xs">{exampleLink}</code>

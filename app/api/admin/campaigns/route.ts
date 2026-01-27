@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { clientId, name, destinationUrl, customDomain, status, stripeWebhookSecret, stripeAccountId } = body
+    const { clientId, name, destinationUrl, customDomain, commissionPercent, status, stripeWebhookSecret, stripeAccountId } = body
 
     if (!name || !destinationUrl) {
       return NextResponse.json(
@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
         name,
         destinationUrl,
         customDomain: customDomain || null,
+        commissionPercent: commissionPercent !== undefined && commissionPercent !== null && commissionPercent !== '' ? parseFloat(commissionPercent.toString()) : null,
         status: status || 'active',
       },
     })
