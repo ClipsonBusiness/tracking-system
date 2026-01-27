@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface Campaign {
   id: string
@@ -101,13 +102,21 @@ export default function CampaignList({ campaigns, baseUrl }: { campaigns: Campai
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(campaign.id)}
-                disabled={deletingId === campaign.id}
-                className="ml-4 px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50"
-              >
-                {deletingId === campaign.id ? 'Deleting...' : 'Delete'}
-              </button>
+              <div className="ml-4 flex gap-2">
+                <Link
+                  href={`/admin/campaigns/${campaign.id}/edit`}
+                  className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                >
+                  Edit
+                </Link>
+                <button
+                  onClick={() => handleDelete(campaign.id)}
+                  disabled={deletingId === campaign.id}
+                  className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50"
+                >
+                  {deletingId === campaign.id ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
             </div>
           </div>
         )
