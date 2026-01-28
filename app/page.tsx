@@ -6,7 +6,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
       <div className="max-w-2xl mx-auto text-center px-4">
         <div className="flex items-center justify-center gap-4 mb-6">
-          <Logo size="xl" className="rounded-2xl" />
+          <Logo size="2xl" className="rounded-2xl" />
         </div>
         <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
           ClipSon Affiliates

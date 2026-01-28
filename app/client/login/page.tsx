@@ -32,7 +32,7 @@ export default function ClientLoginPage() {
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-8 shadow-2xl">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Logo size="lg" />
+              <Logo size="xl" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
               ClipSon Affiliates

@@ -4,22 +4,24 @@ import { useState } from 'react'
 import Image from 'next/image'
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
   className?: string
 }
 
 const sizeClasses = {
-  sm: 'w-8 h-8',
-  md: 'w-10 h-10',
-  lg: 'w-16 h-16',
-  xl: 'w-20 h-20',
+  sm: 'w-12 h-12',
+  md: 'w-16 h-16',
+  lg: 'w-24 h-24',
+  xl: 'w-32 h-32',
+  '2xl': 'w-40 h-40',
 }
 
 const textSizes = {
-  sm: 'text-xs',
-  md: 'text-sm',
-  lg: 'text-xl',
-  xl: 'text-2xl',
+  sm: 'text-sm',
+  md: 'text-lg',
+  lg: 'text-2xl',
+  xl: 'text-3xl',
+  '2xl': 'text-4xl',
 }
 
 export default function Logo({ size = 'md', className = '' }: LogoProps) {
