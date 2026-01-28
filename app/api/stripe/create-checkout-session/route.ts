@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-})
-
 const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3000'
 
 export async function POST(request: NextRequest) {
+  // Check if Stripe secret key is configured
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json(
+      { 
+        error: 'STRIPE_SECRET_KEY is not configured. Please add it to your Vercel environment variables.',
+        details: 'Go to Vercel Dashboard → Settings → Environment Variables → Add STRIPE_SECRET_KEY'
+      },
+      { status: 500 }
+    )
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2023-10-16',
+  })
+
   try {
     const body = await request.json()
     const {
