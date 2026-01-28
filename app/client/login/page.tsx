@@ -28,13 +28,21 @@ export default function ClientLoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 shadow-xl">
-          <h1 className="text-3xl font-bold text-white mb-2 text-center">
-            Client Dashboard
-          </h1>
-          <p className="text-gray-400 mb-8 text-center">
-            Enter your access token to continue
-          </p>
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-8 shadow-2xl">
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-2xl">CA</span>
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+              ClipSon Affiliates
+            </h1>
+            <p className="text-gray-300 text-lg mb-1">Client Dashboard</p>
+            <p className="text-gray-400 text-sm">
+              Enter your access token to continue
+            </p>
+          </div>
 
           {error && (
             <div className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg">
@@ -68,7 +76,7 @@ export default function ClientLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {loading ? 'Loading...' : 'Access Dashboard'}
             </button>

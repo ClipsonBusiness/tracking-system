@@ -14,8 +14,13 @@ export default async function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Clients</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Clients
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Manage your client accounts</p>
+        </div>
       </div>
 
       {/* Clients Grid */}

@@ -99,7 +99,15 @@ export default function ClipperPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-white mb-2">Clipper Portal</h1>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-2xl">CA</span>
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+            ClipSon Affiliates
+          </h1>
+          <p className="text-gray-300 text-lg mb-1">Clipper Portal</p>
           <p className="text-gray-400">Generate your unique tracking links</p>
         </div>
 
@@ -120,7 +128,7 @@ export default function ClipperPage() {
         </div>
 
         {/* Generate Link Section */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 shadow-xl">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-8 shadow-2xl">
           <h2 className="text-2xl font-bold text-white mb-6">Generate New Link</h2>
 
           <div className="space-y-6">
@@ -193,7 +201,7 @@ export default function ClipperPage() {
             <button
               onClick={handleGenerateLink}
               disabled={generating || !selectedCampaignId || !discordUsername.trim() || !socialMediaPage.trim()}
-              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {generating ? 'Generating...' : 'Generate Link'}
             </button>

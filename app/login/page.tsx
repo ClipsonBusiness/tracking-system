@@ -28,10 +28,17 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg border border-gray-700">
+      <div className="max-w-md w-full space-y-8 p-8 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-2xl">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">TRACKING</h1>
-          <h2 className="text-xl text-gray-400">Admin Login</h2>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-2xl">CA</span>
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+            ClipSon Affiliates
+          </h1>
+          <h2 className="text-lg text-gray-400">Admin Login</h2>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

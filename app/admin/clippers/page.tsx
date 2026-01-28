@@ -49,13 +49,13 @@ export default async function AdminClippersPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Clippers</h1>
-          <p className="text-gray-400 mt-1">
-            Manage clippers and view their dashboard codes
-          </p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Clippers
+        </h1>
+        <p className="text-gray-400 text-sm mt-1">
+          View and manage clipper accounts
+        </p>
       </div>
 
       <ClipperList clippers={filteredClippers} initialSearch={searchQuery} />

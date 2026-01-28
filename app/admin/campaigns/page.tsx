@@ -21,7 +21,7 @@ export default async function AdminCampaignsPage() {
         <h1 className="text-3xl font-bold text-white">Campaigns</h1>
 
         {/* Create Campaign Section */}
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-lg">
           <h2 className="text-xl font-semibold text-white mb-4">Create New Campaign</h2>
           <CampaignForm clients={clients} />
         </div>
@@ -41,7 +41,12 @@ export default async function AdminCampaignsPage() {
     console.error('Error loading campaigns:', error)
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-white">Campaigns</h1>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Campaigns
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Create and manage affiliate campaigns</p>
+        </div>
         <div className="bg-red-900/20 border border-red-700 rounded-lg p-6">
           <p className="text-red-400">Error loading campaigns: {error.message}</p>
           <p className="text-sm text-red-300 mt-2">Make sure the database is migrated: npm run db:push</p>

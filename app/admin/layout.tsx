@@ -12,9 +12,17 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-900 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
-        <div className="p-6 border-b border-gray-700">
-          <h1 className="text-2xl font-bold text-white">TRACKING</h1>
+      <aside className="w-64 bg-gradient-to-b from-gray-800 to-gray-900 border-r border-gray-700 flex flex-col">
+        <div className="p-6 border-b border-gray-700 bg-gradient-to-r from-blue-600/20 to-purple-600/20">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">CA</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">ClipSon</h1>
+              <p className="text-xs text-gray-400">Affiliates</p>
+            </div>
+          </div>
         </div>
         <SidebarNav />
         <div className="p-4 border-t border-gray-700">
