@@ -20,14 +20,10 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showAffiliateProgram, setShowAffiliateProgram] = useState(false)
+  const [enableAffiliateProgram, setEnableAffiliateProgram] = useState(false)
   const [showDNSForm, setShowDNSForm] = useState(false)
   const [clientPortalUrl, setClientPortalUrl] = useState<string | null>(null)
   const [clientSetupUrl, setClientSetupUrl] = useState<string | null>(null)
-  const [affiliateData, setAffiliateData] = useState({
-    stripeWebhookSecret: '',
-    stripeAccountId: '',
-  })
   const [dnsData, setDnsData] = useState({
     dnsType: 'CNAME',
     dnsName: '@',
@@ -53,12 +49,7 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
           ...formData,
           customDomain: formData.customDomain.trim() || null,
           commissionPercent: formData.commissionPercent ? parseFloat(formData.commissionPercent) : null,
-          ...(showAffiliateProgram && affiliateData.stripeWebhookSecret && {
-            stripeWebhookSecret: affiliateData.stripeWebhookSecret.trim(),
-          }),
-          ...(showAffiliateProgram && affiliateData.stripeAccountId && {
-            stripeAccountId: affiliateData.stripeAccountId.trim(),
-          }),
+          enableAffiliateProgram,
         }),
       })
 
@@ -248,71 +239,26 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
 
       {/* Affiliate Program Section */}
       <div className="border-t border-gray-700 pt-4">
-        <button
-          type="button"
-          onClick={() => setShowAffiliateProgram(!showAffiliateProgram)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-purple-900/20 hover:bg-purple-900/30 border border-purple-700 rounded-lg transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">💰</span>
-            <div className="text-left">
-              <p className="text-white font-medium">Affiliate Program</p>
-              <p className="text-xs text-gray-400">Enable sales tracking for this campaign</p>
+        <div className="flex items-center gap-3 p-4 bg-purple-900/20 border border-purple-700 rounded-lg">
+          <input
+            type="checkbox"
+            id="enableAffiliateProgram"
+            checked={enableAffiliateProgram}
+            onChange={(e) => setEnableAffiliateProgram(e.target.checked)}
+            className="w-5 h-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+          />
+          <label htmlFor="enableAffiliateProgram" className="flex-1 cursor-pointer">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">💰</span>
+              <div>
+                <p className="text-white font-medium">Enable Affiliate Program</p>
+                <p className="text-xs text-gray-400">
+                  Client will set up Stripe webhook in their setup form
+                </p>
+              </div>
             </div>
-          </div>
-          <span className="text-purple-400">
-            {showAffiliateProgram ? '▼' : '▶'}
-          </span>
-        </button>
-
-        {showAffiliateProgram && (
-          <div className="mt-4 p-4 bg-purple-900/10 border border-purple-700/50 rounded-lg space-y-4">
-            <div>
-              <label htmlFor="stripeWebhookSecret" className="block text-sm font-medium text-gray-300 mb-2">
-                Stripe Webhook Secret
-              </label>
-              <input
-                id="stripeWebhookSecret"
-                type="text"
-                value={affiliateData.stripeWebhookSecret}
-                onChange={(e) => setAffiliateData({ ...affiliateData, stripeWebhookSecret: e.target.value })}
-                placeholder="whsec_..."
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Get this from Stripe Dashboard → Webhooks → Signing secret
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="stripeAccountId" className="block text-sm font-medium text-gray-300 mb-2">
-                Stripe Account ID (Optional)
-              </label>
-              <input
-                id="stripeAccountId"
-                type="text"
-                value={affiliateData.stripeAccountId}
-                onChange={(e) => setAffiliateData({ ...affiliateData, stripeAccountId: e.target.value })}
-                placeholder="acct_..."
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Only needed for Stripe Connect accounts
-              </p>
-            </div>
-
-            <div className="p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
-              <p className="text-xs text-blue-300 font-medium mb-1">📋 Setup Instructions:</p>
-              <ol className="text-xs text-blue-400 space-y-1 list-decimal list-inside">
-                <li>Go to Stripe Dashboard → Webhooks</li>
-                <li>Add endpoint: <code className="bg-blue-900/30 px-1 rounded">https://your-app.railway.app/api/stripe/webhook</code></li>
-                <li>Select events: invoice.paid, checkout.session.completed</li>
-                <li>Copy the signing secret (starts with whsec_)</li>
-                <li>Paste it above</li>
-              </ol>
-            </div>
-          </div>
-        )}
+          </label>
+        </div>
       </div>
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
