@@ -85,7 +85,6 @@ export default async function ClipperDashboardPage({
     by: ['country'],
     where: {
       linkId: { in: linkIds },
-      country: { not: null },
       ts: { gte: thirtyDaysAgo },
     },
     _count: true,

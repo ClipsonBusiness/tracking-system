@@ -224,7 +224,9 @@ export default function ClipperDashboard({
                   <div key={item.country} className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
                       <span className="text-2xl">🌍</span>
-                      <span className="text-white font-medium">{item.country}</span>
+                      <span className="text-white font-medium">
+                        {item.country === 'XX' || item.country === 'Unknown' ? 'Unknown Location' : item.country}
+                      </span>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="w-32 bg-gray-700 rounded-full h-2">
@@ -240,7 +242,13 @@ export default function ClipperDashboard({
                   </div>
                 ))
               ) : (
-                <p className="text-gray-400">No country data available</p>
+                <div className="text-gray-400 space-y-2">
+                  <p>No country data available</p>
+                  <p className="text-xs text-gray-500">
+                    Country detection requires Vercel geolocation headers or Cloudflare. 
+                    Once clicks are tracked, country data will appear here.
+                  </p>
+                </div>
               )}
             </div>
           </div>
