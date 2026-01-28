@@ -41,6 +41,7 @@ export default function TestStripeInterface({
   const [selectedClientId, setSelectedClientId] = useState('')
   const [testAffiliateCode, setTestAffiliateCode] = useState('TEST123')
   const [testPriceId, setTestPriceId] = useState('')
+  const [isLiveMode, setIsLiveMode] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
@@ -123,7 +124,8 @@ export default function TestStripeInterface({
               <li>Enter a test Stripe Price ID (from your Stripe dashboard)</li>
               <li>Enter an affiliate code (optional, for testing attribution)</li>
               <li>Click &quot;Create Test Checkout&quot; - it will open Stripe checkout</li>
-              <li>Use Stripe test card: <code className="bg-gray-800 px-1 rounded">4242 4242 4242 4242</code></li>
+              <li>Use Stripe test card: <code className="bg-gray-800 px-1 rounded">4242 4242 4242 4242</code> (for test mode only)</li>
+              <li>For live mode: Use real payment methods - you will be charged!</li>
               <li>Complete the payment</li>
               <li>Check &quot;Recent Conversions&quot; below to see if it was tracked</li>
             </ol>
@@ -142,7 +144,9 @@ export default function TestStripeInterface({
 
       {/* Test Checkout Form */}
       <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Create Test Checkout</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">
+          {isLiveMode ? 'Create Live Checkout ⚠️' : 'Create Test Checkout'}
+        </h2>
         
         <div className="space-y-4">
           <div>
@@ -174,16 +178,38 @@ export default function TestStripeInterface({
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Stripe Price ID *
             </label>
-            <input
-              type="text"
-              value={testPriceId}
-              onChange={(e) => setTestPriceId(e.target.value)}
-              placeholder="price_1234567890"
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Get this from your Stripe Dashboard → Products → Prices (use test mode price)
-            </p>
+            <div className="flex items-center gap-3 mb-2">
+              <input
+                type="text"
+                value={testPriceId}
+                onChange={(e) => setTestPriceId(e.target.value)}
+                placeholder="price_1234567890"
+                className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isLiveMode}
+                  onChange={(e) => setIsLiveMode(e.target.checked)}
+                  className="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                />
+                <span className={isLiveMode ? 'text-red-400 font-semibold' : ''}>
+                  Live Mode {isLiveMode && '⚠️'}
+                </span>
+              </label>
+            </div>
+            {isLiveMode ? (
+              <div className="p-3 bg-red-900/20 border border-red-700 rounded-lg">
+                <p className="text-red-300 text-xs font-semibold mb-1">⚠️ Live Mode Enabled</p>
+                <p className="text-red-400 text-xs">
+                  You will be charged real money! Use a live mode price ID from your Stripe Dashboard.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 mt-1">
+                Get this from your Stripe Dashboard → Products → Prices (test mode: <code className="bg-gray-800 px-1 rounded">price_xxx</code> or live mode: <code className="bg-gray-800 px-1 rounded">price_xxx</code>)
+              </p>
+            )}
           </div>
 
           <div>
@@ -220,9 +246,13 @@ export default function TestStripeInterface({
           <button
             onClick={handleCreateTestCheckout}
             disabled={loading || !selectedClientId || !testPriceId}
-            className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`w-full px-6 py-3 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              isLiveMode
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
           >
-            {loading ? 'Creating...' : 'Create Test Checkout'}
+            {loading ? 'Creating...' : isLiveMode ? '⚠️ Create Live Checkout (Real Money)' : 'Create Test Checkout'}
           </button>
         </div>
       </div>
