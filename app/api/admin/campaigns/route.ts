@@ -92,18 +92,33 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Get client to return portal URL
-    const client = await prisma.client.findUnique({
+    // Get or generate client access token
+    let client = await prisma.client.findUnique({
       where: { id: finalClientId },
       select: {
         clientAccessToken: true,
       },
     })
 
-    // Generate portal URL if client has access token
+    // Auto-generate access token if client doesn't have one
+    if (!client?.clientAccessToken) {
+      const crypto = await import('crypto')
+      const token = crypto.randomBytes(32).toString('hex')
+      await prisma.client.update({
+        where: { id: finalClientId },
+        data: { clientAccessToken: token },
+      })
+      client = { clientAccessToken: token }
+    }
+
+    // Generate setup URL for client onboarding
     const protocol = request.headers.get('x-forwarded-proto') || 'https'
     const host = request.headers.get('host') || request.headers.get('x-forwarded-host') || 'localhost:3000'
     const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
+    
+    const setupUrl = client?.clientAccessToken
+      ? `${baseUrl}/client/setup/${client.clientAccessToken}`
+      : null
     
     const portalUrl = client?.clientAccessToken
       ? `${baseUrl}/client/dashboard?token=${client.clientAccessToken}`
@@ -112,6 +127,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ...campaign,
       clientPortalUrl: portalUrl,
+      clientSetupUrl: setupUrl,
     })
   } catch (error: any) {
     return NextResponse.json(

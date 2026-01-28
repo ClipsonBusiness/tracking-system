@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { token, name, customDomain } = body
+    const { token, name, customDomain, stripeWebhookSecret, stripeAccountId } = body
 
     if (!token) {
       return NextResponse.json(
@@ -31,6 +31,11 @@ export async function POST(request: NextRequest) {
       data: {
         ...(name && { name }),
         ...(customDomain !== undefined && { customDomain: customDomain.trim() || null }),
+        ...(stripeWebhookSecret !== undefined && {
+          stripeWebhookSecret: stripeWebhookSecret?.trim() || null,
+          ...(stripeWebhookSecret?.trim() && { stripeConnectedAt: new Date() }),
+        }),
+        ...(stripeAccountId !== undefined && { stripeAccountId: stripeAccountId?.trim() || null }),
       },
     })
 
