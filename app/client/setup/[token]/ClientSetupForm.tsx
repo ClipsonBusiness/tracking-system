@@ -7,7 +7,7 @@ interface Campaign {
   id: string
   name: string
   destinationUrl: string
-} | null
+}
 
 export default function ClientSetupForm({
   clientId,
@@ -23,7 +23,7 @@ export default function ClientSetupForm({
   existingCustomDomain: string | null
   existingStripeWebhookSecret: string | null
   existingStripeAccountId: string | null
-  campaign: Campaign
+  campaign: Campaign | null | null
   token: string
 }) {
   const router = useRouter()
