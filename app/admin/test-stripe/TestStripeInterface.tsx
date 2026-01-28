@@ -82,7 +82,9 @@ export default function TestStripeInterface({
         window.open(data.url, '_blank')
       } else {
         const data = await res.json()
-        setError(data.error || 'Failed to create checkout session')
+        const errorMessage = data.error || 'Failed to create checkout session'
+        const errorDetails = data.details ? `\n\n${data.details}` : ''
+        setError(`${errorMessage}${errorDetails}`)
       }
     } catch (err) {
       setError('Network error')
