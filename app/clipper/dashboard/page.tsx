@@ -94,11 +94,22 @@ export default async function ClipperDashboardPage({
   }) : []
 
   // Revenue/Sales from conversions
-  // Note: Conversions are not directly linked to clipper links
-  // Revenue tracking for clippers requires linking conversions to specific link slugs
-  // For now, set to 0 until proper conversion tracking is implemented
-  const totalRevenue = 0
-  const totalSales = 0
+  // Get conversions linked to this clipper's links
+  const conversions = linkIds.length > 0 ? await prisma.conversion.findMany({
+    where: {
+      linkId: { in: linkIds },
+      status: 'paid', // Only count paid conversions
+    },
+    select: {
+      amountPaid: true,
+      paidAt: true,
+    },
+  }) : []
+
+  // Calculate total revenue (convert from cents to dollars)
+  const totalRevenue = conversions.reduce((sum, conv) => sum + (conv.amountPaid / 100), 0)
+  // Count total sales (including $0 conversions from 100% coupons)
+  const totalSales = conversions.length
 
   // Recent clicks
   const recentClicks = linkIds.length > 0 ? await prisma.click.findMany({
