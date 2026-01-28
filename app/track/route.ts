@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     // Find link by slug (direct lookup, no custom domain filtering needed here)
     const link = await prisma.link.findFirst({
       where: { slug: actualSlug },
+      select: { id: true, clientId: true, destinationUrl: true, slug: true },
     })
     
     if (!link) {
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
 
 async function handleLinkRedirect(
   request: NextRequest,
-  link: { id: string; clientId: string; destinationUrl: string }
+  link: { id: string; clientId: string; destinationUrl: string; slug: string }
 ) {
   // Get affiliate code from query param or cookie
   const searchParams = request.nextUrl.searchParams

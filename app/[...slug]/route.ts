@@ -54,6 +54,7 @@ export async function GET(
       console.log('No custom domain match, trying direct slug lookup for:', actualSlug)
       const directLink = await prisma.link.findFirst({
         where: { slug: actualSlug },
+        select: { id: true, clientId: true, destinationUrl: true, slug: true },
       })
       
       if (directLink) {
@@ -70,6 +71,7 @@ export async function GET(
         slug: actualSlug,
         clientId: foundClient.id,
       },
+      select: { id: true, clientId: true, destinationUrl: true, slug: true },
     })
     
     console.log('Link lookup:', { actualSlug, clientId: foundClient.id, found: !!link })
@@ -87,7 +89,7 @@ export async function GET(
 
 async function handleLinkRedirect(
   request: NextRequest,
-  link: { id: string; clientId: string; destinationUrl: string }
+  link: { id: string; clientId: string; destinationUrl: string; slug: string }
 ) {
   // Get affiliate code from query param or cookie
   const searchParams = request.nextUrl.searchParams
@@ -110,20 +112,12 @@ async function handleLinkRedirect(
 
   // Store link slug in cookie for conversion attribution
   // This allows us to attribute sales to the specific clipper link
-  // Find the link to get its slug
-  const linkWithSlug = await prisma.link.findUnique({
-    where: { id: link.id },
-    select: { slug: true },
+  cookieStore.set('link_slug', link.slug, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 60, // 60 days
   })
-  
-  if (linkWithSlug?.slug) {
-    cookieStore.set('link_slug', linkWithSlug.slug, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 60, // 60 days
-    })
-  }
 
   // Capture click analytics
   const headers = request.headers
