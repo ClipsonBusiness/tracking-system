@@ -17,6 +17,7 @@ export default function ClientSetupForm({
   existingStripeAccountId,
   campaign,
   token,
+  appBaseUrl,
 }: {
   clientId: string
   clientName: string
@@ -25,6 +26,7 @@ export default function ClientSetupForm({
   existingStripeAccountId: string | null
   campaign: Campaign | null
   token: string
+  appBaseUrl: string
 }) {
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -235,7 +237,7 @@ export default function ClientSetupForm({
             <li>Go to your Stripe Dashboard</li>
             <li>Click &quot;Webhooks&quot; in the left menu</li>
             <li>Click &quot;Add endpoint&quot; or select your existing webhook</li>
-            <li>Endpoint URL: <code className="bg-gray-800 px-1 rounded">https://clipsonaffiliates.com/api/stripe/webhook</code></li>
+            <li>Endpoint URL: <code className="bg-gray-800 px-1 rounded">{appBaseUrl}/api/stripe/webhook</code></li>
             <li>Select events: <code className="bg-gray-800 px-1 rounded">invoice.paid</code>, <code className="bg-gray-800 px-1 rounded">checkout.session.completed</code></li>
             <li>Copy the &quot;Signing secret&quot; (starts with <code className="bg-gray-800 px-1 rounded">whsec_</code>)</li>
             <li>Paste it above</li>
