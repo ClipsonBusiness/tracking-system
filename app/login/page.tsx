@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Logo from '@/components/Logo'
 
 export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
@@ -31,9 +32,7 @@ export default function AdminLoginPage() {
       <div className="max-w-md w-full space-y-8 p-8 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-2xl">
         <div className="text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-2xl">CA</span>
-            </div>
+            <Logo size="lg" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
             ClipSon Affiliates

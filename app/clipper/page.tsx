@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 
 interface Campaign {
   id: string
@@ -100,9 +101,7 @@ export default function ClipperPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-2xl">CA</span>
-            </div>
+            <Logo size="lg" />
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
             ClipSon Affiliates
