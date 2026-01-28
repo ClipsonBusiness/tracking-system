@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Campaign {
@@ -23,7 +23,7 @@ export default function ClientSetupForm({
   existingCustomDomain: string | null
   existingStripeWebhookSecret: string | null
   existingStripeAccountId: string | null
-  campaign: Campaign | null | null
+  campaign: Campaign | null
   token: string
 }) {
   const router = useRouter()
@@ -35,6 +35,67 @@ export default function ClientSetupForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [jsCopied, setJsCopied] = useState(false)
+  
+  // Get tracking server URL
+  const trackingServerUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : 'https://clipsonaffiliates.com'
+  
+  // Generate JavaScript code when custom domain is entered
+  const generateJsCode = (domain: string) => {
+    if (!domain || !domain.trim()) return ''
+    const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/^\/+/, '')
+    return `<!-- Tracking Link Redirect Script -->
+<!-- Add this to your website's <head> or before </body> -->
+<script>
+(function() {
+  // Only run on your custom domain
+  if (window.location.hostname !== '${cleanDomain}' && 
+      window.location.hostname !== 'www.${cleanDomain}') {
+    return;
+  }
+
+  // Check for ?ref= query parameter first (e.g., /?ref=xxxx)
+  const urlParams = new URLSearchParams(window.location.search);
+  const refParam = urlParams.get('ref');
+  
+  if (refParam) {
+    // Redirect with ?ref= parameter
+    const trackingUrl = '${trackingServerUrl}/?ref=' + refParam;
+    window.location.href = trackingUrl;
+    return;
+  }
+
+  // Get the current path (e.g., /xxxxx)
+  const path = window.location.pathname;
+  
+  // Skip if it's a root path or common paths
+  if (path === '/' || path.startsWith('/api/') || path.startsWith('/_next/')) {
+    return;
+  }
+
+  // Extract slug from path (remove leading slash)
+  const slug = path.substring(1);
+  
+  // If there's a slug, redirect to tracking server
+  if (slug && slug.length > 0) {
+    const trackingUrl = '${trackingServerUrl}/' + slug;
+    window.location.href = trackingUrl;
+  }
+})();
+</script>`
+  }
+  
+  const jsCode = generateJsCode(formData.customDomain)
+  
+  function copyJsCode() {
+    if (jsCode) {
+      navigator.clipboard.writeText(jsCode)
+      setJsCopied(true)
+      setTimeout(() => setJsCopied(false), 2000)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -105,6 +166,50 @@ export default function ClientSetupForm({
         <p className="text-xs text-gray-400 mt-1">
           Your tracking links will use this domain (e.g., lowbackability.com/?ref=xxxxx)
         </p>
+        {formData.customDomain && formData.customDomain.trim() && (
+          <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+            <div className="flex items-start gap-3 mb-3">
+              <span className="text-2xl">⚠️</span>
+              <div className="flex-1">
+                <h4 className="text-yellow-300 font-semibold mb-1">
+                  Important: Add JavaScript Code to Your Website
+                </h4>
+                <p className="text-sm text-yellow-200">
+                  For tracking to work on <code className="bg-yellow-900/50 px-1 rounded">{formData.customDomain}</code>, you need to add the code below to your website.
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-gray-900 rounded-lg p-4 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-medium text-gray-400">
+                  Copy this code and add it to your website&apos;s <code className="bg-gray-800 px-1 rounded">&lt;head&gt;</code> or before <code className="bg-gray-800 px-1 rounded">&lt;/body&gt;</code>:
+                </label>
+                <button
+                  type="button"
+                  onClick={copyJsCode}
+                  className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded transition-colors"
+                >
+                  {jsCopied ? '✓ Copied!' : '📋 Copy Code'}
+                </button>
+              </div>
+              <pre className="text-xs text-green-400 bg-gray-800 p-3 rounded overflow-x-auto">
+                <code>{jsCode}</code>
+              </pre>
+            </div>
+            
+            <div className="text-xs text-yellow-200 space-y-1">
+              <p className="font-semibold">How to add:</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Copy the code above</li>
+                <li>Open your website&apos;s HTML file (or your website builder&apos;s code editor)</li>
+                <li>Paste it in the <code className="bg-yellow-900/50 px-1 rounded">&lt;head&gt;</code> section or right before <code className="bg-yellow-900/50 px-1 rounded">&lt;/body&gt;</code></li>
+                <li>Save and publish your website</li>
+                <li>Test by visiting: <code className="bg-yellow-900/50 px-1 rounded">{formData.customDomain}/?ref=test</code></li>
+              </ol>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stripe Webhook Secret */}
