@@ -108,6 +108,23 @@ async function handleLinkRedirect(
     affiliateCode = affFromQuery
   }
 
+  // Store link slug in cookie for conversion attribution
+  // This allows us to attribute sales to the specific clipper link
+  // Find the link to get its slug
+  const linkWithSlug = await prisma.link.findUnique({
+    where: { id: link.id },
+    select: { slug: true },
+  })
+  
+  if (linkWithSlug?.slug) {
+    cookieStore.set('link_slug', linkWithSlug.slug, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 60, // 60 days
+    })
+  }
+
   // Capture click analytics
   const headers = request.headers
   const ip = getIPFromHeaders(headers)

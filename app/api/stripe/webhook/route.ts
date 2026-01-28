@@ -324,6 +324,77 @@ async function handleInvoicePaid(
     return
   }
 
+  // Try to find the link that generated this conversion
+  // We'll match by finding the most recent click for this customer
+  let linkId: string | null = null
+  
+  // First, try to get link slug from metadata (if client passes it in checkout)
+  let linkSlug: string | null = null
+  if (invoice.metadata?.link_slug) {
+    linkSlug = invoice.metadata.link_slug
+  } else if (invoice.subscription) {
+    const subscriptionId =
+      typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : invoice.subscription?.id || null
+    
+    if (subscriptionId) {
+      try {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        if (subscription.metadata?.link_slug) {
+          linkSlug = subscription.metadata.link_slug
+        }
+      } catch (err) {
+        console.error('Error retrieving subscription for link_slug:', err)
+      }
+    }
+  }
+  
+  // If we have link slug from metadata, find the link
+  if (linkSlug) {
+    try {
+      const link = await prisma.link.findUnique({
+        where: { slug: linkSlug },
+        select: { id: true },
+      })
+      if (link) {
+        linkId = link.id
+      }
+    } catch (err) {
+      console.error('Error finding link by slug:', err)
+    }
+  }
+  
+  // If no link from metadata, try to match by finding most recent click for this customer
+  // We'll match by customer email (if available) or by finding recent clicks within a time window
+  if (!linkId && invoice.customer && typeof invoice.customer === 'string') {
+    try {
+      const customer = await stripe.customers.retrieve(invoice.customer)
+      if (!customer.deleted) {
+        // Find the most recent click for this client within the last 60 days
+        // This attributes the sale to the most recent link the customer clicked
+        const sixtyDaysAgo = new Date()
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+        
+        const recentClick = await prisma.click.findFirst({
+          where: {
+            clientId: foundClient.id,
+            ts: { gte: sixtyDaysAgo },
+          },
+          orderBy: { ts: 'desc' },
+          select: { linkId: true },
+        })
+        
+        if (recentClick) {
+          linkId = recentClick.linkId
+          console.log(`Matched conversion to link ${linkId} by most recent click`)
+        }
+      }
+    } catch (err) {
+      console.error('Error matching conversion to link:', err)
+    }
+  }
+
   // Create conversion with idempotency check
   const invoiceId = invoice.id
   const amountPaid = invoice.amount_paid || 0
@@ -340,10 +411,12 @@ async function handleInvoicePaid(
       update: {
         // Update if needed (e.g., status changed)
         status: 'paid',
+        ...(linkId && { linkId }),
       },
       create: {
         clientId: foundClient.id,
         affiliateCode,
+        linkId,
         stripeCustomerId: invoice.customer as string,
         stripeSubscriptionId: subscriptionId,
         stripeInvoiceId: invoiceId,
@@ -353,7 +426,7 @@ async function handleInvoicePaid(
         status: 'paid',
       },
     })
-    console.log(`Conversion created/updated for invoice ${invoiceId}`)
+    console.log(`Conversion created/updated for invoice ${invoiceId}${linkSlug ? ` with link slug: ${linkSlug}` : ''}`)
   } catch (err) {
     console.error('Error creating conversion:', err)
     throw err

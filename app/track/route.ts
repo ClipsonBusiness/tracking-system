@@ -62,6 +62,17 @@ async function handleLinkRedirect(
     affiliateCode = affFromQuery
   }
 
+  // Store link slug in cookie for conversion attribution
+  // This allows us to attribute sales to the specific clipper link
+  if (link.slug) {
+    cookieStore.set('link_slug', link.slug, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 60, // 60 days
+    })
+  }
+
   // Capture click analytics
   const headers = request.headers
   const ip = getIPFromHeaders(headers)
