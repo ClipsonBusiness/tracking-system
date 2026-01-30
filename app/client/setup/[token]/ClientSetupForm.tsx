@@ -45,46 +45,25 @@ export default function ClientSetupForm({
     : 'https://clipsonaffiliates.com'
   
   // Generate JavaScript code when custom domain is entered
+  // SAFE VERSION: Only redirects when ?ref= parameter is present
   const generateJsCode = (domain: string) => {
     if (!domain || !domain.trim()) return ''
     const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/^\/+/, '')
-    return `<!-- Tracking Link Redirect Script -->
-<!-- Add this to your website's <head> or before </body> -->
+    return `<!-- Clipson Tracking Redirect (SAFE: only redirects when ?ref= is present) -->
 <script>
 (function() {
-  // Only run on your custom domain
-  if (window.location.hostname !== '${cleanDomain}' && 
+  if (window.location.hostname !== '${cleanDomain}' &&
       window.location.hostname !== 'www.${cleanDomain}') {
     return;
   }
 
-  // Check for ?ref= query parameter first (e.g., /?ref=xxxx)
   const urlParams = new URLSearchParams(window.location.search);
   const refParam = urlParams.get('ref');
-  
-  if (refParam) {
-    // Redirect with ?ref= parameter
-    const trackingUrl = '${trackingServerUrl}/?ref=' + refParam;
-    window.location.href = trackingUrl;
-    return;
-  }
 
-  // Get the current path (e.g., /xxxxx)
-  const path = window.location.pathname;
-  
-  // Skip if it's a root path or common paths
-  if (path === '/' || path.startsWith('/api/') || path.startsWith('/_next/')) {
-    return;
-  }
+  if (!refParam) return;
 
-  // Extract slug from path (remove leading slash)
-  const slug = path.substring(1);
-  
-  // If there's a slug, redirect to tracking server
-  if (slug && slug.length > 0) {
-    const trackingUrl = '${trackingServerUrl}/' + slug;
-    window.location.href = trackingUrl;
-  }
+  const trackingUrl = '${trackingServerUrl}/?ref=' + encodeURIComponent(refParam);
+  window.location.replace(trackingUrl);
 })();
 </script>`
   }

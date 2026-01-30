@@ -14,43 +14,22 @@ export default function JavaScriptRedirectGuide({
   const [copied, setCopied] = useState(false)
 
   // Generate the JavaScript code
-  const jsCode = `<!-- Tracking Link Redirect Script -->
-<!-- Add this to your website's <head> or before </body> -->
+  // SAFE VERSION: Only redirects when ?ref= parameter is present
+  const jsCode = `<!-- Clipson Tracking Redirect (SAFE: only redirects when ?ref= is present) -->
 <script>
 (function() {
-  // Only run on your custom domain
-  if (window.location.hostname !== '${customDomain}' && 
+  if (window.location.hostname !== '${customDomain}' &&
       window.location.hostname !== 'www.${customDomain}') {
     return;
   }
 
-  // Check for ?ref= query parameter first (e.g., /?ref=xxxx)
   const urlParams = new URLSearchParams(window.location.search);
   const refParam = urlParams.get('ref');
-  
-  if (refParam) {
-    // Redirect with ?ref= parameter
-    const trackingUrl = '${trackingServerUrl}/?ref=' + refParam;
-    window.location.href = trackingUrl;
-    return;
-  }
 
-  // Get the current path (e.g., /xxxxx)
-  const path = window.location.pathname;
-  
-  // Skip if it's a root path or common paths
-  if (path === '/' || path.startsWith('/api/') || path.startsWith('/_next/')) {
-    return;
-  }
+  if (!refParam) return;
 
-  // Extract slug from path (remove leading slash)
-  const slug = path.substring(1);
-  
-  // If there's a slug, redirect to tracking server
-  if (slug && slug.length > 0) {
-    const trackingUrl = '${trackingServerUrl}/' + slug;
-    window.location.href = trackingUrl;
-  }
+  const trackingUrl = '${trackingServerUrl}/?ref=' + encodeURIComponent(refParam);
+  window.location.replace(trackingUrl);
 })();
 </script>`
 
@@ -77,7 +56,7 @@ export default function JavaScriptRedirectGuide({
             <span className="flex-shrink-0 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
             <div>
               <p className="font-medium text-white">Script detects tracking links</p>
-              <p className="text-gray-400 mt-1">When someone visits <code className="bg-gray-800 px-1 rounded">{customDomain}/xxxxx</code>, the script automatically redirects to the tracking server</p>
+              <p className="text-gray-400 mt-1">When someone visits <code className="bg-gray-800 px-1 rounded">{customDomain}/?ref=xxxxx</code>, the script automatically redirects to the tracking server</p>
             </div>
           </li>
           <li className="flex items-start gap-3">
@@ -150,10 +129,13 @@ export default function JavaScriptRedirectGuide({
         <div className="space-y-2 text-sm text-gray-300">
           <p>After adding the script, test it by visiting:</p>
           <code className="block bg-gray-900 px-4 py-2 rounded text-green-400">
-            https://{customDomain}/test123
+            https://{customDomain}/?ref=test123
           </code>
           <p className="text-gray-400 mt-2">
             It should redirect to the tracking server and then to your destination URL.
+          </p>
+          <p className="text-yellow-300 mt-2 text-xs">
+            ⚠️ <strong>Safe:</strong> This script only redirects when <code className="bg-yellow-900/50 px-1 rounded">?ref=</code> is present. Your normal site pages (like /faqs/, /about/, etc.) will work normally.
           </p>
         </div>
       </div>

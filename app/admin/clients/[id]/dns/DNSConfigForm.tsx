@@ -94,45 +94,24 @@ export default function DNSConfigForm({
   const trackingServerUrl = railwayUrl.startsWith('http') ? railwayUrl : `https://${railwayUrl}`
   
   // Generate JavaScript code for redirect
+  // SAFE VERSION: Only redirects when ?ref= parameter is present
   const customDomain = formData.customDomain || client.customDomain || ''
   const cleanDomain = customDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/^\/+/, '')
-  const jsCode = `<!-- Tracking Link Redirect Script -->
-<!-- Add this to your website's <head> or before </body> -->
+  const jsCode = `<!-- Clipson Tracking Redirect (SAFE: only redirects when ?ref= is present) -->
 <script>
 (function() {
-  // Only run on your custom domain
-  if (window.location.hostname !== '${cleanDomain}' && 
+  if (window.location.hostname !== '${cleanDomain}' &&
       window.location.hostname !== 'www.${cleanDomain}') {
     return;
   }
 
-  // Check for ?ref= query parameter first (e.g., /?ref=xxxx)
   const urlParams = new URLSearchParams(window.location.search);
   const refParam = urlParams.get('ref');
-  
-  if (refParam) {
-    // Redirect with ?ref= parameter
-    const trackingUrl = '${trackingServerUrl}/?ref=' + refParam;
-    window.location.href = trackingUrl;
-    return;
-  }
 
-  // Get the current path (e.g., /ref=xxxx or /xxxxx)
-  const path = window.location.pathname;
-  
-  // Skip if it's a root path or common paths
-  if (path === '/' || path.startsWith('/api/') || path.startsWith('/_next/')) {
-    return;
-  }
+  if (!refParam) return;
 
-  // Extract slug from path (remove leading slash)
-  const slug = path.substring(1);
-  
-  // If there's a slug, redirect to tracking server
-  if (slug && slug.length > 0) {
-    const trackingUrl = '${trackingServerUrl}/' + slug + window.location.search;
-    window.location.href = trackingUrl;
-  }
+  const trackingUrl = '${trackingServerUrl}/?ref=' + encodeURIComponent(refParam);
+  window.location.replace(trackingUrl);
 })();
 </script>`
 
