@@ -1,16 +1,31 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { headers } from 'next/headers'
+import ClientSetupLink from './ClientSetupLink'
 
 export default async function ClientsPage() {
-  // Get all clients with their campaigns
+  // Get all clients with their campaigns and access tokens
   const clients = await prisma.client.findMany({
     include: {
       campaigns: {
         orderBy: { createdAt: 'desc' },
       },
     },
+    select: {
+      id: true,
+      name: true,
+      customDomain: true,
+      clientAccessToken: true,
+      campaigns: true,
+    },
     orderBy: { name: 'asc' },
   })
+
+  // Get base URL for setup links
+  const headersList = await headers()
+  const protocol = headersList.get('x-forwarded-proto') || 'https'
+  const host = headersList.get('host') || headersList.get('x-forwarded-host') || 'localhost:3000'
+  const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
 
   return (
     <div className="space-y-6">
@@ -53,6 +68,16 @@ export default async function ClientsPage() {
                   ⚙️ DNS
                 </Link>
               </div>
+            </div>
+
+            {/* Client Setup Link */}
+            <div className="mb-4">
+              <ClientSetupLink 
+                clientId={client.id}
+                clientName={client.name}
+                clientAccessToken={client.clientAccessToken}
+                baseUrl={baseUrl}
+              />
             </div>
 
             {/* Campaigns Grid */}
