@@ -39,10 +39,10 @@ export default function ClientSetupForm({
   const [success, setSuccess] = useState(false)
   const [jsCopied, setJsCopied] = useState(false)
   
-  // Get tracking server URL
-  const trackingServerUrl = typeof window !== 'undefined' 
+  // Get tracking server URL - use appBaseUrl from server for consistency
+  const trackingServerUrl = appBaseUrl || (typeof window !== 'undefined' 
     ? window.location.origin 
-    : 'https://clipsonaffiliates.com'
+    : 'https://clipsonaffiliates.com')
   
   // Generate JavaScript code when custom domain is entered
   // SAFE VERSION: Only redirects when ?ref= parameter is present
