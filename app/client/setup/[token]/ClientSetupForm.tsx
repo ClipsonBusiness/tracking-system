@@ -179,15 +179,69 @@ export default function ClientSetupForm({
               </pre>
             </div>
             
-            <div className="text-xs text-yellow-200 space-y-1">
-              <p className="font-semibold">How to add:</p>
-              <ol className="list-decimal list-inside space-y-1 ml-2">
-                <li>Copy the code above</li>
-                <li>Open your website&apos;s HTML file (or your website builder&apos;s code editor)</li>
-                <li>Paste it in the <code className="bg-yellow-900/50 px-1 rounded">&lt;head&gt;</code> section or right before <code className="bg-yellow-900/50 px-1 rounded">&lt;/body&gt;</code></li>
-                <li>Save and publish your website</li>
-                <li>Test by visiting: <code className="bg-yellow-900/50 px-1 rounded">{formData.customDomain}/?ref=test</code></li>
-              </ol>
+            <div className="text-xs text-yellow-200 space-y-3">
+              <p className="font-semibold text-base mb-2">How to add (choose your platform):</p>
+              
+              {/* WordPress */}
+              <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
+                <p className="font-semibold mb-1">📝 WordPress (Easiest):</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Install <strong>WPCode</strong> plugin (free) or use <strong>Insert Headers and Footers</strong></li>
+                  <li>Go to <code className="bg-yellow-900/50 px-1 rounded">WPCode → Code Snippets → Add New</code></li>
+                  <li>Paste the code above</li>
+                  <li>Set location to <code className="bg-yellow-900/50 px-1 rounded">Site Wide Header</code></li>
+                  <li>Click <strong>Save Snippet</strong> and <strong>Activate</strong></li>
+                  <li>Test: <code className="bg-yellow-900/50 px-1 rounded">{formData.customDomain}/?ref=test</code></li>
+                </ol>
+              </div>
+
+              {/* Squarespace */}
+              <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
+                <p className="font-semibold mb-1">🔷 Squarespace:</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Go to <code className="bg-yellow-900/50 px-1 rounded">Settings → Advanced → Code Injection</code></li>
+                  <li>Paste the code in the <strong>Header</strong> section</li>
+                  <li>Click <strong>Save</strong></li>
+                </ol>
+              </div>
+
+              {/* Wix */}
+              <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
+                <p className="font-semibold mb-1">🎨 Wix:</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Go to <code className="bg-yellow-900/50 px-1 rounded">Settings → Custom Code</code></li>
+                  <li>Click <strong>Add Code</strong> → <strong>Head</strong></li>
+                  <li>Paste the code and click <strong>Apply</strong></li>
+                </ol>
+              </div>
+
+              {/* Shopify */}
+              <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
+                <p className="font-semibold mb-1">🛒 Shopify:</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Go to <code className="bg-yellow-900/50 px-1 rounded">Online Store → Themes → Actions → Edit Code</code></li>
+                  <li>Open <code className="bg-yellow-900/50 px-1 rounded">theme.liquid</code></li>
+                  <li>Paste code before <code className="bg-yellow-900/50 px-1 rounded">&lt;/head&gt;</code></li>
+                  <li>Click <strong>Save</strong></li>
+                </ol>
+              </div>
+
+              {/* Custom HTML */}
+              <div className="bg-yellow-900/30 rounded-lg p-3">
+                <p className="font-semibold mb-1">⚙️ Custom HTML/Other:</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Copy the code above</li>
+                  <li>Open your website&apos;s HTML file</li>
+                  <li>Paste it in the <code className="bg-yellow-900/50 px-1 rounded">&lt;head&gt;</code> section or before <code className="bg-yellow-900/50 px-1 rounded">&lt;/body&gt;</code></li>
+                  <li>Save and publish</li>
+                </ol>
+              </div>
+
+              <div className="mt-3 p-2 bg-green-900/30 rounded border border-green-700">
+                <p className="text-green-300 text-xs">
+                  ✅ <strong>Safe:</strong> This script only redirects when <code className="bg-green-900/50 px-1 rounded">?ref=</code> is present. Your normal pages won&apos;t be affected.
+                </p>
+              </div>
             </div>
           </div>
         )}
