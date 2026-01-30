@@ -147,6 +147,15 @@ export default function ClientSetupForm({
         <p className="text-xs text-gray-400 mt-1">
           Your tracking links will use this domain (e.g., lowbackability.com/?ref=xxxxx)
         </p>
+        <div className="mt-2 p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
+          <p className="text-xs text-blue-300 mb-2">
+            💡 <strong>Easier Alternative:</strong> Use a subdomain instead (no code needed!)
+          </p>
+          <p className="text-xs text-blue-200">
+            Instead of adding code, you can use <code className="bg-blue-900/50 px-1 rounded">links.lowbackability.com</code> and just add a DNS record. 
+            Contact us if you prefer this option - it&apos;s often easier than adding code!
+          </p>
+        </div>
         {formData.customDomain && formData.customDomain.trim() && (
           <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
             <div className="flex items-start gap-3 mb-3">
