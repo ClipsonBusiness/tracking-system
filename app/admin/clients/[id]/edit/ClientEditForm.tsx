@@ -262,18 +262,18 @@ export default function ClientEditForm({ client }: { client: Client }) {
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-            Client Password
+            Login Code (Password)
           </label>
           <input
             id="password"
             type="password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            placeholder="Set password for client login"
+            placeholder="Set login code for client access"
             className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <p className="text-xs text-gray-400 mt-1">
-            Required: Password for client to login at <code className="bg-gray-800 px-1 rounded">/client/login</code>. Username is their client name.
+            Required: Login code for client to access their dashboard at <code className="bg-gray-800 px-1 rounded">/client/login</code>. Clients only need this code (no username required).
           </p>
           {!formData.password && (
             <p className="text-xs text-yellow-400 mt-1">
