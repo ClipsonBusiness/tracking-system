@@ -26,3 +26,18 @@ export async function setAdminAuth(password: string) {
   })
 }
 
+
+const CAMPAIGN_MANAGER_PASSWORD = process.env.CAMPAIGN_MANAGER_PASSWORD || 'campaign-manager'
+
+export async function checkCampaignManagerAuth(): Promise<boolean> {
+  const cookieStore = await cookies()
+  const campaignManagerAuth = cookieStore.get('campaign_manager_auth')
+  return campaignManagerAuth?.value === CAMPAIGN_MANAGER_PASSWORD
+}
+
+export async function requireCampaignManagerAuth() {
+  const isAuthenticated = await checkCampaignManagerAuth()
+  if (!isAuthenticated) {
+    redirect('/login')
+  }
+}
