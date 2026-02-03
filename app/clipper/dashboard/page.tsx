@@ -99,24 +99,32 @@ export default async function ClipperDashboardPage({
         return { country: item.country || 'Unknown', count: item._count, city: null }
       }
       
-      // Get most common city for this country
-      const cityData = await prisma.click.groupBy({
-        by: ['city'],
-        where: {
-          linkId: { in: linkIds },
-          country: item.country,
-          ts: { gte: thirtyDaysAgo },
-          city: { not: null },
-        },
-        _count: true,
-        orderBy: { _count: { city: 'desc' } },
-        take: 1,
-      })
+      // Get most common city for this country (with error handling in case city column doesn't exist yet)
+      let city: string | null = null
+      try {
+        const cityData = await prisma.click.groupBy({
+          by: ['city'],
+          where: {
+            linkId: { in: linkIds },
+            country: item.country,
+            ts: { gte: thirtyDaysAgo },
+            city: { not: null },
+          },
+          _count: true,
+          orderBy: { _count: { city: 'desc' } },
+          take: 1,
+        })
+        city = cityData.length > 0 ? cityData[0].city : null
+      } catch (error) {
+        // If city column doesn't exist yet, just return null for city
+        console.warn('City column may not exist yet:', error)
+        city = null
+      }
       
       return {
         country: item.country,
         count: item._count,
-        city: cityData.length > 0 ? cityData[0].city : null,
+        city,
       }
     })
   )
