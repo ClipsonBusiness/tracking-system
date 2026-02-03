@@ -4,20 +4,21 @@ import { requireClientAuth } from '@/lib/auth'
 import ClientAnalyticsDashboard from './ClientAnalyticsDashboard'
 
 export default async function ClientAnalyticsPage() {
-  const clientId = await requireClientAuth()
+  try {
+    const clientId = await requireClientAuth()
 
-  // Find client by ID
-  const client = await prisma.client.findUnique({
-    where: { id: clientId },
-    select: {
-      id: true,
-      name: true,
-    },
-  })
+    // Find client by ID
+    const client = await prisma.client.findUnique({
+      where: { id: clientId },
+      select: {
+        id: true,
+        name: true,
+      },
+    })
 
-  if (!client) {
-    redirect('/client/login?error=invalid_client')
-  }
+    if (!client) {
+      redirect('/client/login?error=invalid_client')
+    }
 
   // Get ALL links for this client across ALL campaigns
   const links = await prisma.link.findMany({
@@ -247,4 +248,30 @@ export default async function ClientAnalyticsPage() {
       topClippers={topClippers}
     />
   )
+  } catch (error: any) {
+    console.error('Error in ClientAnalyticsPage:', error)
+    // Return error UI instead of crashing
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-gray-800 rounded-lg border border-red-700 p-8">
+          <h2 className="text-2xl font-bold text-white mb-4">Error Loading Analytics</h2>
+          <p className="text-gray-400 mb-4">
+            An error occurred while loading your analytics data. Please try refreshing the page.
+          </p>
+          {process.env.NODE_ENV === 'development' && error?.message && (
+            <div className="mb-4 p-3 bg-red-900/20 border border-red-700 rounded text-sm text-red-300">
+              <p className="font-medium">Error details:</p>
+              <p className="mt-1">{error.message}</p>
+            </div>
+          )}
+          <a
+            href="/client/dashboard"
+            className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Back to Dashboard
+          </a>
+        </div>
+      </div>
+    )
+  }
 }
