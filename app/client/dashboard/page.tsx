@@ -12,41 +12,42 @@ export default async function ClientDashboardPage({
 }: {
   searchParams: { token?: string; error?: string; success?: string; campaignId?: string }
 }) {
-  // Handle token-based URLs - direct access with token
-  const token = searchParams.token
-  const campaignId = searchParams.campaignId
-  
-  let clientId: string | null = null
-  
-  // If token is provided, authenticate directly with token
-  if (token) {
+  try {
+    // Handle token-based URLs - direct access with token
+    const token = searchParams.token
+    const campaignId = searchParams.campaignId
+    
+    let clientId: string | null = null
+    
+    // If token is provided, authenticate directly with token
+    if (token) {
+      const client = await prisma.client.findUnique({
+        where: { clientAccessToken: token },
+        select: { id: true },
+      })
+      
+      if (!client) {
+        redirect('/client/login?error=invalid_token')
+      }
+      
+      // Set cookie for future visits
+      await setClientAuth(client.id)
+      clientId = client.id
+      
+      // If campaignId is provided, redirect to campaign dashboard immediately
+      if (campaignId) {
+        redirect(`/client/campaign-dashboard?token=${token}&campaignId=${campaignId}`)
+      }
+    }
+
+    // Use cookie-based authentication (if no token provided)
+    if (!clientId) {
+      const clientIdFromCookie = await checkClientAuth()
+      clientId = clientIdFromCookie || await requireClientAuth()
+    }
+
+    // Find client by ID
     const client = await prisma.client.findUnique({
-      where: { clientAccessToken: token },
-      select: { id: true },
-    })
-    
-    if (!client) {
-      redirect('/client/login?error=invalid_token')
-    }
-    
-    // Set cookie for future visits
-    await setClientAuth(client.id)
-    clientId = client.id
-    
-    // If campaignId is provided, redirect to campaign dashboard immediately
-    if (campaignId) {
-      redirect(`/client/campaign-dashboard?token=${token}&campaignId=${campaignId}`)
-    }
-  }
-
-  // Use cookie-based authentication (if no token provided)
-  if (!clientId) {
-    const clientIdFromCookie = await checkClientAuth()
-    clientId = clientIdFromCookie || await requireClientAuth()
-  }
-
-  // Find client by ID
-  const client = await prisma.client.findUnique({
     where: { id: clientId },
     select: {
       id: true,
@@ -208,5 +209,61 @@ export default async function ClientDashboardPage({
       </div>
     </div>
   )
+  } catch (error: any) {
+    console.error('Error in ClientDashboardPage:', error)
+    
+    // Check if it's a database connection error
+    const isDbError = error?.message?.includes('Can\'t reach database server') || 
+                     error?.message?.includes('database server') ||
+                     error?.code === 'P1001'
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-gray-800 rounded-lg border border-red-700 p-8">
+          <h2 className="text-2xl font-bold text-white mb-4">Error Loading Dashboard</h2>
+          {isDbError ? (
+            <div className="space-y-3">
+              <p className="text-gray-400 mb-4">
+                Database connection failed. The database server may be down or unreachable.
+              </p>
+              <div className="bg-red-900/30 border border-red-600 rounded p-3 text-sm text-red-200">
+                <p className="font-medium mb-2">🔧 Troubleshooting Steps:</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Check Railway dashboard - ensure PostgreSQL service is &quot;Online&quot;</li>
+                  <li>Verify DATABASE_URL environment variable is set correctly</li>
+                  <li>Check if the database service was paused (Railway pauses inactive services)</li>
+                  <li>Try refreshing the page</li>
+                </ol>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-400 mb-4">
+              An error occurred while loading your dashboard. Please try refreshing the page.
+            </p>
+          )}
+          {process.env.NODE_ENV === 'development' && error?.message && (
+            <div className="mb-4 p-3 bg-red-900/20 border border-red-700 rounded text-sm text-red-300">
+              <p className="font-medium">Error details:</p>
+              <p className="mt-1">{error.message}</p>
+            </div>
+          )}
+          <div className="flex gap-3">
+            <a
+              href="/client/login"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-center"
+            >
+              Back to Login
+            </a>
+            <a
+              href="/"
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-center"
+            >
+              Go Home
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
 
