@@ -9,7 +9,6 @@ export default function ClientLoginPage() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
   const campaignId = searchParams.get('campaignId')
-  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(searchParams.get('error') || '')
@@ -19,8 +18,8 @@ export default function ClientLoginPage() {
     setLoading(true)
     setError('')
 
-    if (!username.trim() || !password.trim()) {
-      setError('Please enter both username and password')
+    if (!password.trim()) {
+      setError('Please enter your login code')
       setLoading(false)
       return
     }
@@ -32,7 +31,6 @@ export default function ClientLoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          username, 
           password,
           token, // Include token if present
         }),
@@ -75,9 +73,7 @@ export default function ClientLoginPage() {
             </h1>
             <p className="text-gray-300 text-lg mb-1">Client Dashboard</p>
             <p className="text-gray-400 text-sm">
-              {token 
-                ? 'Enter your login code to access your dashboard'
-                : 'Enter your username and password to access your dashboard'}
+              Enter your login code to access your dashboard
             </p>
           </div>
 
@@ -92,42 +88,23 @@ export default function ClientLoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {!token && (
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
-                  Username
-                </label>
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your username"
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required={!token}
-                />
-              </div>
-            )}
-
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                {token ? 'Login Code' : 'Password'}
+                Login Code
               </label>
               <input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={token ? "Enter your login code" : "Enter your password"}
+                placeholder="Enter your login code"
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
-                autoFocus={!!token}
+                autoFocus
               />
-              {token && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Enter the login code provided by your administrator
-                </p>
-              )}
+              <p className="text-xs text-gray-400 mt-1">
+                Enter the login code provided by your administrator
+              </p>
             </div>
 
             <button

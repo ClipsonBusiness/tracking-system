@@ -35,11 +35,11 @@ export default function ClientLoginInfo({
       <h3 className="text-sm font-semibold text-white mb-3">🔐 Client Login Information</h3>
       
       <div className="space-y-3">
-        {/* Username */}
+        {/* Client Name (for reference only) */}
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Username</label>
+          <label className="block text-xs text-gray-400 mb-1">Client Name (for reference)</label>
           <div className="flex items-center gap-2">
-            <code className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-green-400 font-mono">
+            <code className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-gray-400 font-mono">
               {clientName}
             </code>
             <button
@@ -51,9 +51,9 @@ export default function ClientLoginInfo({
           </div>
         </div>
 
-        {/* Password */}
+        {/* Login Code (Password) */}
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Password</label>
+          <label className="block text-xs text-gray-400 mb-1">Login Code (Password)</label>
           <div className="flex items-center gap-2">
             <code className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-yellow-400 font-mono">
               {password || 'Not set'}
@@ -135,13 +135,12 @@ export default function ClientLoginInfo({
               <div className="p-3 bg-gray-800 rounded border border-gray-600">
                 <p className="text-xs text-gray-300 mb-2">Send this to your client:</p>
                 <p className="text-xs text-white font-mono break-all">
-                  Login: {loginUrl}<br />
-                  Username: {clientName}<br />
-                  Password: {password}
+                  Login URL: {loginUrl}<br />
+                  Login Code: {password}
                 </p>
                 <button
                   onClick={() => {
-                    const message = `Login: ${loginUrl}\nUsername: ${clientName}\nPassword: ${password}`
+                    const message = `Login URL: ${loginUrl}\nLogin Code: ${password}`
                     copyToClipboard(message, 'share')
                   }}
                   className="mt-2 w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs transition-colors"
@@ -152,7 +151,7 @@ export default function ClientLoginInfo({
             ) : (
               <div className="p-3 bg-yellow-900/20 rounded border border-yellow-700">
                 <p className="text-xs text-yellow-400">
-                  ⚠️ Set a password first before sharing login credentials
+                  ⚠️ Set a login code (password) first before sharing login credentials
                 </p>
               </div>
             )}

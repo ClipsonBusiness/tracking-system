@@ -44,21 +44,11 @@ export async function POST(request: NextRequest) {
 
       client = clientByToken
     } else {
-      // Normal username/password login
-      if (!username) {
-        return NextResponse.json(
-          { error: 'Username is required' },
-          { status: 400 }
-        )
-      }
-
-      // Find client by name (case-insensitive)
-      const clientByName = await prisma.client.findFirst({
+      // Password-only login (no username needed)
+      // Find client by password
+      const clientsByPassword = await prisma.client.findMany({
         where: {
-          name: {
-            equals: username,
-            mode: 'insensitive',
-          },
+          password: password, // Exact match
         },
         select: {
           id: true,
@@ -67,29 +57,23 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      if (!clientByName) {
+      if (clientsByPassword.length === 0) {
         return NextResponse.json(
-          { error: 'Invalid username or password' },
+          { error: 'Invalid login code' },
           { status: 401 }
         )
       }
 
-      // Check if password is set and matches
-      if (!clientByName.password) {
+      // If multiple clients have the same password, that's a security issue
+      if (clientsByPassword.length > 1) {
+        console.error(`Security warning: Multiple clients share the same password: ${password}`)
         return NextResponse.json(
-          { error: 'No password set for this account. Please contact your administrator.' },
+          { error: 'Multiple accounts found with this password. Please contact your administrator to set a unique password.' },
           { status: 401 }
         )
       }
 
-      if (clientByName.password !== password) {
-        return NextResponse.json(
-          { error: 'Invalid username or password' },
-          { status: 401 }
-        )
-      }
-
-      client = clientByName
+      client = clientsByPassword[0]
     }
 
     // Set authentication cookie
