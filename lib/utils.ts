@@ -29,6 +29,22 @@ export function getCountryFromHeaders(headers: Headers): string | null {
   return null
 }
 
+export function getCityFromHeaders(headers: Headers): string | null {
+  // Try Vercel city header
+  const vercelCity = headers.get('x-vercel-ip-city')
+  if (vercelCity) {
+    return vercelCity
+  }
+
+  // Try Cloudflare city header (if available)
+  const cfCity = headers.get('cf-ipcity')
+  if (cfCity) {
+    return cfCity
+  }
+
+  return null
+}
+
 // Async function to get country and city from IP using free API (fallback)
 export async function getCountryFromIP(ip: string): Promise<string | null> {
   if (!ip) return null
