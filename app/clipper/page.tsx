@@ -273,31 +273,59 @@ export default function ClipperPage() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
+                <div className="p-4 bg-blue-900/20 border-2 border-blue-600 rounded-lg">
+                  {/* Important Warning */}
+                  <div className="mb-4 p-3 bg-yellow-900/30 border border-yellow-600 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <span className="text-2xl">⚠️</span>
+                      <div>
+                        <p className="text-yellow-300 font-bold text-sm mb-1">SAVE YOUR DASHBOARD CODE NOW!</p>
+                        <p className="text-yellow-200 text-xs">
+                          This is your <strong>only way</strong> to access your analytics dashboard. 
+                          Write it down, save it in your notes, or take a screenshot. 
+                          You will need this code every time you want to view your stats.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <p className="text-sm text-blue-300 mb-2 font-semibold">Your Dashboard Code:</p>
                   <p className="text-xs text-blue-400 mb-3">
-                    Save this code to view your analytics dashboard!
+                    Copy and save this code somewhere safe!
                   </p>
                   <div className="flex items-center gap-2 mb-3">
-                    <code className="flex-1 px-3 py-2 bg-gray-800 rounded text-blue-400 text-2xl font-bold text-center tracking-wider">
+                    <code className="flex-1 px-3 py-2 bg-gray-800 rounded text-blue-400 text-2xl font-bold text-center tracking-wider border-2 border-blue-500">
                       {generatedLink.dashboardCode}
                     </code>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(generatedLink.dashboardCode)
-                        alert('Dashboard code copied!')
+                        alert('Dashboard code copied! Make sure to save it!')
                       }}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium"
                     >
-                      Copy Code
+                      📋 Copy Code
                     </button>
                   </div>
-                  <Link
-                    href={`/clipper/dashboard?code=${generatedLink.dashboardCode}`}
-                    className="block w-full mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm text-center"
-                  >
-                    Go to Dashboard →
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/clipper/dashboard?code=${generatedLink.dashboardCode}`}
+                      className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm text-center font-medium"
+                    >
+                      Go to Dashboard →
+                    </Link>
+                    <button
+                      onClick={() => {
+                        const message = `Dashboard Code: ${generatedLink.dashboardCode}\n\nSave this code to access your analytics dashboard at:\n${window.location.origin}/clipper/dashboard/enter`
+                        navigator.clipboard.writeText(message)
+                        alert('Dashboard code and instructions copied!')
+                      }}
+                      className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm"
+                      title="Copy code with instructions"
+                    >
+                      📝 Copy All
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
