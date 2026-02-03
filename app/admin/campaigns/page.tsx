@@ -1,10 +1,13 @@
 import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
+import { requireAdminAuth } from '@/lib/auth'
 import CampaignForm from './CampaignForm'
 import CampaignList from './CampaignList'
 import FixCampaignStatusButton from './FixCampaignStatusButton'
 
 export default async function AdminCampaignsPage() {
+  await requireAdminAuth()
+  
   // Dynamically determine base URL from request headers
   const headersList = await headers()
   const protocol = headersList.get('x-forwarded-proto') || 'https'
