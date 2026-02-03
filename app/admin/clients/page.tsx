@@ -6,11 +6,6 @@ import ClientSetupLink from './ClientSetupLink'
 export default async function ClientsPage() {
   // Get all clients with their campaigns and access tokens
   const clients = await prisma.client.findMany({
-    include: {
-      campaigns: {
-        orderBy: { createdAt: 'desc' },
-      },
-    },
     select: {
       id: true,
       name: true,
@@ -18,7 +13,9 @@ export default async function ClientsPage() {
       clientAccessToken: true,
       stripeWebhookSecret: true,
       stripeAccountId: true,
-      campaigns: true,
+      campaigns: {
+        orderBy: { createdAt: 'desc' },
+      },
     },
     orderBy: { name: 'asc' },
   })
