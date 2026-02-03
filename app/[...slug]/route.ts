@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hashIP, getIPFromHeaders, getCountryFromHeaders, getCountryFromIP } from '@/lib/utils'
+import { hashIP, getIPFromHeaders, getCountryFromHeaders, getCountryFromIP, getCityFromHeaders, getCityFromIP } from '@/lib/utils'
 import { cookies } from 'next/headers'
 
 // Catch-all route for custom domain tracking
@@ -131,6 +131,13 @@ async function handleLinkRedirect(
     country = await getCountryFromIP(ip)
   }
   
+  // Try to get city from headers first, then fallback to IP lookup
+  let city = getCityFromHeaders(headers)
+  if (!city && ip) {
+    // Fallback to IP-based geolocation if headers don't provide city
+    city = await getCityFromIP(ip)
+  }
+  
   const referer = headers.get('referer') || null
   const userAgent = headers.get('user-agent') || null
 
@@ -149,6 +156,7 @@ async function handleLinkRedirect(
         userAgent,
         ipHash,
         country,
+        city,
         utmSource,
         utmMedium,
         utmCampaign,

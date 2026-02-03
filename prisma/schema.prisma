@@ -58,6 +58,7 @@ model Click {
   userAgent     String?  @map("user_agent")
   ipHash        String?  @map("ip_hash")
   country       String?
+  city          String?
   utmSource     String?  @map("utm_source")
   utmMedium     String?  @map("utm_medium")
   utmCampaign   String?  @map("utm_campaign")

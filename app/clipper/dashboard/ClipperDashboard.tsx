@@ -17,7 +17,7 @@ interface ClipperDashboardProps {
   totalClicks: number
   clicksLast7Days: number
   clicksLast30Days: number
-  clicksByCountry: Array<{ country: string; count: number }>
+  clicksByCountry: Array<{ country: string; count: number; city?: string | null }>
   totalRevenue: number
   totalSales: number
   commissionPercent: number | null
@@ -48,6 +48,7 @@ export default function ClipperDashboard({
   const countryPercentages = clicksByCountry.map((c) => ({
     country: c.country,
     count: c.count,
+    city: c.city,
     percentage: totalCountryClicks > 0 ? ((c.count / totalCountryClicks) * 100).toFixed(1) : '0',
   }))
 
@@ -220,27 +221,37 @@ export default function ClipperDashboard({
             <h2 className="text-2xl font-bold text-white mb-4">Clicks by Country</h2>
             <div className="space-y-3">
               {countryPercentages.length > 0 ? (
-                countryPercentages.map((item) => (
-                  <div key={item.country} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1">
-                      <span className="text-2xl">🌍</span>
-                      <span className="text-white font-medium">
-                        {item.country === 'XX' || item.country === 'Unknown' ? 'Unknown Location' : item.country}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-32 bg-gray-700 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full"
-                          style={{ width: `${item.percentage}%` }}
-                        />
+                countryPercentages.map((item) => {
+                  const countryInfo = getCountryInfo(item.country)
+                  return (
+                    <div key={item.country} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="text-2xl flex-shrink-0">{countryInfo.flag}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white font-medium truncate">
+                            {countryInfo.name}
+                          </div>
+                          {item.city && (
+                            <div className="text-xs text-gray-400 truncate">
+                              {item.city}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-gray-400 text-sm w-16 text-right">
-                        {item.count} ({item.percentage}%)
-                      </span>
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="w-32 bg-gray-700 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-gray-400 text-sm w-16 text-right">
+                          {item.count} ({item.percentage}%)
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               ) : (
                 <div className="text-gray-400 space-y-2">
                   <p>No country data available</p>

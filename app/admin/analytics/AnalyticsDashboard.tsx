@@ -1,5 +1,7 @@
 'use client'
 
+import { getCountryInfo } from '@/lib/country-utils'
+
 interface AnalyticsDashboardProps {
   clicksLast7Days: number
   clicksLast30Days: number
@@ -79,16 +81,31 @@ export default function AnalyticsDashboard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
-                {clicksByCountry.map((item, idx) => (
-                  <tr key={idx}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                      {item.country}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                      {item.count.toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
+                {clicksByCountry.map((item, idx) => {
+                  const countryInfo = getCountryInfo(item.country)
+                  return (
+                    <tr key={idx}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{countryInfo.flag}</span>
+                          <div>
+                            <div className="text-sm font-medium text-white">
+                              {countryInfo.name}
+                            </div>
+                            {item.city && (
+                              <div className="text-xs text-gray-400">
+                                {item.city}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                        {item.count.toLocaleString()}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

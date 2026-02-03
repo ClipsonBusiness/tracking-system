@@ -80,8 +80,8 @@ export default async function ClipperDashboardPage({
     },
   }) : 0
 
-  // Clicks by country
-  const clicksByCountry = linkIds.length > 0 ? await prisma.click.groupBy({
+  // Clicks by country (with city aggregation)
+  const clicksByCountryRaw = linkIds.length > 0 ? await prisma.click.groupBy({
     by: ['country'],
     where: {
       linkId: { in: linkIds },
@@ -91,6 +91,35 @@ export default async function ClipperDashboardPage({
     orderBy: { _count: { country: 'desc' } },
     take: 10,
   }) : []
+  
+  // Get sample city for each country (most common city)
+  const clicksByCountry = await Promise.all(
+    clicksByCountryRaw.map(async (item) => {
+      if (!item.country || item.country === 'XX' || item.country === 'Unknown') {
+        return { country: item.country || 'Unknown', count: item._count, city: null }
+      }
+      
+      // Get most common city for this country
+      const cityData = await prisma.click.groupBy({
+        by: ['city'],
+        where: {
+          linkId: { in: linkIds },
+          country: item.country,
+          ts: { gte: thirtyDaysAgo },
+          city: { not: null },
+        },
+        _count: true,
+        orderBy: { _count: { city: 'desc' } },
+        take: 1,
+      })
+      
+      return {
+        country: item.country,
+        count: item._count,
+        city: cityData.length > 0 ? cityData[0].city : null,
+      }
+    })
+  )
 
   // Revenue/Sales from conversions
   // Get conversions linked to this clipper's links
@@ -172,7 +201,8 @@ export default async function ClipperDashboardPage({
       clicksLast30Days={clicksLast30Days}
         clicksByCountry={clicksByCountry.map((c) => ({
           country: c.country || 'Unknown',
-          count: c._count || 0,
+          count: c.count || 0,
+          city: c.city,
         }))}
       totalRevenue={totalRevenue}
       totalSales={totalSales}

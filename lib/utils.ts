@@ -29,7 +29,7 @@ export function getCountryFromHeaders(headers: Headers): string | null {
   return null
 }
 
-// Async function to get country from IP using free API (fallback)
+// Async function to get country and city from IP using free API (fallback)
 export async function getCountryFromIP(ip: string): Promise<string | null> {
   if (!ip) return null
 
@@ -50,6 +50,32 @@ export async function getCountryFromIP(ip: string): Promise<string | null> {
     }
   } catch (error) {
     console.error('Error fetching country from IP:', error)
+  }
+
+  return null
+}
+
+// Async function to get city from IP using free API (fallback)
+export async function getCityFromIP(ip: string): Promise<string | null> {
+  if (!ip) return null
+
+  try {
+    // Use ipapi.co free tier (1,000 requests/day)
+    const response = await fetch(`https://ipapi.co/${ip}/city/`, {
+      headers: {
+        'User-Agent': 'ClipSon-Affiliates-Tracker/1.0',
+      },
+    })
+
+    if (response.ok) {
+      const city = await response.text()
+      const trimmedCity = city.trim()
+      if (trimmedCity && trimmedCity !== 'N/A' && trimmedCity.length > 0) {
+        return trimmedCity
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching city from IP:', error)
   }
 
   return null

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hashIP, getIPFromHeaders, getCountryFromHeaders, getCountryFromIP } from '@/lib/utils'
+import { hashIP, getIPFromHeaders, getCountryFromHeaders, getCountryFromIP, getCityFromHeaders, getCityFromIP } from '@/lib/utils'
 import { cookies } from 'next/headers'
 
 export async function GET(
@@ -57,6 +57,13 @@ export async function GET(
       country = await getCountryFromIP(ip)
     }
     
+    // Try to get city from headers first, then fallback to IP lookup
+    let city = getCityFromHeaders(headers)
+    if (!city && ip) {
+      // Fallback to IP-based geolocation if headers don't provide city
+      city = await getCityFromIP(ip)
+    }
+    
     const referer = headers.get('referer') || null
     const userAgent = headers.get('user-agent') || null
 
@@ -75,6 +82,7 @@ export async function GET(
           userAgent,
           ipHash,
           country,
+          city,
           utmSource,
           utmMedium,
           utmCampaign,
