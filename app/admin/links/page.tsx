@@ -1,15 +1,19 @@
 import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
+import { requireAdminAuth } from '@/lib/auth'
 import LinkForm from './LinkForm'
 import LinkList from './LinkList'
 
 export default async function AdminLinksPage() {
-  // Dynamically determine base URL from request headers
-  const headersList = await headers()
-  const protocol = headersList.get('x-forwarded-proto') || 'https'
-  const host = headersList.get('host') || headersList.get('x-forwarded-host') || 'localhost:3000'
-  const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
-  const clients = await prisma.client.findMany({
+  try {
+    await requireAdminAuth()
+    
+    // Dynamically determine base URL from request headers
+    const headersList = await headers()
+    const protocol = headersList.get('x-forwarded-proto') || 'https'
+    const host = headersList.get('host') || headersList.get('x-forwarded-host') || 'localhost:3000'
+    const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
+    const clients = await prisma.client.findMany({
     select: {
       id: true,
       name: true,
@@ -100,6 +104,25 @@ export default async function AdminLinksPage() {
       </div>
     </div>
   )
+  } catch (error: any) {
+    console.error('Error in AdminLinksPage:', error)
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-white">Links</h1>
+        <div className="bg-red-900/20 border border-red-700 rounded-lg p-6">
+          <p className="text-red-400 font-medium mb-2">Error loading links</p>
+          <p className="text-red-300 text-sm">
+            {error?.message || 'An error occurred while loading the links page. Please try refreshing.'}
+          </p>
+          {process.env.NODE_ENV === 'development' && (
+            <pre className="mt-4 text-xs text-red-200 overflow-auto">
+              {JSON.stringify(error, null, 2)}
+            </pre>
+          )}
+        </div>
+      </div>
+    )
+  }
 }
 
 function SummaryCard({
