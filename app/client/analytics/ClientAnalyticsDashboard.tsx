@@ -75,6 +75,39 @@ export default function ClientAnalyticsDashboard({
     }
   })
 
+  // Function to calculate relative time (e.g., "2 minutes ago")
+  const getRelativeTime = (date: Date): string => {
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds} second${diffInSeconds !== 1 ? 's' : ''} ago`
+    }
+
+    const diffInMinutes = Math.floor(diffInSeconds / 60)
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`
+    }
+
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) {
+      return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`
+    }
+
+    const diffInWeeks = Math.floor(diffInDays / 7)
+    if (diffInWeeks < 4) {
+      return `${diffInWeeks} week${diffInWeeks !== 1 ? 's' : ''} ago`
+    }
+
+    const diffInMonths = Math.floor(diffInDays / 30)
+    return `${diffInMonths} month${diffInMonths !== 1 ? 's' : ''} ago`
+  }
+
   // Calculate links created in last 7 days
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
@@ -353,18 +386,26 @@ export default function ClientAnalyticsDashboard({
             <h2 className="text-2xl font-bold text-white mb-4">Recent Clicks</h2>
             <div className="space-y-3">
               {recentClicks.length > 0 ? (
-                recentClicks.map((click) => (
-                  <div
-                    key={click.id}
-                    className="bg-gray-700 rounded-lg p-4 border border-gray-600"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-white font-semibold">/{click.link.slug}</span>
-                      <span className="text-xs text-gray-400">{click.country || 'Unknown'}</span>
+                recentClicks.map((click) => {
+                  const countryInfo = getCountryInfo(click.country)
+                  const relativeTime = getRelativeTime(new Date(click.ts))
+                  return (
+                    <div
+                      key={click.id}
+                      className="bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-blue-500 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <span className="text-2xl flex-shrink-0">{countryInfo.flag}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-semibold truncate">/{click.link.slug}</p>
+                            <p className="text-xs text-gray-400">{relativeTime}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-400">{new Date(click.ts).toLocaleString()}</p>
-                  </div>
-                ))
+                  )
+                })
               ) : (
                 <p className="text-gray-400">No clicks yet</p>
               )}

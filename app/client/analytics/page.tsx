@@ -152,7 +152,10 @@ export default async function ClientAnalyticsPage() {
     linkIds.length > 0
       ? await prisma.click.findMany({
           where: { linkId: { in: linkIds } },
-          include: {
+          select: {
+            id: true,
+            ts: true,
+            country: true,
             link: {
               select: { slug: true },
             },
