@@ -58,7 +58,6 @@ const countryData: Record<string, { name: string; flag: string }> = {
   'UA': { name: 'Ukraine', flag: '🇺🇦' },
   'NZ': { name: 'New Zealand', flag: '🇳🇿' },
   'IS': { name: 'Iceland', flag: '🇮🇸' },
-  'IE': { name: 'Ireland', flag: '🇮🇪' },
   'LU': { name: 'Luxembourg', flag: '🇱🇺' },
   'MT': { name: 'Malta', flag: '🇲🇹' },
   'CY': { name: 'Cyprus', flag: '🇨🇾' },
