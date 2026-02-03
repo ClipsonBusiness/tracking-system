@@ -16,11 +16,19 @@ export async function POST() {
       orderBy: { name: 'asc' },
     })
 
+    // Find campaigns with null status
+    const nullStatusCampaigns = allCampaigns.filter(c => c.status === null)
+    
     // Update all null status campaigns to inactive
-    const nullUpdate = await prisma.campaign.updateMany({
-      where: { status: null },
-      data: { status: 'inactive' },
-    })
+    let nullUpdate = { count: 0 }
+    if (nullStatusCampaigns.length > 0) {
+      nullUpdate = await prisma.campaign.updateMany({
+        where: {
+          id: { in: nullStatusCampaigns.map(c => c.id) },
+        },
+        data: { status: 'inactive' },
+      })
+    }
 
     // Get updated counts
     const activeCount = await prisma.campaign.count({
