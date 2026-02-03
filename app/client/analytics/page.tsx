@@ -203,11 +203,13 @@ export default async function ClientAnalyticsPage() {
     }
   }
 
-  // Get top clippers by clicks (for the "Top Clippers" section)
+  // Get top clippers by clicks and sales (for the "Top Clippers" section)
   const clipperStats = await Promise.all(
     Array.from(new Set(links.map((l) => l.clipperId).filter((id): id is string => Boolean(id)))).map(async (clipperId) => {
       const clipperLinks = links.filter((l) => l.clipperId === clipperId)
       const clipperLinkIds = clipperLinks.map((l) => l.id)
+      
+      // Get clicks for this clipper
       const clipperClicks =
         clipperLinkIds.length > 0
           ? await prisma.click.count({
@@ -215,19 +217,38 @@ export default async function ClientAnalyticsPage() {
             })
           : 0
 
+      // Get sales and revenue for this clipper
+      const clipperConversions =
+        clipperLinkIds.length > 0
+          ? await prisma.conversion.findMany({
+              where: {
+                linkId: { in: clipperLinkIds },
+                status: 'paid',
+              },
+              select: {
+                amountPaid: true,
+              },
+            })
+          : []
+
+      const clipperSales = clipperConversions.length
+      const clipperRevenue = clipperConversions.reduce((sum, conv) => sum + conv.amountPaid / 100, 0)
+
       const clipper = clipperLinks[0]?.clipper
       return {
         clipperId,
         discordUsername: clipper?.discordUsername || 'Unknown',
         dashboardCode: clipper?.dashboardCode || 'N/A',
         clicks: clipperClicks,
+        sales: clipperSales,
+        revenue: clipperRevenue,
         linkCount: clipperLinks.length,
       }
     })
   )
 
-  // Sort by clicks descending
-  const topClippers = clipperStats.sort((a, b) => b.clicks - a.clicks).slice(0, 10)
+  // Sort by clicks descending (default)
+  const topClippers = clipperStats.sort((a, b) => b.clicks - a.clicks).slice(0, 20)
 
   return (
     <ClientAnalyticsDashboard
