@@ -17,15 +17,17 @@ export default function ClientSetupLink({
   baseUrl,
   isSetupComplete,
 }: ClientSetupLinkProps) {
-  // Don't show setup link if client has already completed setup
-  if (isSetupComplete) {
-    return null
-  }
+  // Hooks must be called at the top level, before any conditional returns
   const [generating, setGenerating] = useState(false)
   const [setupUrl, setSetupUrl] = useState<string | null>(
     clientAccessToken ? `${baseUrl}/client/setup/${clientAccessToken}` : null
   )
   const [copied, setCopied] = useState(false)
+
+  // Don't show setup link if client has already completed setup
+  if (isSetupComplete) {
+    return null
+  }
 
   async function handleGenerate() {
     setGenerating(true)
