@@ -26,8 +26,7 @@ export async function setAdminAuth(password: string) {
   })
 }
 
-
-const CAMPAIGN_MANAGER_PASSWORD = process.env.CAMPAIGN_MANAGER_PASSWORD || 'campaign-manager'
+const CAMPAIGN_MANAGER_PASSWORD = process.env.CAMPAIGN_MANAGER_PASSWORD || 'clipsonadmin'
 
 export async function checkCampaignManagerAuth(): Promise<boolean> {
   const cookieStore = await cookies()
