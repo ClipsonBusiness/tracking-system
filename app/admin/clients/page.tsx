@@ -16,6 +16,8 @@ export default async function ClientsPage() {
       name: true,
       customDomain: true,
       clientAccessToken: true,
+      stripeWebhookSecret: true,
+      stripeAccountId: true,
       campaigns: true,
     },
     orderBy: { name: 'asc' },
@@ -48,11 +50,25 @@ export default async function ClientsPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-semibold text-white">{client.name}</h2>
-                {client.customDomain && (
-                  <p className="text-sm text-gray-400 mt-1">
-                    Domain: <span className="text-blue-400">{client.customDomain}</span>
-                  </p>
-                )}
+                <div className="flex items-center gap-4 mt-2">
+                  {client.customDomain && (
+                    <p className="text-sm text-gray-400">
+                      Domain: <span className="text-blue-400">{client.customDomain}</span>
+                    </p>
+                  )}
+                  {/* Stripe Configuration Status */}
+                  <div className="flex items-center gap-2">
+                    {client.stripeWebhookSecret ? (
+                      <span className="text-xs px-2 py-1 bg-green-900/30 text-green-400 rounded border border-green-700">
+                        ✅ Stripe Configured
+                      </span>
+                    ) : (
+                      <span className="text-xs px-2 py-1 bg-yellow-900/30 text-yellow-400 rounded border border-yellow-700">
+                        ⚠️ Stripe Not Configured
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Link
