@@ -12,6 +12,25 @@ export default function Error({
   useEffect(() => {
     // Log the error to an error reporting service
     console.error('Application error:', error)
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
+    console.error('Error digest:', error.digest)
+    // Log to server if possible (for production debugging)
+    if (typeof window !== 'undefined' && error.digest) {
+      // Try to send error to server for logging
+      fetch('/api/error-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: error.message,
+          digest: error.digest,
+          stack: error.stack,
+          url: window.location.href,
+        }),
+      }).catch(() => {
+        // Ignore if error logging fails
+      })
+    }
   }, [error])
 
   return (

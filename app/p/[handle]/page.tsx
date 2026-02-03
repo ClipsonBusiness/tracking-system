@@ -9,19 +9,20 @@ export default async function LinkInBioPage({
   params: { handle: string }
   searchParams?: { client?: string }
 }) {
-  const handle = params.handle
+  try {
+    const handle = params.handle
 
-  // If custom domain is used, filter by client
-  // Otherwise show all links with this handle
-  const links = await prisma.link.findMany({
-    where: { handle },
-    include: { client: true },
-    orderBy: { createdAt: 'desc' },
-  })
+    // If custom domain is used, filter by client
+    // Otherwise show all links with this handle
+    const links = await prisma.link.findMany({
+      where: { handle },
+      include: { client: true },
+      orderBy: { createdAt: 'desc' },
+    })
 
-  if (links.length === 0) {
-    notFound()
-  }
+    if (links.length === 0) {
+      notFound()
+    }
 
   // Get client from custom domain if available
   // This ensures each client's link-in-bio only shows their links
@@ -60,5 +61,9 @@ export default async function LinkInBioPage({
       </div>
     </div>
   )
+  } catch (error: any) {
+    console.error('Error in LinkInBioPage:', error)
+    notFound()
+  }
 }
 
