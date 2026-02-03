@@ -125,7 +125,7 @@ export default async function AdminLinksPage() {
               <div className="bg-red-900/30 border border-red-600 rounded p-3 text-sm text-red-200">
                 <p className="font-medium mb-2">🔧 Troubleshooting Steps:</p>
                 <ol className="list-decimal list-inside space-y-1 ml-2">
-                  <li>Check Railway dashboard - ensure PostgreSQL service is "Online"</li>
+                  <li>Check Railway dashboard - ensure PostgreSQL service is &quot;Online&quot;</li>
                   <li>Verify DATABASE_URL environment variable is set correctly</li>
                   <li>Check if the database service was paused (Railway pauses inactive services)</li>
                   <li>Try redeploying the application</li>
