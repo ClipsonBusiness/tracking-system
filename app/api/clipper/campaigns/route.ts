@@ -3,21 +3,6 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    // First, update any campaigns with null status to 'inactive'
-    // This handles legacy campaigns created before status field existed
-    const nullUpdate = await prisma.campaign.updateMany({
-      where: {
-        status: null,
-      },
-      data: {
-        status: 'inactive',
-      },
-    })
-    
-    if (nullUpdate.count > 0) {
-      console.log(`Fixed ${nullUpdate.count} campaigns with null status`)
-    }
-
     // Get ALL campaigns to check what we have
     const allCampaigns = await prisma.campaign.findMany({
       select: {
@@ -27,6 +12,26 @@ export async function GET() {
         status: true,
       },
     })
+
+    // First, update any campaigns with null status to 'inactive'
+    // This handles legacy campaigns created before status field existed
+    const nullStatusCampaigns = allCampaigns.filter(c => c.status === null)
+    let nullUpdate = { count: 0 }
+    
+    if (nullStatusCampaigns.length > 0) {
+      nullUpdate = await prisma.campaign.updateMany({
+        where: {
+          id: { in: nullStatusCampaigns.map(c => c.id) },
+        },
+        data: {
+          status: 'inactive',
+        },
+      })
+      
+      if (nullUpdate.count > 0) {
+        console.log(`Fixed ${nullUpdate.count} campaigns with null status`)
+      }
+    }
 
     // Only show campaigns that are explicitly 'active'
     // Exclude 'inactive' and null status campaigns
