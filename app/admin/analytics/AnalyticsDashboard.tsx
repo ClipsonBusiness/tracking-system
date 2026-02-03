@@ -5,7 +5,7 @@ import { getCountryInfo } from '@/lib/country-utils'
 interface AnalyticsDashboardProps {
   clicksLast7Days: number
   clicksLast30Days: number
-  clicksByCountry: Array<{ country: string; count: number }>
+  clicksByCountry: Array<{ country: string; count: number; city?: string | null }>
   clicksByLink: Array<{ linkSlug: string; count: number }>
   totalRevenue: number
   totalSales: number
