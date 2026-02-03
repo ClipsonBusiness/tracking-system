@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
 import CampaignForm from './CampaignForm'
 import CampaignList from './CampaignList'
+import FixCampaignStatusButton from './FixCampaignStatusButton'
 
 export default async function AdminCampaignsPage() {
   // Dynamically determine base URL from request headers
@@ -11,14 +12,25 @@ export default async function AdminCampaignsPage() {
   const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
   try {
     const clients = await prisma.client.findMany()
-    const campaigns = await prisma.campaign.findMany({
+    // Get ALL campaigns (including inactive) for admin view
+    const allCampaigns = await prisma.campaign.findMany({
       include: { client: { select: { name: true } } },
       orderBy: { createdAt: 'desc' },
     })
+    
+    // Separate active and inactive
+    const campaigns = allCampaigns.filter(c => c.status === 'active')
+    const inactiveCampaigns = allCampaigns.filter(c => c.status === 'inactive' || c.status === null)
 
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-white">Campaigns</h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Campaigns</h1>
+            <p className="text-gray-400 text-sm mt-1">Manage your affiliate campaigns</p>
+          </div>
+          <FixCampaignStatusButton />
+        </div>
 
         {/* Create Campaign Section */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-lg">
@@ -29,12 +41,41 @@ export default async function AdminCampaignsPage() {
         {/* Campaigns List */}
         <div className="bg-gray-800 rounded-lg border border-gray-700">
           <div className="p-6 border-b border-gray-700">
-            <h2 className="text-xl font-semibold text-white">Existing Campaigns</h2>
+            <h2 className="text-xl font-semibold text-white">Active Campaigns ({campaigns.length})</h2>
+            {inactiveCampaigns.length > 0 && (
+              <p className="text-sm text-yellow-400 mt-1">
+                ⚠️ {inactiveCampaigns.length} inactive campaign(s) hidden (not shown in clipper portal)
+              </p>
+            )}
           </div>
           <div className="p-6">
             <CampaignList campaigns={campaigns} baseUrl={baseUrl} />
           </div>
         </div>
+        
+        {/* Show inactive campaigns for debugging */}
+        {inactiveCampaigns.length > 0 && (
+          <div className="bg-gray-800 rounded-lg border border-gray-700">
+            <div className="p-6 border-b border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-400">Inactive Campaigns ({inactiveCampaigns.length})</h2>
+              <p className="text-sm text-gray-500 mt-1">These are hidden from the clipper portal</p>
+            </div>
+            <div className="p-6">
+              <div className="space-y-2">
+                {inactiveCampaigns.map((campaign) => (
+                  <div key={campaign.id} className="p-3 bg-gray-700 rounded border border-gray-600">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white font-medium">{campaign.name}</p>
+                        <p className="text-xs text-gray-400">Status: {campaign.status || 'null'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   } catch (error: any) {

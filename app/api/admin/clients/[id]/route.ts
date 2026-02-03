@@ -10,13 +10,14 @@ export async function PATCH(
 
   try {
     const body = await request.json()
-    const { name, customDomain } = body
+    const { name, customDomain, password } = body
 
     const client = await prisma.client.update({
       where: { id: params.id },
       data: {
         ...(name && { name: name.trim() }),
         ...(customDomain !== undefined && { customDomain: customDomain?.trim() || null }),
+        ...(password !== undefined && { password: password?.trim() || null }),
       },
     })
 

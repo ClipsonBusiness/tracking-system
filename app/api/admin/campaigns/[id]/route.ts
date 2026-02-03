@@ -57,12 +57,21 @@ export async function DELETE(
   await requireAdminAuth()
 
   try {
-    await prisma.campaign.delete({
+    // Soft delete: Mark campaign as inactive instead of hard deleting
+    // This preserves data integrity and immediately hides it from clipper portal
+    await prisma.campaign.update({
       where: { id: params.id },
+      data: { status: 'inactive' },
     })
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Campaign not found' },
+        { status: 404 }
+      )
+    }
     return NextResponse.json(
       { error: error.message || 'Failed to delete campaign' },
       { status: 500 }

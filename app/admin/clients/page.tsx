@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import ClientSetupLink from './ClientSetupLink'
+import ClientLoginInfo from './ClientLoginInfo'
 
 export default async function ClientsPage() {
   // Get all clients with their campaigns and access tokens
@@ -9,6 +10,7 @@ export default async function ClientsPage() {
     select: {
       id: true,
       name: true,
+      password: true,
       customDomain: true,
       clientAccessToken: true,
       stripeWebhookSecret: true,
@@ -83,15 +85,29 @@ export default async function ClientsPage() {
               </div>
             </div>
 
-            {/* Client Setup Link */}
+            {/* Client Login Information */}
             <div className="mb-4">
-              <ClientSetupLink 
-                clientId={client.id}
+              <ClientLoginInfo
                 clientName={client.name}
+                password={client.password}
                 clientAccessToken={client.clientAccessToken}
                 baseUrl={baseUrl}
+                clientId={client.id}
               />
             </div>
+
+            {/* Client Setup Link - Only show if setup not complete */}
+            {(!client.stripeWebhookSecret && !client.stripeAccountId) && (
+              <div className="mb-4">
+                <ClientSetupLink 
+                  clientId={client.id}
+                  clientName={client.name}
+                  clientAccessToken={client.clientAccessToken}
+                  baseUrl={baseUrl}
+                  isSetupComplete={false}
+                />
+              </div>
+            )}
 
             {/* Campaigns Grid */}
             {client.campaigns.length > 0 ? (

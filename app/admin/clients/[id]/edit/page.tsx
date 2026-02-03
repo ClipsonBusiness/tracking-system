@@ -16,6 +16,7 @@ export default async function ClientEditPage({
       id: true,
       name: true,
       customDomain: true,
+      password: true,
     },
   })
 

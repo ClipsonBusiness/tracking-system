@@ -38,19 +38,37 @@ export default function ClipperPage() {
     }
   }, [searchParams, router])
 
-  // Load campaigns on mount
+  // Load campaigns on mount and refresh periodically
   useEffect(() => {
-    fetch('/api/clipper/campaigns')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) {
-          setError(data.error)
-        } else if (data.campaigns) {
-          setCampaigns(data.campaigns)
-        }
+    function loadCampaigns() {
+      setLoadingCampaigns(true)
+      // Add cache-busting timestamp and no-cache headers
+      fetch(`/api/clipper/campaigns?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
       })
-      .catch(() => setError('Failed to load campaigns'))
-      .finally(() => setLoadingCampaigns(false))
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.error) {
+            setError(data.error)
+          } else if (data.campaigns) {
+            setCampaigns(data.campaigns)
+            setError('') // Clear any previous errors
+          }
+        })
+        .catch(() => setError('Failed to load campaigns'))
+        .finally(() => setLoadingCampaigns(false))
+    }
+
+    // Load immediately
+    loadCampaigns()
+
+    // Refresh every 5 seconds to pick up deleted campaigns quickly
+    const interval = setInterval(loadCampaigns, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   async function handleGenerateLink() {
@@ -132,9 +150,31 @@ export default function ClipperPage() {
 
           <div className="space-y-6">
             <div>
-              <label htmlFor="campaign" className="block text-sm font-medium text-gray-300 mb-2">
-                Select Campaign *
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="campaign" className="block text-sm font-medium text-gray-300">
+                  Select Campaign *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoadingCampaigns(true)
+                    fetch(`/api/clipper/campaigns?t=${Date.now()}`, {
+                      cache: 'no-store',
+                      headers: { 'Cache-Control': 'no-cache' },
+                    })
+                      .then((res) => res.json())
+                      .then((data) => {
+                        if (data.campaigns) {
+                          setCampaigns(data.campaigns)
+                        }
+                      })
+                      .finally(() => setLoadingCampaigns(false))
+                  }}
+                  className="text-xs text-blue-400 hover:text-blue-300 underline"
+                >
+                  🔄 Refresh
+                </button>
+              </div>
               <select
                 id="campaign"
                 value={selectedCampaignId}
@@ -151,7 +191,7 @@ export default function ClipperPage() {
                 ))}
               </select>
               <p className="text-xs text-gray-400 mt-1">
-                Select the campaign you want to generate a link for
+                Select the campaign you want to generate a link for ({campaigns.length} active)
               </p>
             </div>
 

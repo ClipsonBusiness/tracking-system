@@ -7,6 +7,7 @@ interface ClientSetupLinkProps {
   clientName: string
   clientAccessToken: string | null
   baseUrl: string
+  isSetupComplete: boolean // Hide if client has completed setup
 }
 
 export default function ClientSetupLink({
@@ -14,7 +15,12 @@ export default function ClientSetupLink({
   clientName,
   clientAccessToken,
   baseUrl,
+  isSetupComplete,
 }: ClientSetupLinkProps) {
+  // Don't show setup link if client has already completed setup
+  if (isSetupComplete) {
+    return null
+  }
   const [generating, setGenerating] = useState(false)
   const [setupUrl, setSetupUrl] = useState<string | null>(
     clientAccessToken ? `${baseUrl}/client/setup/${clientAccessToken}` : null

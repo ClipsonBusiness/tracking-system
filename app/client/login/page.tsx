@@ -7,7 +7,10 @@ import Logo from '@/components/Logo'
 export default function ClientLoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [token, setToken] = useState('')
+  const token = searchParams.get('token')
+  const campaignId = searchParams.get('campaignId')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(searchParams.get('error') || '')
 
@@ -16,14 +19,47 @@ export default function ClientLoginPage() {
     setLoading(true)
     setError('')
 
-    if (!token.trim()) {
-      setError('Please enter your access token')
+    if (!username.trim() || !password.trim()) {
+      setError('Please enter both username and password')
       setLoading(false)
       return
     }
 
-    // Redirect to dashboard with token
-    router.push(`/client/dashboard?token=${encodeURIComponent(token)}`)
+    try {
+      const response = await fetch('/api/client/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          username, 
+          password,
+          token, // Include token if present
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Redirect based on whether token/campaignId was provided
+        if (token && campaignId) {
+          // Redirect to dashboard with token and campaignId
+          router.push(`/client/dashboard?token=${token}&campaignId=${campaignId}`)
+        } else if (token) {
+          // Redirect to dashboard with token
+          router.push(`/client/dashboard?token=${token}`)
+        } else {
+          // Normal login - go to analytics
+          router.push('/client/analytics')
+        }
+      } else {
+        setError(data.error || 'Login failed')
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -39,7 +75,9 @@ export default function ClientLoginPage() {
             </h1>
             <p className="text-gray-300 text-lg mb-1">Client Dashboard</p>
             <p className="text-gray-400 text-sm">
-              Enter your access token to continue
+              {token 
+                ? 'Enter your login code to access your dashboard'
+                : 'Enter your username and password to access your dashboard'}
             </p>
           </div>
 
@@ -54,22 +92,42 @@ export default function ClientLoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {!token && (
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your username"
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required={!token}
+                />
+              </div>
+            )}
+
             <div>
-              <label htmlFor="token" className="block text-sm font-medium text-gray-300 mb-2">
-                Access Token
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                {token ? 'Login Code' : 'Password'}
               </label>
               <input
-                id="token"
-                type="text"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Enter your access token"
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={token ? "Enter your login code" : "Enter your password"}
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
+                autoFocus={!!token}
               />
-              <p className="text-xs text-gray-500 mt-2">
-                Your access token was provided when your account was created
-              </p>
+              {token && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Enter the login code provided by your administrator
+                </p>
+              )}
             </div>
 
             <button
@@ -77,30 +135,13 @@ export default function ClientLoginPage() {
               disabled={loading}
               className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {loading ? 'Loading...' : 'Access Dashboard'}
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
-          {/* Alternative: Direct to Get Started */}
-          {token && (
-            <div className="mt-4 pt-4 border-t border-gray-700">
-              <p className="text-xs text-gray-400 text-center mb-2">
-                New to the platform?
-              </p>
-              <button
-                onClick={() => {
-                  router.push(`/client/get-started?token=${token}`)
-                }}
-                className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg transition-colors"
-              >
-                Get Started Guide →
-              </button>
-            </div>
-          )}
-
           <div className="mt-6 pt-6 border-t border-gray-700">
             <p className="text-xs text-gray-500 text-center">
-              Don&apos;t have an access token? Contact your administrator.
+              Need help? Contact your administrator.
             </p>
           </div>
         </div>

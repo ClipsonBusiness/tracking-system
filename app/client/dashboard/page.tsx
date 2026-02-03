@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { requireClientAuth, checkClientAuth, setClientAuth } from '@/lib/auth'
+import { cookies } from 'next/headers'
 import StripeConnect from './StripeConnect'
 import StripeConnectManual from './StripeConnectManual'
 import ClientDetailsForm from './ClientDetailsForm'
@@ -8,17 +10,44 @@ import ClientDetailsForm from './ClientDetailsForm'
 export default async function ClientDashboardPage({
   searchParams,
 }: {
-  searchParams: { token?: string; error?: string; success?: string }
+  searchParams: { token?: string; error?: string; success?: string; campaignId?: string }
 }) {
+  // Handle token-based URLs - direct access with token
   const token = searchParams.token
-
-  if (!token) {
-    redirect('/client/login')
+  const campaignId = searchParams.campaignId
+  
+  let clientId: string | null = null
+  
+  // If token is provided, authenticate directly with token
+  if (token) {
+    const client = await prisma.client.findUnique({
+      where: { clientAccessToken: token },
+      select: { id: true },
+    })
+    
+    if (!client) {
+      redirect('/client/login?error=invalid_token')
+    }
+    
+    // Set cookie for future visits
+    await setClientAuth(client.id)
+    clientId = client.id
+    
+    // If campaignId is provided, redirect to campaign dashboard immediately
+    if (campaignId) {
+      redirect(`/client/campaign-dashboard?token=${token}&campaignId=${campaignId}`)
+    }
   }
 
-  // Find client by access token
+  // Use cookie-based authentication (if no token provided)
+  if (!clientId) {
+    const clientIdFromCookie = await checkClientAuth()
+    clientId = clientIdFromCookie || await requireClientAuth()
+  }
+
+  // Find client by ID
   const client = await prisma.client.findUnique({
-    where: { clientAccessToken: token },
+    where: { id: clientId },
     select: {
       id: true,
       name: true,
@@ -30,7 +59,7 @@ export default async function ClientDashboardPage({
   })
 
   if (!client) {
-    redirect('/client/login?error=invalid_token')
+    redirect('/client/login?error=invalid_client')
   }
 
   // Connected if they have either account ID (OAuth) or webhook secret (manual)
@@ -116,39 +145,27 @@ export default async function ClientDashboardPage({
             />
             */}
 
-            {/* DNS Configuration Section */}
+            {/* Analytics Dashboard Section */}
             <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-white">DNS Configuration</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Analytics Dashboard</h2>
+                  <p className="text-sm text-gray-400 mt-1">
+                    View total performance across all clippers and campaigns
+                  </p>
+                </div>
                 <Link
-                  href={`/client/dns?token=${token}`}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                  href="/client/analytics"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
                 >
-                  {client.customDomain ? 'Edit DNS' : 'Configure DNS'}
+                  View Analytics →
                 </Link>
               </div>
-              {client.customDomain ? (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Custom Domain:</span>
-                    <span className="text-white font-mono">{client.customDomain}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Link Format:</span>
-                    <span className="text-white font-mono">{client.customDomain}/xxxxx</span>
-                  </div>
-                  <p className="text-xs text-green-400 mt-2">✅ Custom domain configured</p>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-gray-400 text-sm mb-2">
-                    Configure your custom domain to use professional tracking links
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Example: yourdomain.com/xxxxx instead of tracking-system.railway.app/xxxxx
-                  </p>
-                </div>
-              )}
+              <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-600">
+                <p className="text-sm text-gray-300">
+                  See aggregated totals for clicks, revenue, sales, and traffic sources from all your clippers in one place.
+                </p>
+              </div>
             </div>
 
             {/* Campaigns Section */}
@@ -159,7 +176,7 @@ export default async function ClientDashboardPage({
                   {campaigns.map((campaign) => (
                     <Link
                       key={campaign.id}
-                      href={`/client/campaign-dashboard?token=${token}&campaignId=${campaign.id}`}
+                      href={`/client/campaign-dashboard?campaignId=${campaign.id}`}
                       className="block p-4 bg-gray-800 hover:bg-gray-750 rounded-lg border border-gray-600 transition-colors"
                     >
                       <div className="flex items-center justify-between">
@@ -184,7 +201,6 @@ export default async function ClientDashboardPage({
                 clientId={client.id}
                 currentName={client.name}
                 currentCustomDomain={client.customDomain}
-                token={token}
               />
             </div>
           </div>

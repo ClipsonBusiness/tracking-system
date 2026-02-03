@@ -7,6 +7,7 @@ interface Client {
   id: string
   name: string
   customDomain: string | null
+  password: string | null
 }
 
 export default function ClientEditForm({ client }: { client: Client }) {
@@ -14,6 +15,7 @@ export default function ClientEditForm({ client }: { client: Client }) {
   const [formData, setFormData] = useState({
     name: client.name,
     customDomain: client.customDomain || '',
+    password: client.password || '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -35,6 +37,7 @@ export default function ClientEditForm({ client }: { client: Client }) {
         body: JSON.stringify({
           name: formData.name.trim(),
           customDomain: formData.customDomain.trim() || null,
+          password: formData.password.trim() || null,
         }),
       })
 
@@ -255,6 +258,28 @@ export default function ClientEditForm({ client }: { client: Client }) {
           <p className="text-xs text-gray-400 mt-1">
             Optional: Custom domain for this client&apos;s tracking links
           </p>
+        </div>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+            Client Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            placeholder="Set password for client login"
+            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Required: Password for client to login at <code className="bg-gray-800 px-1 rounded">/client/login</code>. Username is their client name.
+          </p>
+          {!formData.password && (
+            <p className="text-xs text-yellow-400 mt-1">
+              ⚠️ Password not set. Client cannot login until password is set.
+            </p>
+          )}
         </div>
 
         {error && (

@@ -7,14 +7,12 @@ interface ClientDetailsFormProps {
   clientId: string
   currentName: string
   currentCustomDomain: string | null
-  token: string
 }
 
 export default function ClientDetailsForm({
   clientId,
   currentName,
   currentCustomDomain,
-  token,
 }: ClientDetailsFormProps) {
   const router = useRouter()
   const [name, setName] = useState(currentName)
@@ -34,7 +32,6 @@ export default function ClientDetailsForm({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token,
           name: name.trim(),
           customDomain: customDomain.trim() || null,
         }),
@@ -93,7 +90,7 @@ export default function ClientDetailsForm({
               For <code className="bg-yellow-900/30 px-1 rounded">{customDomain}</code> to work, you need to configure DNS or use one of these options:
             </p>
             <ul className="text-xs text-yellow-400 space-y-1 list-disc list-inside">
-              <li><strong>JavaScript Redirect:</strong> Add script to website (easiest - no DNS!) <a href={`/client/dns/javascript-redirect?token=${token}`} className="text-blue-400 hover:text-blue-300 underline">Get code →</a></li>
+              <li><strong>JavaScript Redirect:</strong> Add script to website (easiest - no DNS!) <a href="/client/dns/javascript-redirect" className="text-blue-400 hover:text-blue-300 underline">Get code →</a></li>
               <li><strong>DNS:</strong> Point domain to tracking server (requires DNS access)</li>
               <li><strong>Reverse Proxy:</strong> Add nginx/apache config (requires server access)</li>
               <li><strong>Subdomain:</strong> Use links.{customDomain} instead (easier DNS)</li>

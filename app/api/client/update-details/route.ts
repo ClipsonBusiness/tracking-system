@@ -1,27 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { checkClientAuth } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { token, name, customDomain, stripeWebhookSecret, stripeAccountId } = body
+    const { name, customDomain, stripeWebhookSecret, stripeAccountId } = body
 
-    if (!token) {
+    // Get client ID from cookie
+    const clientId = await checkClientAuth()
+    if (!clientId) {
       return NextResponse.json(
-        { error: 'Access token required' },
+        { error: 'Not authenticated' },
         { status: 401 }
       )
     }
 
-    // Find client by access token
+    // Find client by ID
     const client = await prisma.client.findUnique({
-      where: { clientAccessToken: token },
+      where: { id: clientId },
     })
 
     if (!client) {
       return NextResponse.json(
-        { error: 'Invalid access token' },
-        { status: 401 }
+        { error: 'Client not found' },
+        { status: 404 }
       )
     }
 

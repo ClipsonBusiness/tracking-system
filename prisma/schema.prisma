@@ -13,11 +13,12 @@ datasource db {
 model Client {
   id                  String    @id @default(cuid())
   name                String
+  password            String? // For client login (optional, can be set by admin)
   stripeAccountId     String?   @map("stripe_account_id")
   stripeWebhookSecret String?   @map("stripe_webhook_secret")
   stripeConnectedAt   DateTime? @map("stripe_connected_at")
   customDomain        String?   @map("custom_domain") // e.g., "lowbackability.com"
-  clientAccessToken   String?   @unique @map("client_access_token") // For client dashboard access
+  clientAccessToken   String?   @unique @map("client_access_token") // For client dashboard access (legacy)
   dnsScreenshot       String?   @map("dns_screenshot") // Base64 encoded screenshot or URL
   createdAt           DateTime  @default(now()) @map("created_at")
 

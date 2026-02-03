@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { requireClientAuth, checkClientAuth, setClientAuth } from '@/lib/auth'
 import { ClientCampaignDashboard } from './ClientCampaignDashboard'
 
 export default async function ClientCampaignDashboardPage({
@@ -8,10 +9,22 @@ export default async function ClientCampaignDashboardPage({
   searchParams: { token?: string; campaignId?: string }
 }) {
   const { token, campaignId } = searchParams
-
-  if (!token) {
-    redirect('/client/login')
+  
+  // Handle token-based authentication
+  if (token) {
+    const client = await prisma.client.findUnique({
+      where: { clientAccessToken: token },
+      select: { id: true },
+    })
+    
+    if (client) {
+      await setClientAuth(client.id)
+    } else {
+      redirect('/client/login?error=invalid_token')
+    }
   }
+  
+  const clientId = await requireClientAuth()
 
   if (!campaignId) {
     return (
@@ -26,9 +39,9 @@ export default async function ClientCampaignDashboardPage({
     )
   }
 
-  // Find client by access token
+  // Find client by ID
   const client = await prisma.client.findUnique({
-    where: { clientAccessToken: token },
+    where: { id: clientId },
     select: {
       id: true,
       name: true,
@@ -36,7 +49,7 @@ export default async function ClientCampaignDashboardPage({
   })
 
   if (!client) {
-    redirect('/client/login?error=invalid_token')
+    redirect('/client/login?error=invalid_client')
   }
 
   // Get campaign

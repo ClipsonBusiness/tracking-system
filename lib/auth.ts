@@ -40,3 +40,28 @@ export async function requireCampaignManagerAuth() {
     redirect('/login')
   }
 }
+
+// Client authentication
+export async function checkClientAuth(): Promise<string | null> {
+  const cookieStore = await cookies()
+  const clientId = cookieStore.get('client_id')
+  return clientId?.value || null
+}
+
+export async function requireClientAuth() {
+  const clientId = await checkClientAuth()
+  if (!clientId) {
+    redirect('/client/login')
+  }
+  return clientId
+}
+
+export async function setClientAuth(clientId: string) {
+  const cookieStore = await cookies()
+  cookieStore.set('client_id', clientId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+  })
+}
