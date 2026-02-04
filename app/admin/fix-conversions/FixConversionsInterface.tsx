@@ -52,7 +52,9 @@ export default function FixConversionsInterface({
       })
 
       if (response.ok) {
-        setFixed(new Set([...fixed, conversionId]))
+        const newFixed = new Set(fixed)
+        newFixed.add(conversionId)
+        setFixed(newFixed)
         // Reload page after a moment to show updated data
         setTimeout(() => {
           window.location.reload()
