@@ -125,8 +125,9 @@ export default function ClientSetupForm({
 
       if (res.ok) {
         setSuccess(true)
+        // Use window.location instead of router.push to avoid CSS-in-JS issues
         setTimeout(() => {
-          router.push(`/client/dashboard?token=${token}`)
+          window.location.href = `/client/dashboard?token=${token}`
         }, 2000)
       } else {
         const data = await res.json()
