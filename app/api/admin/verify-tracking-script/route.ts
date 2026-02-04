@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         domain,
-        url,
+        url, // Return the URL that was checked
         found,
         details: {
           hasComment,
@@ -108,7 +108,6 @@ export async function GET(request: NextRequest) {
           hasExactPattern,
           hasBeaconCall,
         },
-        url, // Return the URL that was checked
         scriptSnippet: scriptSnippet ? `${scriptSnippet}...` : null,
         status: found ? '✅ Script detected!' : '❌ Script not found',
         message: found
