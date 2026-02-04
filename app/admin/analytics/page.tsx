@@ -1,8 +1,10 @@
 import { prisma } from '@/lib/prisma'
+import { requireAdminAuth } from '@/lib/auth'
 import AnalyticsDashboard from './AnalyticsDashboard'
 import ClientFilter from './ClientFilter'
 
 export default async function AdminAnalyticsPage() {
+  await requireAdminAuth()
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)

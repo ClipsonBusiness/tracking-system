@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/prisma'
+import { requireAdminAuth } from '@/lib/auth'
 import ClientSettings from './ClientSettings'
 
 export default async function SettingsPage() {
+  await requireAdminAuth()
   const clients = await prisma.client.findMany({
     select: {
       id: true,

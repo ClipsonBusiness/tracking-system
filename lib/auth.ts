@@ -1,12 +1,19 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin'
+// SECURITY: Require ADMIN_PASSWORD to be set in production
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'admin')
 
 export async function checkAdminAuth(): Promise<boolean> {
+  // SECURITY: In production, require ADMIN_PASSWORD to be set
+  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) {
+    console.error('SECURITY ERROR: ADMIN_PASSWORD must be set in production!')
+    return false
+  }
+  
   const cookieStore = await cookies()
   const adminAuth = cookieStore.get('admin_auth')
-  return adminAuth?.value === ADMIN_PASSWORD
+  return adminAuth?.value === ADMIN_PASSWORD && ADMIN_PASSWORD !== ''
 }
 
 export async function requireAdminAuth() {

@@ -1,9 +1,11 @@
 import { prisma } from '@/lib/prisma'
+import { requireAdminAuth } from '@/lib/auth'
 import AffiliateForm from './AffiliateForm'
 import AffiliateList from './AffiliateList'
 import ApplyCommissionButton from './ApplyCommissionButton'
 
 export default async function AdminAffiliatesPage() {
+  await requireAdminAuth()
   const clients = await prisma.client.findMany()
   const affiliates = await prisma.affiliate.findMany({
     include: { client: true },

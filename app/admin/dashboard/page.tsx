@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { requireAdminAuth } from '@/lib/auth'
 
 export default async function AdminDashboardPage() {
+  await requireAdminAuth()
   // Get summary stats
   const [totalLinks, totalClicks, totalClients, totalCampaigns, totalSales, totalRevenue] = await Promise.all([
     prisma.link.count(),

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { requireAdminAuth } from '@/lib/auth'
 import ClipperList from './ClipperList'
 
 export default async function AdminClippersPage({

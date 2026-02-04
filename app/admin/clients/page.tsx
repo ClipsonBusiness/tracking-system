@@ -1,10 +1,12 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { headers } from 'next/headers'
+import { requireAdminAuth } from '@/lib/auth'
 import ClientSetupLink from './ClientSetupLink'
 import ClientLoginInfo from './ClientLoginInfo'
 
 export default async function ClientsPage() {
+  await requireAdminAuth()
   // Get all clients with their campaigns and access tokens
   const clients = await prisma.client.findMany({
     select: {
