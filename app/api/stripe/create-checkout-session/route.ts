@@ -19,16 +19,19 @@ export async function POST(request: NextRequest) {
     apiVersion: '2023-10-16',
   })
 
+  let priceId: string | undefined
   try {
     const body = await request.json()
     const {
-      priceId,
+      priceId: bodyPriceId,
       customerId,
       affiliateCode,
       successUrl,
       cancelUrl,
       clientId, // Optional: for Stripe Connect accounts
     } = body
+
+    priceId = bodyPriceId
 
     if (!priceId) {
       return NextResponse.json(
