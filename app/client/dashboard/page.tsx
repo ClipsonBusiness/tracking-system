@@ -30,8 +30,13 @@ export default async function ClientDashboardPage({
         redirect('/client/login?error=invalid_token')
       }
       
-      // Set cookie for future visits
-      await setClientAuth(client.id)
+      // Set cookie for future visits (wrap in try-catch to prevent errors)
+      try {
+        await setClientAuth(client.id)
+      } catch (cookieError) {
+        // Log but don't fail - cookie setting is optional
+        console.warn('Failed to set auth cookie:', cookieError)
+      }
       clientId = client.id
       
       // If campaignId is provided, redirect to campaign dashboard immediately
@@ -92,6 +97,15 @@ export default async function ClientDashboardPage({
               <p className="text-green-300 font-medium">✅ Stripe connected successfully!</p>
               <p className="text-green-400 text-sm mt-1">
                 Sales tracking is now active. Webhooks have been configured automatically.
+              </p>
+            </div>
+          )}
+
+          {searchParams.success === 'setup_complete' && (
+            <div className="mb-6 p-4 bg-green-900/20 border border-green-700 rounded-lg">
+              <p className="text-green-300 font-medium">✅ Setup completed successfully!</p>
+              <p className="text-green-400 text-sm mt-1">
+                Your tracking configuration has been saved. Make sure to add the JavaScript snippet to your website and configure Stripe checkout metadata for sales tracking.
               </p>
             </div>
           )}
