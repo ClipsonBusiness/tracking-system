@@ -101,6 +101,9 @@ export default function TestStripeInterface({
   const [verificationDomain, setVerificationDomain] = useState('freeclipping.com')
   const [verificationResult, setVerificationResult] = useState<any>(null)
   const [verifying, setVerifying] = useState(false)
+  const [linkSlugInput, setLinkSlugInput] = useState('')
+  const [clickData, setClickData] = useState<any>(null)
+  const [loadingClicks, setLoadingClicks] = useState(false)
 
   async function checkSale(clipperCode?: string) {
     const code = clipperCode || clipperCodeInput || 'mflp'
@@ -119,6 +122,32 @@ export default function TestStripeInterface({
       setError('Failed to check sale. Make sure the API endpoint exists.')
     } finally {
       setLoadingDiagnostic(false)
+    }
+  }
+
+  async function checkClicks() {
+    if (!linkSlugInput.trim()) {
+      setError('Please enter a link slug')
+      return
+    }
+    
+    setLoadingClicks(true)
+    setClickData(null)
+    setError('')
+    
+    try {
+      const res = await fetch(`/api/admin/check-clicks?slug=${encodeURIComponent(linkSlugInput.trim())}`)
+      if (!res.ok) {
+        const errorData = await res.json()
+        setError(errorData.error || 'Failed to check clicks')
+        return
+      }
+      const data = await res.json()
+      setClickData(data)
+    } catch (err) {
+      setError('Failed to check clicks. Make sure the API endpoint exists.')
+    } finally {
+      setLoadingClicks(false)
     }
   }
 
