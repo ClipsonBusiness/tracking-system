@@ -60,11 +60,13 @@ export async function setAdminAuth(password: string) {
   // Clean up expired sessions periodically
   if (activeSessions.size > 1000) {
     const now = Date.now()
-    for (const [token, session] of activeSessions.entries()) {
+    const tokensToDelete: string[] = []
+    activeSessions.forEach((session, token) => {
       if (session.expiresAt < now) {
-        activeSessions.delete(token)
+        tokensToDelete.push(token)
       }
-    }
+    })
+    tokensToDelete.forEach(token => activeSessions.delete(token))
   }
   
   const cookieStore = await cookies()
