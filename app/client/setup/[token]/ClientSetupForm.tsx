@@ -469,7 +469,7 @@ export default function ClientSetupForm({
       <div className="flex gap-3 pt-4">
         <button
           type="submit"
-          disabled={loading || success || (formData.stripeWebhookSecret.trim() && !metadataConfirmed)}
+          disabled={loading || success || (formData.stripeWebhookSecret.trim() !== '' && !metadataConfirmed)}
           className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Saving...' : 'Complete Setup'}
