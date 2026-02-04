@@ -5,10 +5,26 @@ import { checkClientAuth } from '@/lib/auth'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, customDomain, stripeWebhookSecret, stripeAccountId } = body
+    const { token, name, customDomain, stripeWebhookSecret, stripeAccountId } = body
 
-    // Get client ID from cookie
-    const clientId = await checkClientAuth()
+    let clientId: string | null = null
+
+    // Try token-based authentication first (for setup pages)
+    if (token) {
+      const clientByToken = await prisma.client.findUnique({
+        where: { clientAccessToken: token },
+        select: { id: true },
+      })
+      if (clientByToken) {
+        clientId = clientByToken.id
+      }
+    }
+
+    // Fallback to cookie-based authentication
+    if (!clientId) {
+      clientId = await checkClientAuth()
+    }
+
     if (!clientId) {
       return NextResponse.json(
         { error: 'Not authenticated' },
@@ -28,17 +44,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update client details
+    // Update client details (safely handle null/undefined values)
     const updated = await prisma.client.update({
       where: { id: client.id },
       data: {
         ...(name && { name }),
-        ...(customDomain !== undefined && { customDomain: customDomain.trim() || null }),
-        ...(stripeWebhookSecret !== undefined && {
-          stripeWebhookSecret: stripeWebhookSecret?.trim() || null,
-          ...(stripeWebhookSecret?.trim() && { stripeConnectedAt: new Date() }),
+        ...(customDomain !== undefined && { 
+          customDomain: customDomain && typeof customDomain === 'string' ? customDomain.trim() || null : null 
         }),
-        ...(stripeAccountId !== undefined && { stripeAccountId: stripeAccountId?.trim() || null }),
+        ...(stripeWebhookSecret !== undefined && {
+          stripeWebhookSecret: stripeWebhookSecret && typeof stripeWebhookSecret === 'string' 
+            ? stripeWebhookSecret.trim() || null 
+            : null,
+          ...(stripeWebhookSecret && typeof stripeWebhookSecret === 'string' && stripeWebhookSecret.trim() && { 
+            stripeConnectedAt: new Date() 
+          }),
+        }),
+        ...(stripeAccountId !== undefined && { 
+          stripeAccountId: stripeAccountId && typeof stripeAccountId === 'string' 
+            ? stripeAccountId.trim() || null 
+            : null 
+        }),
       },
     })
 
