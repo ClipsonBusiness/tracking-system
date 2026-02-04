@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 
 // Route handler for tracking links with ?ref= query parameters
 // Handles: tracking-server.com/track?ref=xxxx
+// Can be called directly (redirects) or via beacon (just records click)
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -18,8 +19,14 @@ export async function GET(request: NextRequest) {
 
     const actualSlug = refParam
     
+    // Check if this is a beacon request (from JavaScript snippet)
+    // Beacons typically have specific headers or we can check for redirect=false
+    const isBeacon = searchParams.get('beacon') === 'true' || 
+                     request.headers.get('user-agent')?.includes('beacon') ||
+                     request.headers.get('purpose') === 'prefetch'
+    
     // Debug logging
-    console.log('Track route hit with ref:', { actualSlug })
+    console.log('Track route hit with ref:', { actualSlug, isBeacon })
     
     // Find link by slug (direct lookup, no custom domain filtering needed here)
     const link = await prisma.link.findFirst({
@@ -33,6 +40,14 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('Found link by slug:', actualSlug)
+    
+    // If beacon request, just record click and return OK (no redirect)
+    if (isBeacon) {
+      await recordClick(request, link)
+      return new NextResponse('OK', { status: 200 })
+    }
+    
+    // Otherwise, redirect to destination (direct link visit)
     return handleLinkRedirect(request, link)
   } catch (error) {
     console.error('Error in track route redirect:', error)
@@ -40,14 +55,77 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Extract click recording logic to a separate function
+async function recordClick(
+  request: NextRequest,
+  link: { id: string; clientId: string; destinationUrl: string; slug: string }
+) {
+  const searchParams = request.nextUrl.searchParams
+  const cookieStore = await cookies()
+  
+  // Get affiliate code if present
+  const affFromQuery = searchParams.get('aff')
+  const affFromCookie = cookieStore.get('aff_code')?.value
+  let affiliateCode: string | null = affFromQuery || affFromCookie || null
+
+  // Capture click analytics
+  const headers = request.headers
+  const ip = getIPFromHeaders(headers)
+  const ipHash = ip ? hashIP(ip) : null
+  
+  // Try to get country from headers first, then fallback to IP lookup
+  let country = getCountryFromHeaders(headers)
+  if (!country && ip) {
+    country = await getCountryFromIP(ip)
+  }
+  
+  // Try to get city from headers first, then fallback to IP lookup
+  let city = getCityFromHeaders(headers)
+  if (!city && ip) {
+    city = await getCityFromIP(ip)
+  }
+  
+  const referer = headers.get('referer') || null
+  const userAgent = headers.get('user-agent') || null
+
+  // Extract UTM parameters
+  const utmSource = searchParams.get('utm_source') || null
+  const utmMedium = searchParams.get('utm_medium') || null
+  const utmCampaign = searchParams.get('utm_campaign') || null
+
+  // Store click
+  try {
+    await prisma.click.create({
+      data: {
+        linkId: link.id,
+        clientId: link.clientId,
+        referer,
+        userAgent,
+        ipHash,
+        country,
+        city,
+        utmSource,
+        utmMedium,
+        utmCampaign,
+        affiliateCode,
+      },
+    })
+    console.log('Click stored successfully for link:', link.id)
+  } catch (err) {
+    console.error('Error storing click:', err)
+    throw err
+  }
+}
+
 async function handleLinkRedirect(
   request: NextRequest,
   link: { id: string; clientId: string; destinationUrl: string; slug: string }
 ) {
-  // Get affiliate code from query param or cookie
   const searchParams = request.nextUrl.searchParams
-  const affFromQuery = searchParams.get('aff')
   const cookieStore = await cookies()
+  
+  // Get affiliate code from query param or cookie
+  const affFromQuery = searchParams.get('aff')
   const affFromCookie = cookieStore.get('aff_code')?.value
 
   let affiliateCode: string | null = affFromQuery || affFromCookie || null
@@ -74,51 +152,9 @@ async function handleLinkRedirect(
     })
   }
 
-  // Capture click analytics
-  const headers = request.headers
-  const ip = getIPFromHeaders(headers)
-  const ipHash = ip ? hashIP(ip) : null
-  
-  // Try to get country from headers first, then fallback to IP lookup
-  let country = getCountryFromHeaders(headers)
-  if (!country && ip) {
-    // Fallback to IP-based geolocation if headers don't provide country
-    country = await getCountryFromIP(ip)
-  }
-  
-  // Try to get city from headers first, then fallback to IP lookup
-  let city = getCityFromHeaders(headers)
-  if (!city && ip) {
-    // Fallback to IP-based geolocation if headers don't provide city
-    city = await getCityFromIP(ip)
-  }
-  
-  const referer = headers.get('referer') || null
-  const userAgent = headers.get('user-agent') || null
-
-  // Extract UTM parameters
-  const utmSource = searchParams.get('utm_source') || null
-  const utmMedium = searchParams.get('utm_medium') || null
-  const utmCampaign = searchParams.get('utm_campaign') || null
-
-  // Store click - await to ensure it's saved before redirect
+  // Record the click (reuse the function)
   try {
-    await prisma.click.create({
-      data: {
-        linkId: link.id,
-        clientId: link.clientId,
-        referer,
-        userAgent,
-        ipHash,
-        country,
-        city,
-        utmSource,
-        utmMedium,
-        utmCampaign,
-        affiliateCode,
-      },
-    })
-    console.log('Click stored successfully for link:', link.id)
+    await recordClick(request, link)
   } catch (err) {
     console.error('Error storing click:', err)
     // Continue with redirect even if click storage fails

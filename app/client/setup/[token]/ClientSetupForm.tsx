@@ -79,10 +79,10 @@ export default function ClientSetupForm({
   // Optionally record click on tracking server (non-blocking)
   // This helps with analytics but isn't required for attribution
   try {
-    navigator.sendBeacon('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam));
+    navigator.sendBeacon('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam) + '&beacon=true');
   } catch(e) {
     // Fallback if sendBeacon not supported
-    fetch('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam), { method: 'GET', keepalive: true }).catch(() => {});
+    fetch('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam) + '&beacon=true', { method: 'GET', keepalive: true }).catch(() => {});
   }
 })();
 </script>`
