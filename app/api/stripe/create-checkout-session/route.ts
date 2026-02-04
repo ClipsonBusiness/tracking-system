@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     if (error.type === 'StripeInvalidRequestError') {
       if (error.message?.includes('No such price')) {
         errorMessage = 'Invalid Price ID'
-        errorDetails = `The price ID "${priceId}" doesn't exist in your Stripe account. Make sure you're using:
+        errorDetails = `The price ID "${priceId || 'unknown'}" doesn't exist in your Stripe account. Make sure you're using:
 - A valid price ID from your Stripe Dashboard
 - The correct mode (test vs live) - check if your STRIPE_SECRET_KEY matches the mode
 - A price ID from the same Stripe account as your secret key`
