@@ -263,6 +263,206 @@ export default function TestStripeInterface({
         )}
       </div>
 
+      {/* Sales Tracking Test for freeclipping.com */}
+      <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-lg border-2 border-blue-700 p-6 shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">🧪</span>
+          <h2 className="text-2xl font-bold text-white">Sales Tracking Test</h2>
+        </div>
+        <p className="text-sm text-gray-300 mb-4">
+          Test if sales tracking would work for freeclipping.com. This checks all components needed for a sale to be tracked.
+        </p>
+        
+        <div className="space-y-4">
+          <div className="flex gap-4">
+            <button
+              onClick={async () => {
+                setLoadingSalesTest(true)
+                setError('')
+                setSalesTestResult(null)
+                
+                try {
+                  const res = await fetch(`/api/admin/test-sales-tracking?domain=${encodeURIComponent(verificationDomain)}`)
+                  const data = await res.json()
+                  setSalesTestResult(data)
+                  
+                  // Also run script verification
+                  await verifyTrackingScript()
+                } catch (err) {
+                  setError('Failed to run sales tracking test')
+                } finally {
+                  setLoadingSalesTest(false)
+                }
+              }}
+              disabled={loadingSalesTest || !verificationDomain.trim()}
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+            >
+              {loadingSalesTest ? 'Testing...' : '🚀 Run Full Sales Test'}
+            </button>
+          </div>
+
+          {salesTestResult && (
+            <div className="space-y-4">
+              <div className={`p-4 rounded-lg border-2 ${
+                salesTestResult.overall === 'passed' 
+                  ? 'bg-green-900/20 border-green-700'
+                  : salesTestResult.overall === 'partial'
+                  ? 'bg-yellow-900/20 border-yellow-700'
+                  : 'bg-red-900/20 border-red-700'
+              }`}>
+                <h3 className={`text-lg font-semibold mb-2 ${
+                  salesTestResult.overall === 'passed' ? 'text-green-400' 
+                  : salesTestResult.overall === 'partial' ? 'text-yellow-400'
+                  : 'text-red-400'
+                }`}>
+                  {salesTestResult.overall === 'passed' ? '✅ All Tests Passed!' 
+                   : salesTestResult.overall === 'partial' ? '⚠️ Partial - Some Issues'
+                   : '❌ Tests Failed'}
+                </h3>
+                <p className="text-sm text-gray-300 mb-3">
+                  {salesTestResult.summary.passedTests} of {salesTestResult.summary.totalTests} tests passed
+                </p>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    {salesTestResult.tests.clientFound?.passed ? (
+                      <span className="text-green-400">✅</span>
+                    ) : (
+                      <span className="text-red-400">❌</span>
+                    )}
+                    <span className="text-gray-300">
+                      Client Found: {salesTestResult.tests.clientFound?.clientName || 'Not found'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {salesTestResult.tests.scriptInstalled?.passed ? (
+                      <span className="text-green-400">✅</span>
+                    ) : (
+                      <span className="text-red-400">❌</span>
+                    )}
+                    <span className="text-gray-300">JavaScript Snippet Installed</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {salesTestResult.tests.stripeWebhook?.passed ? (
+                      <span className="text-green-400">✅</span>
+                    ) : (
+                      <span className="text-red-400">❌</span>
+                    )}
+                    <span className="text-gray-300">Stripe Webhook Configured</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {salesTestResult.tests.clickTracking?.passed ? (
+                      <span className="text-green-400">✅</span>
+                    ) : (
+                      <span className="text-yellow-400">⚠️</span>
+                    )}
+                    <span className="text-gray-300">
+                      Click Tracking: {salesTestResult.tests.clickTracking?.recentClicksCount || 0} clicks (last 7 days)
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {salesTestResult.tests.salesTracking?.passed ? (
+                      <span className="text-green-400">✅</span>
+                    ) : (
+                      <span className="text-yellow-400">⚠️</span>
+                    )}
+                    <span className="text-gray-300">
+                      Sales Tracking: {salesTestResult.tests.salesTracking?.recentConversionsCount || 0} conversions (last 30 days)
+                    </span>
+                  </div>
+                </div>
+
+                {salesTestResult.recommendations.length > 0 && (
+                  <div className="mt-4 bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+                    <h4 className="text-sm font-semibold text-yellow-400 mb-2">Recommendations:</h4>
+                    <ul className="text-xs text-yellow-200 space-y-1 list-disc list-inside">
+                      {salesTestResult.recommendations.map((rec: string, i: number) => (
+                        <li key={i}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {salesTestResult.tests.linksExist?.sampleLinks && salesTestResult.tests.linksExist.sampleLinks.length > 0 && (
+                  <div className="mt-4 bg-gray-800/50 rounded-lg p-3">
+                    <h4 className="text-sm font-semibold text-white mb-2">Sample Tracking Links:</h4>
+                    <div className="space-y-1">
+                      {salesTestResult.tests.linksExist.sampleLinks.slice(0, 3).map((link: any, i: number) => (
+                        <code key={i} className="block text-xs text-green-400 bg-gray-900 px-2 py-1 rounded break-all">
+                          {link.trackingUrl}
+                        </code>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-white mb-3">Test Checklist:</h3>
+            
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                {verificationResult?.found ? (
+                  <span className="text-green-400">✅</span>
+                ) : (
+                  <span className="text-gray-500">⏳</span>
+                )}
+                <span className="text-gray-300">JavaScript snippet installed</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {clickData?.clicks.total > 0 ? (
+                  <span className="text-green-400">✅</span>
+                ) : (
+                  <span className="text-gray-500">⏳</span>
+                )}
+                <span className="text-gray-300">Click tracking working</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400">⚠️</span>
+                <span className="text-gray-300">Stripe webhook configured (check manually)</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400">⚠️</span>
+                <span className="text-gray-300">Checkout passes ca_affiliate_id metadata (check manually)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-yellow-400 mb-2">📋 Manual Test Steps:</h3>
+            <ol className="text-xs text-yellow-200 space-y-2 list-decimal list-inside">
+              <li>Visit: <code className="bg-gray-900 px-1 rounded">https://www.freeclipping.com/?ref=tcjsn</code></li>
+              <li>Open DevTools → Application → Cookies</li>
+              <li>Verify <code className="bg-gray-900 px-1 rounded">link_slug=tcjsn</code> cookie exists</li>
+              <li>Go to checkout page</li>
+              <li>Check if checkout code reads cookie and passes to Stripe metadata</li>
+              <li>Complete a test purchase</li>
+              <li>Check admin dashboard for conversion</li>
+            </ol>
+          </div>
+
+          {verificationResult?.found && clickData && (
+            <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-green-400 mb-2">✅ Test Results:</h3>
+              <div className="text-xs text-green-200 space-y-1">
+                <p>✅ Script is installed and working</p>
+                <p>✅ Click tracking is active ({clickData.clicks.total} clicks recorded)</p>
+                <p>⚠️ Next: Verify Stripe checkout passes metadata</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Check Click Tracking */}
       <div className="bg-gradient-to-r from-green-900/30 to-teal-900/30 rounded-lg border-2 border-green-700 p-6 shadow-lg">
         <div className="flex items-center gap-3 mb-4">
