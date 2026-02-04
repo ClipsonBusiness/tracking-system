@@ -18,7 +18,7 @@ interface Link {
   slug: string
   clipper: {
     dashboardCode: string
-    name: string
+    discordUsername: string | null
   } | null
 }
 
