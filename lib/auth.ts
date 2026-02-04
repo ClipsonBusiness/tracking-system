@@ -83,7 +83,14 @@ export async function clearAdminAuth() {
   if (sessionToken) {
     activeSessions.delete(sessionToken)
   }
-  cookieStore.delete('admin_session')
+  // Delete cookie with same settings as when it was set
+  cookieStore.set('admin_session', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 0, // Expire immediately
+    path: '/admin',
+  })
 }
 
 const CAMPAIGN_MANAGER_PASSWORD = process.env.CAMPAIGN_MANAGER_PASSWORD || 'clipsonadmin'
