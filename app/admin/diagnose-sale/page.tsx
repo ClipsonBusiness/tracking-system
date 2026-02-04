@@ -127,7 +127,7 @@ export default async function DiagnoseSalePage({
               <div className="mt-4">
                 <h3 className="text-sm font-semibold text-white mb-2">All Links for This Clipper:</h3>
                 <div className="space-y-2">
-                  {allClipperLinks.map((l) => (
+                  {allClipperLinks.map((l: any) => (
                     <div key={l.id} className="text-sm text-gray-300 bg-gray-700/50 p-3 rounded">
                       <div className="flex items-center justify-between">
                         <span>
@@ -198,7 +198,7 @@ export default async function DiagnoseSalePage({
               <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
                 <h2 className="text-xl font-semibold text-white mb-4">Recent Clicks (Last 5)</h2>
                 <div className="space-y-2">
-                  {link.clicks.map((click, i) => (
+                  {link.clicks.map((click: any, i: number) => (
                     <div key={click.id} className="text-sm text-gray-300 bg-gray-700/50 p-3 rounded">
                       <div className="flex items-center justify-between">
                         <span>
@@ -219,7 +219,7 @@ export default async function DiagnoseSalePage({
               </h2>
               {linkConversions.length > 0 ? (
                 <div className="space-y-2">
-                  {linkConversions.map((conv, i) => (
+                  {linkConversions.map((conv: any, i: number) => (
                     <div key={conv.id} className="text-sm text-gray-300 bg-gray-700/50 p-3 rounded">
                       <div className="flex items-center justify-between">
                         <span>
@@ -244,7 +244,7 @@ export default async function DiagnoseSalePage({
               </h2>
               {recentConversions.length > 0 ? (
                 <div className="space-y-2">
-                  {recentConversions.map((conv, i) => (
+                  {recentConversions.map((conv: any, i: number) => (
                     <div
                       key={conv.id}
                       className={`text-sm p-3 rounded ${
@@ -291,7 +291,7 @@ export default async function DiagnoseSalePage({
               </h2>
               {recentEvents.length > 0 ? (
                 <div className="space-y-2">
-                  {recentEvents.map((event, i) => (
+                  {recentEvents.map((event: any, i: number) => (
                     <div key={event.id} className="text-sm text-gray-300 bg-gray-700/50 p-3 rounded">
                       <div className="flex items-center justify-between">
                         <span className="font-mono">{event.type}</span>
