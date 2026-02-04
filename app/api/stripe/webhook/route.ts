@@ -167,10 +167,18 @@ export async function POST(request: NextRequest) {
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('Checkout session completed:', session.id)
   
-  // Check for required ca_affiliate_id metadata (new standard)
-  const caAffiliateId = session.metadata?.ca_affiliate_id
-  if (!caAffiliateId) {
+  // Read ca_affiliate_id from checkout session metadata (primary method)
+  const affiliateId = session.metadata?.ca_affiliate_id
+  
+  if (!affiliateId) {
     console.warn(`⚠️ WARNING: Checkout session ${session.id} missing required ca_affiliate_id metadata. Sales will not be attributed.`)
+  } else {
+    console.log(`✅ Affiliate sale detected: affiliate_id="${affiliateId}", session_id="${session.id}"`)
+    
+    // Log the sale record (for debugging/monitoring)
+    const amount = session.amount_total || 0
+    const currency = session.currency || 'usd'
+    console.log(`📊 Affiliate Sale Record: { affiliate_id: "${affiliateId}", stripe_session_id: "${session.id}", amount: ${amount}, currency: "${currency.toUpperCase()}" }`)
   }
   
   // If affiliate code is in checkout session metadata, propagate it to customer and subscription

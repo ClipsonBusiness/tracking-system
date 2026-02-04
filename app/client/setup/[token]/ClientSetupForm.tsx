@@ -413,6 +413,11 @@ const session = await stripe.checkout.sessions.create({
       ca_affiliate_id: linkSlug || '', // Also add to subscription for recurring payments
     },
   },
+  payment_intent_data: {
+    metadata: {
+      ca_affiliate_id: linkSlug || '', // Optional: shows in PaymentIntent UI
+    },
+  },
 });`
                           navigator.clipboard.writeText(code)
                           alert('✅ Complete code copied to clipboard!')
@@ -444,6 +449,11 @@ const session = await stripe.checkout.sessions.create({
       ca_affiliate_id: linkSlug || '', // Also add to subscription for recurring payments
     },
   },
+  payment_intent_data: {
+    metadata: {
+      ca_affiliate_id: linkSlug || '', // Optional: shows in PaymentIntent UI
+    },
+  },
 });`}</code>
                       </pre>
                     </div>
@@ -463,6 +473,16 @@ app.post('/create-checkout', async (req, res) => {
     // ... your config ...
     metadata: {
       ca_affiliate_id: linkSlug || '',
+    },
+    subscription_data: {
+      metadata: {
+        ca_affiliate_id: linkSlug || '', // For recurring payments
+      },
+    },
+    payment_intent_data: {
+      metadata: {
+        ca_affiliate_id: linkSlug || '', // Optional: shows in PaymentIntent UI
+      },
     },
   });
   
