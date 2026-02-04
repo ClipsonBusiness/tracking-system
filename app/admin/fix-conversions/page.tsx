@@ -37,7 +37,7 @@ export default async function FixConversionsPage() {
         },
         include: {
           link: {
-            select: { slug: true, clipper: { select: { dashboardCode: true, name: true } } },
+            select: { slug: true, clipper: { select: { dashboardCode: true, discordUsername: true } } },
           },
         },
         orderBy: { ts: 'desc' },

@@ -113,7 +113,7 @@ export default function FixConversionsInterface({
                 <div className="space-y-1 text-sm text-gray-400">
                   <p>Link: <span className="text-white font-mono">{matchingClick.link.slug}</span></p>
                   <p>
-                    Clipper: {matchingClick.link.clipper?.name || 'N/A'} 
+                    Clipper: {matchingClick.link.clipper?.discordUsername || 'N/A'} 
                     {matchingClick.link.clipper?.dashboardCode && (
                       <span className="text-gray-500"> ({matchingClick.link.clipper.dashboardCode})</span>
                     )}
