@@ -63,21 +63,32 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Determine the correct URL format
+    // Determine the actual tracking link format (what clippers use)
     const trackingServerUrl = process.env.APP_BASE_URL || 'https://clipsonaffiliates.com'
     const customDomain = link.campaign?.customDomain || link.client.customDomain
 
-    let trackingUrl = ''
-    if (customDomain) {
-      trackingUrl = `https://${customDomain}/${linkSlug}`
-    } else {
-      trackingUrl = `${trackingServerUrl}/l/${linkSlug}`
+    // Clean custom domain
+    let cleanCustomDomain = customDomain
+    if (cleanCustomDomain) {
+      cleanCustomDomain = cleanCustomDomain.replace(/^https?:\/\//, '')
+      cleanCustomDomain = cleanCustomDomain.replace(/\/+$/, '')
+      cleanCustomDomain = cleanCustomDomain.replace(/^\/+/, '')
     }
 
-    // Alternative formats
+    // Primary tracking URL (the actual link clippers use - ?ref= format)
+    let actualTrackingUrl = ''
+    if (cleanCustomDomain) {
+      actualTrackingUrl = `https://${cleanCustomDomain}/?ref=${linkSlug}`
+    } else {
+      // Fallback to tracking server with ref= format
+      const cleanBaseUrl = trackingServerUrl.replace(/\/$/, '').replace(/\/l$/, '')
+      actualTrackingUrl = `${cleanBaseUrl}/?ref=${linkSlug}`
+    }
+
+    // Alternative formats (for reference)
     const alternativeUrls = [
+      cleanCustomDomain ? `https://${cleanCustomDomain}/${linkSlug}` : `${trackingServerUrl}/l/${linkSlug}`,
       `${trackingServerUrl}/track?ref=${linkSlug}`,
-      `${trackingServerUrl}/${linkSlug}`,
     ]
 
     return NextResponse.json({
@@ -98,14 +109,15 @@ export async function GET(request: NextRequest) {
           referer: c.referer || 'Direct',
         })),
       },
-      trackingUrl,
+      actualTrackingUrl, // The actual link format clippers use
+      trackingUrl: actualTrackingUrl, // Keep for backward compatibility
       alternativeUrls,
       diagnosis: {
         linkExists: true,
         hasClicks: totalClicks > 0,
         recentActivity: clicksLast24h > 0,
         message: totalClicks === 0
-          ? '⚠️ No clicks recorded for this link. Make sure you\'re using the correct URL format.'
+          ? `⚠️ No clicks recorded for this link. Make sure you're using: ${actualTrackingUrl}`
           : clicksLast24h === 0
           ? '⚠️ No clicks in the last 24 hours. The link may not be receiving traffic.'
           : '✅ Link is tracking clicks successfully.',

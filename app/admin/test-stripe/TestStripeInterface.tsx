@@ -353,17 +353,33 @@ export default function TestStripeInterface({
             )}
 
             <div className="bg-gray-700/50 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-white mb-2">Tracking URLs</h3>
-              <div className="space-y-2 text-xs">
-                <div>
-                  <p className="text-gray-400 mb-1">Primary URL:</p>
-                  <code className="block bg-gray-800 p-2 rounded text-green-400 break-all">{clickData.trackingUrl}</code>
+              <h3 className="text-sm font-semibold text-white mb-2">📎 Actual Tracking Link</h3>
+              <div className="space-y-3">
+                <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3">
+                  <p className="text-xs text-yellow-300 mb-2 font-semibold">🎯 This is the link clippers use:</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-sm text-yellow-400 bg-gray-900 p-2 rounded break-all font-mono">
+                      {clickData.actualTrackingUrl || clickData.trackingUrl}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(clickData.actualTrackingUrl || clickData.trackingUrl)
+                        alert('Link copied!')
+                      }}
+                      className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-sm font-medium whitespace-nowrap"
+                    >
+                      📋 Copy
+                    </button>
+                  </div>
+                  <p className="text-xs text-yellow-200 mt-2">
+                    💡 This is the exact link format that should be shared. When someone visits this URL, clicks will be tracked.
+                  </p>
                 </div>
-                {clickData.alternativeUrls.length > 0 && (
+                {clickData.alternativeUrls && clickData.alternativeUrls.length > 0 && (
                   <div>
-                    <p className="text-gray-400 mb-1">Alternative Formats:</p>
+                    <p className="text-xs text-gray-400 mb-1">Other formats (for reference):</p>
                     {clickData.alternativeUrls.map((url: string, i: number) => (
-                      <code key={i} className="block bg-gray-800 p-2 rounded text-blue-400 break-all mb-1">{url}</code>
+                      <code key={i} className="block bg-gray-800 p-2 rounded text-blue-400 break-all mb-1 text-xs">{url}</code>
                     ))}
                   </div>
                 )}
