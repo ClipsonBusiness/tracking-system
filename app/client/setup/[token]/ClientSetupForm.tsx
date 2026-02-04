@@ -159,126 +159,132 @@ export default function ClientSetupForm({
         </div>
       )}
 
-      {/* Custom Domain */}
-      <div>
-        <label htmlFor="customDomain" className="block text-sm font-medium text-gray-300 mb-2">
-          Your Custom Domain (Optional)
-        </label>
-        <input
-          id="customDomain"
-          type="text"
-          value={formData.customDomain}
-          onChange={(e) => setFormData({ ...formData, customDomain: e.target.value })}
-          placeholder="lowbackability.com"
-          className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <p className="text-xs text-gray-400 mt-1">
-          Your tracking links will use this domain (e.g., lowbackability.com/?ref=xxxxx). The script sets a cookie on your domain for Stripe checkout attribution.
-        </p>
-        <div className="mt-2 p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
-          <p className="text-xs text-blue-300 mb-2">
-            💡 <strong>Easier Alternative:</strong> Use a subdomain instead (no code needed!)
-          </p>
-          <p className="text-xs text-blue-200">
-            Instead of adding code, you can use <code className="bg-blue-900/50 px-1 rounded">links.lowbackability.com</code> and just add a DNS record. 
-            Contact us if you prefer this option - it&apos;s often easier than adding code!
+      {/* JavaScript Tracking Code - PROMINENT SECTION */}
+      <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 rounded-lg border-2 border-yellow-700 p-6 mb-6">
+        <div className="flex items-start gap-3 mb-4">
+          <span className="text-3xl">📝</span>
+          <div className="flex-1">
+            <h3 className="text-xl font-semibold text-yellow-300 mb-2">
+              Step 1: Add JavaScript Tracking Code to Your Website Header
+            </h3>
+            <p className="text-sm text-yellow-200 mb-4">
+              This code enables tracking links on your domain. <strong>Enter your domain below</strong> to generate the code, then copy and paste it into your website&apos;s <code className="bg-yellow-900/50 px-1 rounded">&lt;head&gt;</code> section.
+            </p>
+          </div>
+        </div>
+
+        {/* Domain Input */}
+        <div className="mb-4">
+          <label htmlFor="customDomain" className="block text-sm font-medium text-gray-300 mb-2">
+            Your Website Domain <span className="text-yellow-400">*</span>
+          </label>
+          <input
+            id="customDomain"
+            type="text"
+            value={formData.customDomain}
+            onChange={(e) => setFormData({ ...formData, customDomain: e.target.value })}
+            placeholder="freeclipping.com"
+            className="w-full px-4 py-2 bg-gray-700 border-2 border-yellow-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
+          />
+          <p className="text-xs text-gray-400 mt-2">
+            Enter your domain (e.g., freeclipping.com) to generate the tracking code below.
           </p>
         </div>
+
+        {/* JavaScript Code Display */}
+        {formData.customDomain && formData.customDomain.trim() ? (
+          <div className="bg-gray-900 rounded-lg p-4 mb-3 border-2 border-yellow-600">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-semibold text-yellow-300">
+                📋 Copy this code and paste it in your website&apos;s <code className="bg-gray-800 px-1 rounded">&lt;head&gt;</code>:
+              </label>
+              <button
+                type="button"
+                onClick={copyJsCode}
+                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded transition-colors"
+              >
+                {jsCopied ? '✓ Copied!' : '📋 Copy Code'}
+              </button>
+            </div>
+            <pre className="text-xs text-green-400 bg-gray-800 p-4 rounded overflow-x-auto border border-gray-700">
+              <code>{jsCode}</code>
+            </pre>
+            <p className="text-xs text-gray-400 mt-3">
+              💡 <strong>Where to add:</strong> Paste this code in your website&apos;s <code className="bg-gray-800 px-1 rounded">&lt;head&gt;</code> section (before <code className="bg-gray-800 px-1 rounded">&lt;/head&gt;</code>) or before <code className="bg-gray-800 px-1 rounded">&lt;/body&gt;</code>.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+            <p className="text-sm text-gray-400 text-center">
+              👆 <strong>Enter your domain above</strong> to generate the JavaScript tracking code
+            </p>
+          </div>
+        )}
+
+        {/* Platform Instructions - Show when domain is entered */}
         {formData.customDomain && formData.customDomain.trim() && (
-          <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
-            <div className="flex items-start gap-3 mb-3">
-              <span className="text-2xl">⚠️</span>
-              <div className="flex-1">
-                <h4 className="text-yellow-300 font-semibold mb-1">
-                  Important: Add JavaScript Code to Your Website
-                </h4>
-                <p className="text-sm text-yellow-200">
-                  For tracking to work on <code className="bg-yellow-900/50 px-1 rounded">{formData.customDomain}</code>, you need to add the code below to your website.
-                </p>
-              </div>
-            </div>
+          <div className="mt-4 text-xs text-yellow-200 space-y-3">
+            <p className="font-semibold text-base mb-2">📚 How to add (choose your platform):</p>
             
-            <div className="bg-gray-900 rounded-lg p-4 mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-medium text-gray-400">
-                  Copy this code and add it to your website&apos;s <code className="bg-gray-800 px-1 rounded">&lt;head&gt;</code> or before <code className="bg-gray-800 px-1 rounded">&lt;/body&gt;</code>:
-                </label>
-                <button
-                  type="button"
-                  onClick={copyJsCode}
-                  className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded transition-colors"
-                >
-                  {jsCopied ? '✓ Copied!' : '📋 Copy Code'}
-                </button>
-              </div>
-              <pre className="text-xs text-green-400 bg-gray-800 p-3 rounded overflow-x-auto">
-                <code>{jsCode}</code>
-              </pre>
+            {/* WordPress */}
+            <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
+              <p className="font-semibold mb-1">📝 WordPress (Easiest):</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Install <strong>WPCode</strong> plugin (free) or use <strong>Insert Headers and Footers</strong></li>
+                <li>Go to <code className="bg-yellow-900/50 px-1 rounded">WPCode → Code Snippets → Add New</code></li>
+                <li>Paste the code above</li>
+                <li>Set location to <code className="bg-yellow-900/50 px-1 rounded">Site Wide Header</code></li>
+                <li>Click <strong>Save Snippet</strong> and <strong>Activate</strong></li>
+                <li>Test: <code className="bg-yellow-900/50 px-1 rounded">{formData.customDomain}/?ref=test</code></li>
+              </ol>
             </div>
-            
-            <div className="text-xs text-yellow-200 space-y-3">
-              <p className="font-semibold text-base mb-2">How to add (choose your platform):</p>
-              
-              {/* WordPress */}
-              <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
-                <p className="font-semibold mb-1">📝 WordPress (Easiest):</p>
-                <ol className="list-decimal list-inside space-y-1 ml-2">
-                  <li>Install <strong>WPCode</strong> plugin (free) or use <strong>Insert Headers and Footers</strong></li>
-                  <li>Go to <code className="bg-yellow-900/50 px-1 rounded">WPCode → Code Snippets → Add New</code></li>
-                  <li>Paste the code above</li>
-                  <li>Set location to <code className="bg-yellow-900/50 px-1 rounded">Site Wide Header</code></li>
-                  <li>Click <strong>Save Snippet</strong> and <strong>Activate</strong></li>
-                  <li>Test: <code className="bg-yellow-900/50 px-1 rounded">{formData.customDomain}/?ref=test</code></li>
-                </ol>
-              </div>
 
-              {/* Squarespace */}
-              <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
-                <p className="font-semibold mb-1">🔷 Squarespace:</p>
-                <ol className="list-decimal list-inside space-y-1 ml-2">
-                  <li>Go to <code className="bg-yellow-900/50 px-1 rounded">Settings → Advanced → Code Injection</code></li>
-                  <li>Paste the code in the <strong>Header</strong> section</li>
-                  <li>Click <strong>Save</strong></li>
-                </ol>
-              </div>
+            {/* Squarespace */}
+            <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
+              <p className="font-semibold mb-1">🔷 Squarespace:</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Go to <code className="bg-yellow-900/50 px-1 rounded">Settings → Advanced → Code Injection</code></li>
+                <li>Paste the code in the <strong>Header</strong> section</li>
+                <li>Click <strong>Save</strong></li>
+              </ol>
+            </div>
 
-              {/* Wix */}
-              <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
-                <p className="font-semibold mb-1">🎨 Wix:</p>
-                <ol className="list-decimal list-inside space-y-1 ml-2">
-                  <li>Go to <code className="bg-yellow-900/50 px-1 rounded">Settings → Custom Code</code></li>
-                  <li>Click <strong>Add Code</strong> → <strong>Head</strong></li>
-                  <li>Paste the code and click <strong>Apply</strong></li>
-                </ol>
-              </div>
+            {/* Wix */}
+            <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
+              <p className="font-semibold mb-1">🎨 Wix:</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Go to <code className="bg-yellow-900/50 px-1 rounded">Settings → Custom Code</code></li>
+                <li>Click <strong>Add Code</strong> → <strong>Head</strong></li>
+                <li>Paste the code and click <strong>Apply</strong></li>
+              </ol>
+            </div>
 
-              {/* Shopify */}
-              <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
-                <p className="font-semibold mb-1">🛒 Shopify:</p>
-                <ol className="list-decimal list-inside space-y-1 ml-2">
-                  <li>Go to <code className="bg-yellow-900/50 px-1 rounded">Online Store → Themes → Actions → Edit Code</code></li>
-                  <li>Open <code className="bg-yellow-900/50 px-1 rounded">theme.liquid</code></li>
-                  <li>Paste code before <code className="bg-yellow-900/50 px-1 rounded">&lt;/head&gt;</code></li>
-                  <li>Click <strong>Save</strong></li>
-                </ol>
-              </div>
+            {/* Shopify */}
+            <div className="bg-yellow-900/30 rounded-lg p-3 mb-2">
+              <p className="font-semibold mb-1">🛒 Shopify:</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Go to <code className="bg-yellow-900/50 px-1 rounded">Online Store → Themes → Actions → Edit Code</code></li>
+                <li>Open <code className="bg-yellow-900/50 px-1 rounded">theme.liquid</code></li>
+                <li>Paste code before <code className="bg-yellow-900/50 px-1 rounded">&lt;/head&gt;</code></li>
+                <li>Click <strong>Save</strong></li>
+              </ol>
+            </div>
 
-              {/* Custom HTML */}
-              <div className="bg-yellow-900/30 rounded-lg p-3">
-                <p className="font-semibold mb-1">⚙️ Custom HTML/Other:</p>
-                <ol className="list-decimal list-inside space-y-1 ml-2">
-                  <li>Copy the code above</li>
-                  <li>Open your website&apos;s HTML file</li>
-                  <li>Paste it in the <code className="bg-yellow-900/50 px-1 rounded">&lt;head&gt;</code> section or before <code className="bg-yellow-900/50 px-1 rounded">&lt;/body&gt;</code></li>
-                  <li>Save and publish</li>
-                </ol>
-              </div>
+            {/* Custom HTML */}
+            <div className="bg-yellow-900/30 rounded-lg p-3">
+              <p className="font-semibold mb-1">⚙️ Custom HTML/Other:</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Copy the code above</li>
+                <li>Open your website&apos;s HTML file</li>
+                <li>Paste it in the <code className="bg-yellow-900/50 px-1 rounded">&lt;head&gt;</code> section or before <code className="bg-yellow-900/50 px-1 rounded">&lt;/body&gt;</code></li>
+                <li>Save and publish</li>
+              </ol>
+            </div>
 
-              <div className="mt-3 p-2 bg-green-900/30 rounded border border-green-700">
-                <p className="text-green-300 text-xs">
-                  ✅ <strong>Cookie-Based Tracking:</strong> This script sets a cookie on your domain when <code className="bg-green-900/50 px-1 rounded">?ref=</code> is present. Users stay on your site (no redirect), and the cookie is available for Stripe checkout attribution.
-                </p>
-              </div>
+            <div className="mt-3 p-2 bg-green-900/30 rounded border border-green-700">
+              <p className="text-green-300 text-xs">
+                ✅ <strong>Cookie-Based Tracking:</strong> This script sets a cookie on your domain when <code className="bg-green-900/50 px-1 rounded">?ref=</code> is present. Users stay on your site (no redirect), and the cookie is available for Stripe checkout attribution.
+              </p>
             </div>
           </div>
         )}
