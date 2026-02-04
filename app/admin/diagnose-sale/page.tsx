@@ -24,7 +24,7 @@ export default async function DiagnoseSalePage({
           select: { id: true, name: true, stripeWebhookSecret: true },
         },
         clipper: {
-          select: { name: true, dashboardCode: true },
+          select: { discordUsername: true, dashboardCode: true },
         },
         clicks: {
           orderBy: { ts: 'desc' },
@@ -177,7 +177,7 @@ export default async function DiagnoseSalePage({
                 <p>
                   <span className="text-gray-400">Clipper:</span>{' '}
                   <span className="text-white">
-                    {link.clipper?.name || 'N/A'} ({link.clipper?.dashboardCode || 'N/A'})
+                    {link.clipper?.discordUsername || 'N/A'} ({link.clipper?.dashboardCode || 'N/A'})
                   </span>
                 </p>
                 <p>
