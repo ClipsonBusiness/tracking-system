@@ -167,8 +167,15 @@ export async function POST(request: NextRequest) {
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('Checkout session completed:', session.id)
   
+  // Check for required ca_affiliate_id metadata (new standard)
+  const caAffiliateId = session.metadata?.ca_affiliate_id
+  if (!caAffiliateId) {
+    console.warn(`⚠️ WARNING: Checkout session ${session.id} missing required ca_affiliate_id metadata. Sales will not be attributed.`)
+  }
+  
   // If affiliate code is in checkout session metadata, propagate it to customer and subscription
-  const affiliateCode = session.metadata?.affiliate_code
+  // Support both old (affiliate_code) and new (ca_affiliate_id) formats
+  const affiliateCode = session.metadata?.ca_affiliate_id || session.metadata?.affiliate_code
   
   if (affiliateCode) {
     // Update customer metadata if customer exists
@@ -217,11 +224,18 @@ async function handleInvoicePaid(
   }
 
   // Extract affiliate code from metadata
+  // Check for new standard (ca_affiliate_id) first, then fallback to old (affiliate_code)
   let affiliateCode: string | null = null
+  let hasRequiredMetadata = false
 
-  // Try invoice metadata first
-  if (invoice.metadata?.affiliate_code) {
+  // Try invoice metadata first - check for new standard
+  if (invoice.metadata?.ca_affiliate_id) {
+    affiliateCode = invoice.metadata.ca_affiliate_id
+    hasRequiredMetadata = true
+  } else if (invoice.metadata?.affiliate_code) {
     affiliateCode = invoice.metadata.affiliate_code
+    // Old format - log warning
+    console.warn(`⚠️ Invoice ${invoice.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
   }
 
   // Try subscription metadata
@@ -233,8 +247,12 @@ async function handleInvoicePaid(
 
     try {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-      if (subscription.metadata?.affiliate_code) {
+      if (subscription.metadata?.ca_affiliate_id) {
+        affiliateCode = subscription.metadata.ca_affiliate_id
+        hasRequiredMetadata = true
+      } else if (subscription.metadata?.affiliate_code) {
         affiliateCode = subscription.metadata.affiliate_code
+        console.warn(`⚠️ Subscription ${subscriptionId} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
       }
       
       // If still no affiliate code, check the subscription's latest invoice's checkout session
@@ -253,8 +271,13 @@ async function handleInvoicePaid(
             
             if (checkoutSessions.data.length > 0) {
               const session = checkoutSessions.data[0]
-              if (session.metadata?.affiliate_code) {
+              if (session.metadata?.ca_affiliate_id) {
+                affiliateCode = session.metadata.ca_affiliate_id
+                hasRequiredMetadata = true
+              } else if (session.metadata?.affiliate_code) {
                 affiliateCode = session.metadata.affiliate_code
+                console.warn(`⚠️ Checkout session ${session.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
+              }
                 // Update subscription with the affiliate code for future invoices
                 try {
                   await stripe.subscriptions.update(subscriptionId, {
@@ -281,12 +304,23 @@ async function handleInvoicePaid(
   if (!affiliateCode) {
     try {
       const customer = await stripe.customers.retrieve(invoice.customer)
-      if (!customer.deleted && customer.metadata?.affiliate_code) {
-        affiliateCode = customer.metadata.affiliate_code
+      if (!customer.deleted) {
+        if (customer.metadata?.ca_affiliate_id) {
+          affiliateCode = customer.metadata.ca_affiliate_id
+          hasRequiredMetadata = true
+        } else if (customer.metadata?.affiliate_code) {
+          affiliateCode = customer.metadata.affiliate_code
+          console.warn(`⚠️ Customer ${invoice.customer} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
+        }
       }
     } catch (err) {
       console.error('Error retrieving customer:', err)
     }
+  }
+
+  // Log warning if required metadata is missing
+  if (!hasRequiredMetadata && !affiliateCode) {
+    console.warn(`❌ WARNING: Invoice ${invoice.id} missing required ca_affiliate_id metadata. Sale will be recorded as unattributed.`)
   }
 
   // Get client - use the one found from webhook verification above, or find by account ID
@@ -390,8 +424,11 @@ async function handleInvoicePaid(
   let linkId: string | null = null
   
   // First, try to get link slug from metadata (if client passes it in checkout)
+  // Support both ca_affiliate_id (new standard) and link_slug (legacy)
   let linkSlug: string | null = null
-  if (invoice.metadata?.link_slug) {
+  if (invoice.metadata?.ca_affiliate_id) {
+    linkSlug = invoice.metadata.ca_affiliate_id
+  } else if (invoice.metadata?.link_slug) {
     linkSlug = invoice.metadata.link_slug
   } else if (invoice.subscription) {
     const subscriptionId =
@@ -402,7 +439,9 @@ async function handleInvoicePaid(
     if (subscriptionId) {
       try {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-        if (subscription.metadata?.link_slug) {
+        if (subscription.metadata?.ca_affiliate_id) {
+          linkSlug = subscription.metadata.ca_affiliate_id
+        } else if (subscription.metadata?.link_slug) {
           linkSlug = subscription.metadata.link_slug
         }
       } catch (err) {
@@ -519,7 +558,8 @@ async function handleInvoicePaid(
     })
     
     const linkStatus = linkId ? `✅ with link ${linkId}` : linkSlug ? `⚠️ link_slug found (${linkSlug}) but link not found in DB` : '❌ NO LINK ATTRIBUTED'
-    console.log(`✅ Conversion ${conversion.id} created/updated for invoice ${invoiceId} - ${linkStatus}`)
+    const metadataStatus = hasRequiredMetadata ? '✅' : '❌ MISSING ca_affiliate_id metadata'
+    console.log(`✅ Conversion ${conversion.id} created/updated for invoice ${invoiceId} - ${linkStatus} - ${metadataStatus}`)
     
     // If conversion was created without linkId, try to fix it immediately
     if (!linkId && conversion.linkId === null) {

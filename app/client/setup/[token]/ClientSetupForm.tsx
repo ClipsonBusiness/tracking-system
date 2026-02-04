@@ -38,6 +38,8 @@ export default function ClientSetupForm({
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [jsCopied, setJsCopied] = useState(false)
+  const [metadataConfirmed, setMetadataConfirmed] = useState(false)
+  const [activeTab, setActiveTab] = useState<'checkout' | 'paymentintent'>('checkout')
   
   // Get tracking server URL - use appBaseUrl from server for consistency
   const trackingServerUrl = appBaseUrl || (typeof window !== 'undefined' 
@@ -98,6 +100,13 @@ export default function ClientSetupForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    
+    // Require metadata confirmation if webhook secret is provided
+    if (formData.stripeWebhookSecret.trim() && !metadataConfirmed) {
+      setError('Please confirm that your Stripe checkout passes affiliate metadata')
+      return
+    }
+    
     setLoading(true)
     setError('')
     setSuccess(false)
@@ -291,6 +300,12 @@ export default function ClientSetupForm({
         <p className="text-xs text-gray-400 mt-1">
           Get this from your Stripe Dashboard → Webhooks → Your webhook → Signing secret
         </p>
+        <div className="mt-2 p-3 bg-yellow-900/20 border border-yellow-700 rounded text-xs text-yellow-200">
+          <p className="font-semibold mb-1">⚠️ Important:</p>
+          <p className="mb-2">
+            Adding a webhook alone is <strong>not sufficient</strong> for sales tracking. You must also pass affiliate metadata in your Stripe checkout (see section below).
+          </p>
+        </div>
         <div className="mt-2 p-3 bg-gray-700/50 rounded text-xs text-gray-300">
           <p className="font-semibold mb-1">How to get your Stripe Webhook Secret:</p>
           <ol className="list-decimal list-inside space-y-1 ml-2">
@@ -304,6 +319,128 @@ export default function ClientSetupForm({
           </ol>
         </div>
       </div>
+
+      {/* Stripe Checkout Integration Section */}
+      {formData.stripeWebhookSecret.trim() && (
+        <div className="bg-red-900/20 border-2 border-red-700 rounded-lg p-6">
+          <div className="flex items-start gap-3 mb-4">
+            <span className="text-3xl">🔴</span>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-300 mb-2">
+                Stripe Checkout Integration (Required for Sales Tracking)
+              </h3>
+              <p className="text-sm text-red-200 mb-4">
+                To track affiliate sales, your Stripe checkout <strong>must</strong> pass the affiliate ID into Stripe as metadata. Adding a webhook alone is not enough.
+              </p>
+            </div>
+          </div>
+
+          {/* Required Metadata Keys */}
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-white mb-2">Required Metadata Key:</p>
+            <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+              <pre className="text-xs text-green-400 overflow-x-auto">
+                <code>{`{
+  "ca_affiliate_id": "<affiliate_id>"
+}`}</code>
+              </pre>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              This value must be attached to every Stripe Checkout Session or PaymentIntent.
+            </p>
+          </div>
+
+          {/* Code Examples Tabs */}
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-white mb-3">How to Add Metadata:</p>
+            
+            {/* Tab Buttons */}
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setActiveTab('checkout')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'checkout'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                Stripe Checkout Sessions
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('paymentintent')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'paymentintent'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                Payment Intents
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+              {activeTab === 'checkout' ? (
+                <div>
+                  <p className="text-xs text-gray-400 mb-2">Example for Stripe Checkout Sessions:</p>
+                  <pre className="text-xs text-green-400 overflow-x-auto">
+                    <code>{`stripe.checkout.sessions.create({
+  // ... your existing checkout config ...
+  metadata: {
+    ca_affiliate_id: affiliateId  // Read from cookie: link_slug
+  }
+});`}</code>
+                  </pre>
+                  <p className="text-xs text-gray-400 mt-2">
+                    💡 <strong>Tip:</strong> Read the <code className="bg-gray-800 px-1 rounded">link_slug</code> cookie (set by the tracking script) and pass it as <code className="bg-gray-800 px-1 rounded">ca_affiliate_id</code>.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-xs text-gray-400 mb-2">Example for Payment Intents:</p>
+                  <pre className="text-xs text-green-400 overflow-x-auto">
+                    <code>{`stripe.paymentIntents.create({
+  // ... your existing payment config ...
+  metadata: {
+    ca_affiliate_id: affiliateId  // Read from cookie: link_slug
+  }
+});`}</code>
+                  </pre>
+                  <p className="text-xs text-gray-400 mt-2">
+                    💡 <strong>Tip:</strong> Read the <code className="bg-gray-800 px-1 rounded">link_slug</code> cookie (set by the tracking script) and pass it as <code className="bg-gray-800 px-1 rounded">ca_affiliate_id</code>.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Warning about Payment Links */}
+          <div className="mb-4 p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg">
+            <p className="text-xs text-yellow-200">
+              ❌ <strong>Not Supported:</strong> Stripe Payment Links and dashboard-created payments are not supported. You must use Stripe Checkout Sessions or Payment Intents with metadata.
+            </p>
+          </div>
+
+          {/* Confirmation Checkbox */}
+          <div className="flex items-start gap-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+            <input
+              type="checkbox"
+              id="metadataConfirmed"
+              checked={metadataConfirmed}
+              onChange={(e) => setMetadataConfirmed(e.target.checked)}
+              className="mt-1 w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="metadataConfirmed" className="flex-1 text-sm text-white cursor-pointer">
+              <span className="font-semibold">I confirm that my Stripe checkout passes the affiliate ID as metadata</span>
+              <span className="block text-xs text-gray-400 mt-1">
+                I understand that sales will not be tracked without this metadata, even if the webhook is configured.
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
 
       {/* Stripe Account ID (Optional) */}
       <div>
@@ -332,21 +469,31 @@ export default function ClientSetupForm({
       <div className="flex gap-3 pt-4">
         <button
           type="submit"
-          disabled={loading || success}
+          disabled={loading || success || (formData.stripeWebhookSecret.trim() && !metadataConfirmed)}
           className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Saving...' : 'Complete Setup'}
         </button>
       </div>
+      {formData.stripeWebhookSecret.trim() && !metadataConfirmed && (
+        <p className="text-xs text-red-400 mt-2">
+          ⚠️ Please confirm that your Stripe checkout passes affiliate metadata to complete setup.
+        </p>
+      )}
 
       <div className="mt-6 p-4 bg-gray-700/30 rounded-lg border border-gray-600">
         <h4 className="text-white font-semibold mb-2">What happens next?</h4>
         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside">
           <li>Your tracking links will be ready to use</li>
           <li>Link clicks will be automatically tracked</li>
-          <li>Sales from Stripe will be tracked and attributed to clippers</li>
+          <li>Sales from Stripe will be tracked and attributed to clippers <strong>only if</strong> your checkout passes <code className="bg-gray-800 px-1 rounded">ca_affiliate_id</code> metadata</li>
           <li>You&apos;ll have access to your dashboard with analytics</li>
         </ul>
+        <div className="mt-3 p-3 bg-yellow-900/20 border border-yellow-700 rounded">
+          <p className="text-xs text-yellow-200">
+            ⚠️ <strong>Remember:</strong> Sales tracking requires Stripe checkout metadata. Webhooks alone are not sufficient.
+          </p>
+        </div>
       </div>
     </form>
   )
