@@ -45,25 +45,43 @@ export default function ClientSetupForm({
     : 'https://clipsonaffiliates.com')
   
   // Generate JavaScript code when custom domain is entered
-  // SAFE VERSION: Only redirects when ?ref= parameter is present
+  // COOKIE-BASED VERSION: Sets cookie on client domain (Stripe-compatible)
   const generateJsCode = (domain: string) => {
     if (!domain || !domain.trim()) return ''
     const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/^\/+/, '')
-    return `<!-- Clipson Tracking Redirect (SAFE: only redirects when ?ref= is present) -->
+    return `<!-- Clipson Affiliate Tracking (Cookie-Based - Stripe Compatible) -->
 <script>
 (function() {
-  if (window.location.hostname !== '${cleanDomain}' &&
-      window.location.hostname !== 'www.${cleanDomain}') {
-    return;
-  }
+  // Only run on the client's domain
+  const hostname = window.location.hostname;
+  const domainMatch = hostname === '${cleanDomain}' || hostname === 'www.${cleanDomain}';
+  if (!domainMatch) return;
 
+  // Check for ?ref= parameter
   const urlParams = new URLSearchParams(window.location.search);
   const refParam = urlParams.get('ref');
-
+  
   if (!refParam) return;
 
-  const trackingUrl = '${trackingServerUrl}/?ref=' + encodeURIComponent(refParam);
-  window.location.replace(trackingUrl);
+  // Set cookie on client's domain (90 days expiry)
+  // This cookie will be available when user reaches Stripe checkout
+  const expiryDays = 90;
+  const expiryDate = new Date();
+  expiryDate.setTime(expiryDate.getTime() + (expiryDays * 24 * 60 * 60 * 1000));
+  document.cookie = 'link_slug=' + encodeURIComponent(refParam) + 
+    '; expires=' + expiryDate.toUTCString() + 
+    '; path=/' + 
+    '; SameSite=Lax' + 
+    (location.protocol === 'https:' ? '; Secure' : '');
+
+  // Optionally record click on tracking server (non-blocking)
+  // This helps with analytics but isn't required for attribution
+  try {
+    navigator.sendBeacon('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam));
+  } catch(e) {
+    // Fallback if sendBeacon not supported
+    fetch('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam), { method: 'GET', keepalive: true }).catch(() => {});
+  }
 })();
 </script>`
   }
@@ -145,7 +163,7 @@ export default function ClientSetupForm({
           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="text-xs text-gray-400 mt-1">
-          Your tracking links will use this domain (e.g., lowbackability.com/?ref=xxxxx)
+          Your tracking links will use this domain (e.g., lowbackability.com/?ref=xxxxx). The script sets a cookie on your domain for Stripe checkout attribution.
         </p>
         <div className="mt-2 p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
           <p className="text-xs text-blue-300 mb-2">
@@ -248,7 +266,7 @@ export default function ClientSetupForm({
 
               <div className="mt-3 p-2 bg-green-900/30 rounded border border-green-700">
                 <p className="text-green-300 text-xs">
-                  ✅ <strong>Safe:</strong> This script only redirects when <code className="bg-green-900/50 px-1 rounded">?ref=</code> is present. Your normal pages won&apos;t be affected.
+                  ✅ <strong>Cookie-Based Tracking:</strong> This script sets a cookie on your domain when <code className="bg-green-900/50 px-1 rounded">?ref=</code> is present. Users stay on your site (no redirect), and the cookie is available for Stripe checkout attribution.
                 </p>
               </div>
             </div>
