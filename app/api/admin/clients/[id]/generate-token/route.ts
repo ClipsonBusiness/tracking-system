@@ -41,6 +41,7 @@ export async function POST(
       token,
       dashboardUrl: `${baseUrl}/client/dashboard?token=${token}`,
       getStartedUrl: `${baseUrl}/client/get-started?token=${token}`,
+      setupUrl: `${baseUrl}/client/setup/${token}`,
     })
   } catch (error: any) {
     return NextResponse.json(

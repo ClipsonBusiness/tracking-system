@@ -22,7 +22,7 @@ export default function ClientEditForm({ client }: { client: Client }) {
   const [success, setSuccess] = useState('')
   const [generatingToken, setGeneratingToken] = useState(false)
   const [clientToken, setClientToken] = useState<string | null>(null)
-  const [tokenUrls, setTokenUrls] = useState<{ dashboardUrl: string; getStartedUrl: string } | null>(null)
+  const [tokenUrls, setTokenUrls] = useState<{ dashboardUrl: string; getStartedUrl: string; setupUrl: string } | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -72,10 +72,11 @@ export default function ClientEditForm({ client }: { client: Client }) {
       if (res.ok) {
         const data = await res.json()
         setClientToken(data.token)
-        setTokenUrls({
-          dashboardUrl: data.dashboardUrl,
-          getStartedUrl: data.getStartedUrl,
-        })
+          setTokenUrls({
+            dashboardUrl: data.dashboardUrl,
+            getStartedUrl: data.getStartedUrl,
+            setupUrl: data.setupUrl || `${window.location.origin}/client/setup/${data.token}`,
+          })
       } else {
         const data = await res.json()
         setError(data.error || 'Failed to generate token')
@@ -202,11 +203,35 @@ export default function ClientEditForm({ client }: { client: Client }) {
                         </button>
                       </div>
                     </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-yellow-400 mb-1">
+                        Setup URL (for JavaScript code):
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-sm text-yellow-400 bg-gray-900 px-3 py-2 rounded break-all">
+                          {tokenUrls.setupUrl}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(tokenUrls.setupUrl)
+                            alert('Setup URL copied!')
+                          }}
+                          className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-sm"
+                        >
+                          📋 Copy
+                        </button>
+                      </div>
+                      <p className="text-xs text-yellow-300 mt-1">
+                        ⚠️ Use this URL to access the setup form where you can get the JavaScript tracking code to add to your website.
+                      </p>
+                    </div>
                   </>
                 )}
 
                 <p className="text-xs text-gray-400 mt-3">
-                  💡 <strong>Send these URLs to your client.</strong> They can use the Dashboard URL to access their portal, or the Get Started URL for step-by-step setup.
+                  💡 <strong>Send these URLs to your client.</strong> They can use the Dashboard URL to access their portal, the Get Started URL for step-by-step setup, or the Setup URL to get the JavaScript tracking code.
                 </p>
               </div>
             </div>
