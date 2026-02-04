@@ -10,9 +10,8 @@ export async function GET(request: NextRequest) {
     const clipperCode = searchParams.get('clipperCode') || 'mflp'
     const linkSlug = searchParams.get('linkSlug')
 
-    // Find clipper
-    const clipper = await prisma.clipper.findFirst({
-      where: { dashboardCode: clipperCode.toUpperCase() },
+    // Find clipper (case-insensitive matching for SQLite compatibility)
+    const allClippers = await prisma.clipper.findMany({
       include: {
         links: {
           include: {
@@ -28,6 +27,10 @@ export async function GET(request: NextRequest) {
         },
       },
     })
+
+    const clipper = allClippers.find(
+      c => c.dashboardCode.toUpperCase() === clipperCode.toUpperCase()
+    )
 
     if (!clipper) {
       return NextResponse.json({ error: 'Clipper not found' }, { status: 404 })
