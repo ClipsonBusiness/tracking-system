@@ -62,7 +62,7 @@ export default async function FixConversionsPage() {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-8">Fix Orphan Conversions</h1>
         <p className="text-gray-400 mb-6">
-          These conversions don't have a link attributed. They can be matched to the most recent click before purchase.
+          These conversions don&apos;t have a link attributed. They can be matched to the most recent click before purchase.
         </p>
 
         <FixConversionsInterface conversionsWithMatches={conversionsWithMatches} />
