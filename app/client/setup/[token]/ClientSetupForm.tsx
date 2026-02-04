@@ -383,36 +383,180 @@ export default function ClientSetupForm({
             {/* Tab Content */}
             <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
               {activeTab === 'checkout' ? (
-                <div>
-                  <p className="text-xs text-gray-400 mb-2">Example for Stripe Checkout Sessions:</p>
-                  <pre className="text-xs text-green-400 overflow-x-auto">
-                    <code>{`stripe.checkout.sessions.create({
-  // ... your existing checkout config ...
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs font-semibold text-white mb-2">✅ Complete Ready-to-Use Code:</p>
+                    <p className="text-xs text-gray-400 mb-3">Copy this entire code block and add it to your checkout page:</p>
+                    <div className="bg-gray-800 rounded p-3 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const code = `// Helper function to read cookies
+function getCookie(name) {
+  const value = \`; \${document.cookie}\`;
+  const parts = value.split(\`; \${name}=\`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+// Read the affiliate link slug from cookie (set by tracking script)
+const linkSlug = getCookie('link_slug');
+
+// When creating Stripe Checkout Session, include metadata:
+const session = await stripe.checkout.sessions.create({
+  // ... your existing checkout config (line_items, mode, success_url, etc.) ...
   metadata: {
-    ca_affiliate_id: affiliateId  // Read from cookie: link_slug
-  }
+    ca_affiliate_id: linkSlug || '', // Pass the link slug to Stripe
+  },
+  subscription_data: {
+    metadata: {
+      ca_affiliate_id: linkSlug || '', // Also add to subscription for recurring payments
+    },
+  },
+});`
+                          navigator.clipboard.writeText(code)
+                          alert('✅ Complete code copied to clipboard!')
+                        }}
+                        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors mb-2"
+                      >
+                        📋 Copy Complete Code
+                      </button>
+                      <pre className="text-xs text-green-400 overflow-x-auto whitespace-pre-wrap">
+                        <code>{`// Helper function to read cookies
+function getCookie(name) {
+  const value = \`; \${document.cookie}\`;
+  const parts = value.split(\`; \${name}=\`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+// Read the affiliate link slug from cookie (set by tracking script)
+const linkSlug = getCookie('link_slug');
+
+// When creating Stripe Checkout Session, include metadata:
+const session = await stripe.checkout.sessions.create({
+  // ... your existing checkout config (line_items, mode, success_url, etc.) ...
+  metadata: {
+    ca_affiliate_id: linkSlug || '', // Pass the link slug to Stripe
+  },
+  subscription_data: {
+    metadata: {
+      ca_affiliate_id: linkSlug || '', // Also add to subscription for recurring payments
+    },
+  },
 });`}</code>
-                  </pre>
-                  <p className="text-xs text-gray-400 mt-2">
-                    💡 <strong>Tip:</strong> Read the <code className="bg-gray-800 px-1 rounded">link_slug</code> cookie (set by the tracking script) and pass it as <code className="bg-gray-800 px-1 rounded">ca_affiliate_id</code>.
-                  </p>
+                      </pre>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-900/20 border border-blue-700 rounded p-3">
+                    <p className="text-xs font-semibold text-blue-300 mb-1">📝 Server-Side Example (Node.js/Express):</p>
+                    <pre className="text-xs text-blue-400 overflow-x-auto whitespace-pre-wrap">
+                      <code>{`// If checkout is created server-side, read cookie from request
+app.post('/create-checkout', async (req, res) => {
+  const linkSlug = req.cookies?.link_slug || req.headers.cookie
+    ?.split('; ')
+    ?.find(row => row.startsWith('link_slug='))
+    ?.split('=')[1] || null;
+
+  const session = await stripe.checkout.sessions.create({
+    // ... your config ...
+    metadata: {
+      ca_affiliate_id: linkSlug || '',
+    },
+  });
+  
+  res.json({ sessionId: session.id });
+});`}</code>
+                    </pre>
+                  </div>
                 </div>
               ) : (
-                <div>
-                  <p className="text-xs text-gray-400 mb-2">Example for Payment Intents:</p>
-                  <pre className="text-xs text-green-400 overflow-x-auto">
-                    <code>{`stripe.paymentIntents.create({
-  // ... your existing payment config ...
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs font-semibold text-white mb-2">✅ Complete Ready-to-Use Code:</p>
+                    <p className="text-xs text-gray-400 mb-3">Copy this entire code block and add it to your payment page:</p>
+                    <div className="bg-gray-800 rounded p-3 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const code = `// Helper function to read cookies
+function getCookie(name) {
+  const value = \`; \${document.cookie}\`;
+  const parts = value.split(\`; \${name}=\`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+// Read the affiliate link slug from cookie (set by tracking script)
+const linkSlug = getCookie('link_slug');
+
+// When creating Payment Intent, include metadata:
+const paymentIntent = await stripe.paymentIntents.create({
+  // ... your existing payment config (amount, currency, etc.) ...
   metadata: {
-    ca_affiliate_id: affiliateId  // Read from cookie: link_slug
-  }
+    ca_affiliate_id: linkSlug || '', // Pass the link slug to Stripe
+  },
+});`
+                          navigator.clipboard.writeText(code)
+                          alert('✅ Complete code copied to clipboard!')
+                        }}
+                        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors mb-2"
+                      >
+                        📋 Copy Complete Code
+                      </button>
+                      <pre className="text-xs text-green-400 overflow-x-auto whitespace-pre-wrap">
+                        <code>{`// Helper function to read cookies
+function getCookie(name) {
+  const value = \`; \${document.cookie}\`;
+  const parts = value.split(\`; \${name}=\`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+// Read the affiliate link slug from cookie (set by tracking script)
+const linkSlug = getCookie('link_slug');
+
+// When creating Payment Intent, include metadata:
+const paymentIntent = await stripe.paymentIntents.create({
+  // ... your existing payment config (amount, currency, etc.) ...
+  metadata: {
+    ca_affiliate_id: linkSlug || '', // Pass the link slug to Stripe
+  },
 });`}</code>
-                  </pre>
-                  <p className="text-xs text-gray-400 mt-2">
-                    💡 <strong>Tip:</strong> Read the <code className="bg-gray-800 px-1 rounded">link_slug</code> cookie (set by the tracking script) and pass it as <code className="bg-gray-800 px-1 rounded">ca_affiliate_id</code>.
-                  </p>
+                      </pre>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-900/20 border border-blue-700 rounded p-3">
+                    <p className="text-xs font-semibold text-blue-300 mb-1">📝 Server-Side Example (Node.js/Express):</p>
+                    <pre className="text-xs text-blue-400 overflow-x-auto whitespace-pre-wrap">
+                      <code>{`// If payment is created server-side, read cookie from request
+app.post('/create-payment', async (req, res) => {
+  const linkSlug = req.cookies?.link_slug || req.headers.cookie
+    ?.split('; ')
+    ?.find(row => row.startsWith('link_slug='))
+    ?.split('=')[1] || null;
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    // ... your config ...
+    metadata: {
+      ca_affiliate_id: linkSlug || '',
+    },
+  });
+  
+  res.json({ clientSecret: paymentIntent.client_secret });
+});`}</code>
+                    </pre>
+                  </div>
                 </div>
               )}
+              
+              <div className="mt-4 p-3 bg-green-900/20 border border-green-700 rounded">
+                <p className="text-xs text-green-300">
+                  ✅ <strong>That&apos;s it!</strong> Just copy the code above, paste it into your checkout/payment code, and sales will be automatically tracked. The cookie is already set by the tracking script you added to your website.
+                </p>
+              </div>
             </div>
           </div>
 
