@@ -263,6 +263,116 @@ export default function TestStripeInterface({
         )}
       </div>
 
+      {/* Check Click Tracking */}
+      <div className="bg-gradient-to-r from-green-900/30 to-teal-900/30 rounded-lg border-2 border-green-700 p-6 shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">🖱️</span>
+          <h2 className="text-2xl font-bold text-white">Check Click Tracking</h2>
+        </div>
+        <p className="text-sm text-gray-300 mb-4">
+          Verify if a tracking link is recording clicks. Enter the link slug below.
+        </p>
+        <div className="flex gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-sm text-gray-400 mb-2">Link Slug</label>
+            <input
+              type="text"
+              value={linkSlugInput}
+              onChange={(e) => setLinkSlugInput(e.target.value)}
+              placeholder="pynhl"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  checkClicks()
+                }
+              }}
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
+            />
+          </div>
+          <button
+            onClick={checkClicks}
+            disabled={loadingClicks}
+            className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+          >
+            {loadingClicks ? 'Checking...' : 'Check Clicks'}
+          </button>
+        </div>
+
+        {clickData && (
+          <div className="mt-6 space-y-4">
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-white mb-2">Link Information</h3>
+              <div className="space-y-1 text-xs text-gray-300">
+                <p><span className="text-gray-400">Slug:</span> <code className="text-green-400">{clickData.link.slug}</code></p>
+                <p><span className="text-gray-400">Client:</span> {clickData.link.client}</p>
+                <p><span className="text-gray-400">Clipper:</span> {clickData.link.clipper}</p>
+                <p><span className="text-gray-400">Campaign:</span> {clickData.link.campaign}</p>
+                <p><span className="text-gray-400">Destination:</span> <a href={clickData.link.destinationUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{clickData.link.destinationUrl}</a></p>
+              </div>
+            </div>
+
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-white mb-2">Click Statistics</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-400">Total Clicks</p>
+                  <p className="text-2xl font-bold text-white">{clickData.clicks.total}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Last 24 Hours</p>
+                  <p className="text-2xl font-bold text-white">{clickData.clicks.last24h}</p>
+                </div>
+              </div>
+              <div className={`mt-3 p-3 rounded-lg ${
+                clickData.diagnosis.hasClicks 
+                  ? 'bg-green-900/20 border border-green-700' 
+                  : 'bg-yellow-900/20 border border-yellow-700'
+              }`}>
+                <p className={`text-sm ${clickData.diagnosis.hasClicks ? 'text-green-300' : 'text-yellow-300'}`}>
+                  {clickData.diagnosis.message}
+                </p>
+              </div>
+            </div>
+
+            {clickData.clicks.recent.length > 0 && (
+              <div className="bg-gray-700/50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-white mb-2">Recent Clicks (Last 10)</h3>
+                <div className="space-y-2">
+                  {clickData.clicks.recent.map((click: any, i: number) => (
+                    <div key={i} className="text-xs text-gray-300 bg-gray-800/50 p-2 rounded">
+                      <div className="flex items-center justify-between">
+                        <span>{new Date(click.timestamp).toLocaleString()}</span>
+                        <span className="text-gray-500">{click.country} {click.city ? `- ${click.city}` : ''}</span>
+                      </div>
+                      {click.referer && click.referer !== 'Direct' && (
+                        <p className="text-gray-500 text-xs mt-1">From: {click.referer}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-white mb-2">Tracking URLs</h3>
+              <div className="space-y-2 text-xs">
+                <div>
+                  <p className="text-gray-400 mb-1">Primary URL:</p>
+                  <code className="block bg-gray-800 p-2 rounded text-green-400 break-all">{clickData.trackingUrl}</code>
+                </div>
+                {clickData.alternativeUrls.length > 0 && (
+                  <div>
+                    <p className="text-gray-400 mb-1">Alternative Formats:</p>
+                    {clickData.alternativeUrls.map((url: string, i: number) => (
+                      <code key={i} className="block bg-gray-800 p-2 rounded text-blue-400 break-all mb-1">{url}</code>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Quick Sale Check - ALWAYS VISIBLE */}
       <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border-2 border-blue-700 p-6 shadow-lg">
         <div className="flex items-center gap-3 mb-4">
