@@ -332,6 +332,7 @@ async function handleInvoicePaid(
         const emailDomain = customer.email.split('@')[1]
         const allClients = await prisma.client.findMany({
           where: { customDomain: { not: null } },
+          select: { id: true, name: true, customDomain: true, stripeAccountId: true },
         })
         
         for (const testClient of allClients) {
@@ -360,7 +361,9 @@ async function handleInvoicePaid(
     
     // If STILL no client, create conversion with first client (better than losing it)
     if (!foundClient) {
-      foundClient = await prisma.client.findFirst()
+      foundClient = await prisma.client.findFirst({
+        select: { id: true, name: true, stripeAccountId: true },
+      })
       if (foundClient) {
         console.warn(`WARNING: Using first available client as fallback: ${foundClient.name}`)
       } else {
