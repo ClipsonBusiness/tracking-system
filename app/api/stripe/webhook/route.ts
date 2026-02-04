@@ -351,6 +351,7 @@ async function handleInvoicePaid(
       foundClient = await prisma.client.findFirst({
         where: { stripeWebhookSecret: { not: null } },
         orderBy: { createdAt: 'asc' },
+        select: { id: true, name: true, stripeAccountId: true },
       })
       if (foundClient) {
         console.log(`Using fallback client: ${foundClient.name}`)
