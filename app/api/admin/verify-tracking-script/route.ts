@@ -15,28 +15,41 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Clean domain
+    // Clean domain - try both www and non-www versions
     let cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/+$/, '')
-    if (!cleanDomain.startsWith('www.')) {
-      cleanDomain = `www.${cleanDomain}`
-    }
-
-    const url = `https://${cleanDomain}/`
+    const domainWithoutWww = cleanDomain.replace(/^www\./, '')
+    
+    // Try www version first, then non-www
+    let url = `https://www.${domainWithoutWww}/`
+    let triedNonWww = false
 
     try {
-      // Fetch the website
-      const response = await fetch(url, {
+      // Fetch the website - try www version first
+      let response = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; ClipsonAffiliates/1.0; +https://clipsonaffiliates.com)',
         },
         redirect: 'follow',
       })
 
+      // If www version fails, try non-www
+      if (!response.ok && !triedNonWww) {
+        url = `https://${domainWithoutWww}/`
+        triedNonWww = true
+        response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; ClipsonAffiliates/1.0; +https://clipsonaffiliates.com)',
+          },
+          redirect: 'follow',
+        })
+      }
+
       if (!response.ok) {
         return NextResponse.json({
           domain,
           found: false,
           error: `Failed to fetch website: ${response.status} ${response.statusText}`,
+          url,
         })
       }
 
@@ -48,22 +61,30 @@ export async function GET(request: NextRequest) {
       // 2. Cookie-based version: "Cookie-Based" or "Stripe Compatible"
       // 3. Cookie setting: "link_slug"
       // 4. Domain check: hostname check for the domain
+      // 5. Beacon call: navigator.sendBeacon or fetch to /track
 
       const hasComment = html.includes('Clipson Affiliate Tracking') || 
                         html.includes('Clipson Tracking')
       const hasCookieBased = html.includes('Cookie-Based') || 
-                            html.includes('Stripe Compatible') ||
-                            html.includes('link_slug')
-      const hasDomainCheck = html.includes(cleanDomain.replace('www.', '')) ||
-                            html.includes(cleanDomain)
+                            html.includes('Stripe Compatible')
+      const hasDomainCheck = html.includes(domainWithoutWww) ||
+                            html.includes(`'${domainWithoutWww}'`) ||
+                            html.includes(`"${domainWithoutWww}"`) ||
+                            html.includes(`www.${domainWithoutWww}`)
       const hasCookieSetting = html.includes('document.cookie') && 
                               (html.includes('link_slug') || html.includes('linkSlug'))
-
+      
       // More specific check - look for the exact pattern
       const hasExactPattern = html.includes('link_slug=') && 
                              html.includes('encodeURIComponent(refParam)')
+      
+      // Check for beacon call to tracking server
+      const hasBeaconCall = html.includes('navigator.sendBeacon') && 
+                           (html.includes('/track?ref=') || html.includes('/track?ref='))
 
-      const found = hasComment && hasCookieBased && hasCookieSetting && hasExactPattern
+      // Script is detected if it has the comment, cookie setting, and exact pattern
+      // Domain check is helpful but not required (script might be minified)
+      const found = hasComment && hasCookieSetting && hasExactPattern
 
       // Extract the script if found
       let scriptSnippet = null
@@ -85,7 +106,9 @@ export async function GET(request: NextRequest) {
           hasDomainCheck,
           hasCookieSetting,
           hasExactPattern,
+          hasBeaconCall,
         },
+        url, // Return the URL that was checked
         scriptSnippet: scriptSnippet ? `${scriptSnippet}...` : null,
         status: found ? '✅ Script detected!' : '❌ Script not found',
         message: found
