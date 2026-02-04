@@ -85,8 +85,33 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error creating checkout session:', error)
+    
+    // Provide more helpful error messages for common Stripe errors
+    let errorMessage = error.message || 'Failed to create checkout session'
+    let errorDetails = ''
+    
+    if (error.type === 'StripeInvalidRequestError') {
+      if (error.message?.includes('No such price')) {
+        errorMessage = 'Invalid Price ID'
+        errorDetails = `The price ID "${priceId}" doesn't exist in your Stripe account. Make sure you're using:
+- A valid price ID from your Stripe Dashboard
+- The correct mode (test vs live) - check if your STRIPE_SECRET_KEY matches the mode
+- A price ID from the same Stripe account as your secret key`
+      } else if (error.message?.includes('No such customer')) {
+        errorMessage = 'Invalid Customer ID'
+        errorDetails = 'The customer ID provided doesn\'t exist in your Stripe account.'
+      } else if (error.message?.includes('Invalid API Key')) {
+        errorMessage = 'Invalid Stripe API Key'
+        errorDetails = 'Your STRIPE_SECRET_KEY is invalid or not configured correctly.'
+      }
+    }
+    
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
+      { 
+        error: errorMessage,
+        details: errorDetails || error.message,
+        type: error.type,
+      },
       { status: 500 }
     )
   }

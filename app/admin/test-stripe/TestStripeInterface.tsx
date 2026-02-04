@@ -85,6 +85,9 @@ export default function TestStripeInterface({
         const errorMessage = data.error || 'Failed to create checkout session'
         const errorDetails = data.details ? `\n\n${data.details}` : ''
         setError(`${errorMessage}${errorDetails}`)
+        
+        // Show error in a more visible way
+        console.error('Checkout creation error:', data)
       }
     } catch (err) {
       setError('Network error')
