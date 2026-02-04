@@ -640,9 +640,18 @@ app.post('/create-payment', async (req, res) => {
         </button>
       </div>
       {formData.stripeWebhookSecret.trim() && !metadataConfirmed && (
-        <p className="text-xs text-red-400 mt-2">
-          ⚠️ Please confirm that your Stripe checkout passes affiliate metadata to complete setup.
-        </p>
+        <div className="mt-2 p-3 bg-red-900/20 border border-red-700 rounded-lg">
+          <p className="text-xs text-red-400">
+            ⚠️ Please check the box above to confirm that your Stripe checkout passes affiliate metadata to complete setup.
+          </p>
+        </div>
+      )}
+      {formData.stripeWebhookSecret.trim() && metadataConfirmed && (
+        <div className="mt-2 p-3 bg-green-900/20 border border-green-700 rounded-lg">
+          <p className="text-xs text-green-400">
+            ✅ Confirmed! You can now complete setup.
+          </p>
+        </div>
       )}
 
       <div className="mt-6 p-4 bg-gray-700/30 rounded-lg border border-gray-600">
