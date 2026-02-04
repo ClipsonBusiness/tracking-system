@@ -72,6 +72,7 @@ export default function TestStripeInterface({
           affiliateCode: testAffiliateCode || null,
           successUrl: `${window.location.origin}/admin/test-stripe?success=true`,
           cancelUrl: `${window.location.origin}/admin/test-stripe?canceled=true`,
+          clientId: selectedClientId || null, // Pass client ID for Stripe Connect
         }),
       })
 

@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
       affiliateCode,
       successUrl,
       cancelUrl,
+      clientId, // Optional: for Stripe Connect accounts
     } = body
 
     if (!priceId) {
@@ -34,6 +35,20 @@ export async function POST(request: NextRequest) {
         { error: 'priceId is required' },
         { status: 400 }
       )
+    }
+
+    // If clientId is provided, try to use their Stripe Connect account
+    let stripeAccountId: string | undefined = undefined
+    if (clientId) {
+      const { prisma } = await import('@/lib/prisma')
+      const client = await prisma.client.findUnique({
+        where: { id: clientId },
+        select: { stripeAccountId: true },
+      })
+      if (client?.stripeAccountId) {
+        stripeAccountId = client.stripeAccountId
+        console.log(`Using Stripe Connect account: ${stripeAccountId}`)
+      }
     }
 
     // Build metadata object
@@ -59,6 +74,16 @@ export async function POST(request: NextRequest) {
       },
     }
 
+    // If using Stripe Connect, add the account ID
+    if (stripeAccountId) {
+      sessionParams.payment_intent_data = {
+        ...sessionParams.payment_intent_data,
+        application_fee_amount: undefined, // Remove if not needed
+      }
+      // For Stripe Connect, we need to use the account's prices
+      // The price must exist in the connected account
+    }
+
     // If customer exists, attach metadata to customer
     if (customerId) {
       sessionParams.customer = customerId
@@ -77,7 +102,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams)
+    // Create checkout session - use Stripe Connect if account ID provided
+    const session = stripeAccountId
+      ? await stripe.checkout.sessions.create(sessionParams, {
+          stripeAccount: stripeAccountId,
+        })
+      : await stripe.checkout.sessions.create(sessionParams)
 
     return NextResponse.json({
       sessionId: session.id,
