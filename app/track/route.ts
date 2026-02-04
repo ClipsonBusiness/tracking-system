@@ -103,24 +103,34 @@ async function recordClick(
 
   // Store click
   try {
-    await prisma.click.create({
-      data: {
-        linkId: link.id,
-        clientId: link.clientId,
-        referer,
-        userAgent,
-        ipHash,
-        country,
-        city,
-        utmSource,
-        utmMedium,
-        utmCampaign,
-        affiliateCode,
-      },
+    const clickData = {
+      linkId: link.id,
+      clientId: link.clientId,
+      referer,
+      userAgent,
+      ipHash,
+      country,
+      city,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      affiliateCode,
+    }
+    console.log('Attempting to create click record:', { linkId: link.id, slug: link.slug, clientId: link.clientId })
+    const createdClick = await prisma.click.create({
+      data: clickData,
     })
-    console.log('Click stored successfully for link:', link.id)
-  } catch (err) {
-    console.error('Error storing click:', err)
+    console.log('✅ Click stored successfully:', { clickId: createdClick.id, linkId: link.id, slug: link.slug })
+    return createdClick
+  } catch (err: any) {
+    console.error('❌ Error storing click:', err)
+    console.error('Error details:', {
+      message: err.message,
+      code: err.code,
+      meta: err.meta,
+      linkId: link.id,
+      slug: link.slug,
+    })
     throw err
   }
 }
