@@ -108,6 +108,8 @@ export default function TestStripeInterface({
   const [linkSlugInput, setLinkSlugInput] = useState('')
   const [clickData, setClickData] = useState<any>(null)
   const [loadingClicks, setLoadingClicks] = useState(false)
+  const [salesTestResult, setSalesTestResult] = useState<any>(null)
+  const [loadingSalesTest, setLoadingSalesTest] = useState(false)
 
   async function checkSale(clipperCode?: string) {
     const code = clipperCode || clipperCodeInput || 'mflp'
