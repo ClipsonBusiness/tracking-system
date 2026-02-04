@@ -5,6 +5,16 @@ const nextConfig = {
   experimental: {
     optimizeCss: false,
   },
+  // Disable CSS optimization to prevent @import errors
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        minimize: false,
+      }
+    }
+    return config
+  },
 }
 
 module.exports = nextConfig
