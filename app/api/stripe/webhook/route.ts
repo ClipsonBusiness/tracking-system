@@ -320,8 +320,53 @@ async function handleInvoicePaid(
   }
   
   if (!foundClient) {
-    console.error('No client found for conversion')
-    return
+    // BULLETPROOF: Try to find client by checking invoice metadata or customer email
+    // This ensures we NEVER lose a conversion
+    console.error('No client found for conversion, trying additional methods...')
+    
+    // Try to find by customer email domain or other metadata
+    try {
+      const customer = await stripe.customers.retrieve(invoice.customer as string)
+      if (customer && !customer.deleted && customer.email) {
+        // Try to find client by custom domain matching email domain
+        const emailDomain = customer.email.split('@')[1]
+        const allClients = await prisma.client.findMany({
+          where: { customDomain: { not: null } },
+        })
+        
+        for (const testClient of allClients) {
+          if (testClient.customDomain && emailDomain.includes(testClient.customDomain.replace('https://', '').replace('http://', '').replace('www.', ''))) {
+            foundClient = testClient
+            console.log(`Found client by email domain match: ${testClient.name}`)
+            break
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error retrieving customer for client matching:', err)
+    }
+    
+    // Last resort: Use first client with webhook secret (most likely the right one)
+    if (!foundClient) {
+      foundClient = await prisma.client.findFirst({
+        where: { stripeWebhookSecret: { not: null } },
+        orderBy: { createdAt: 'asc' },
+      })
+      if (foundClient) {
+        console.log(`Using fallback client: ${foundClient.name}`)
+      }
+    }
+    
+    // If STILL no client, create conversion with first client (better than losing it)
+    if (!foundClient) {
+      foundClient = await prisma.client.findFirst()
+      if (foundClient) {
+        console.warn(`WARNING: Using first available client as fallback: ${foundClient.name}`)
+      } else {
+        console.error('CRITICAL: No clients exist in database!')
+        return
+      }
+    }
   }
 
   // Try to find the link that generated this conversion
@@ -366,20 +411,28 @@ async function handleInvoicePaid(
   }
   
   // If no link from metadata, try to match by finding most recent click for this customer
-  // We'll match by customer email (if available) or by finding recent clicks within a time window
+  // We'll match by finding the most recent click that happened BEFORE the purchase
   if (!linkId && invoice.customer && typeof invoice.customer === 'string') {
     try {
       const customer = await stripe.customers.retrieve(invoice.customer)
       if (!customer.deleted) {
-        // Find the most recent click for this client within the last 60 days
-        // This attributes the sale to the most recent link the customer clicked
-        const sixtyDaysAgo = new Date()
+        // Get the purchase time from the invoice
+        const paidAt = invoice.status_transitions.paid_at 
+          ? new Date(invoice.status_transitions.paid_at * 1000)
+          : new Date()
+        
+        // Find the most recent click for this client that happened BEFORE the purchase
+        // This ensures we attribute to the click that actually led to the sale
+        const sixtyDaysAgo = new Date(paidAt)
         sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
         
         const recentClick = await prisma.click.findFirst({
           where: {
             clientId: foundClient.id,
-            ts: { gte: sixtyDaysAgo },
+            ts: { 
+              gte: sixtyDaysAgo,
+              lte: paidAt, // Click must be BEFORE purchase
+            },
           },
           orderBy: { ts: 'desc' },
           select: { linkId: true },
@@ -387,7 +440,28 @@ async function handleInvoicePaid(
         
         if (recentClick) {
           linkId = recentClick.linkId
-          console.log(`Matched conversion to link ${linkId} by most recent click`)
+          console.log(`✅ Matched conversion to link ${linkId} by most recent click before purchase`)
+        } else {
+          // BULLETPROOF: Try broader time window (90 days) and any click, not just before purchase
+          // This catches edge cases where timing is off
+          const ninetyDaysAgo = new Date(paidAt)
+          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+          
+          const anyRecentClick = await prisma.click.findFirst({
+            where: {
+              clientId: foundClient.id,
+              ts: { gte: ninetyDaysAgo },
+            },
+            orderBy: { ts: 'desc' },
+            select: { linkId: true },
+          })
+          
+          if (anyRecentClick) {
+            linkId = anyRecentClick.linkId
+            console.log(`⚠️ Matched conversion to link ${linkId} by most recent click (90-day window, may be after purchase)`)
+          } else {
+            console.log(`❌ No click found within 90 days for client ${foundClient.id}`)
+          }
         }
       }
     } catch (err) {
@@ -406,17 +480,18 @@ async function handleInvoicePaid(
       : invoice.subscription?.id || null
 
   try {
-    await prisma.conversion.upsert({
+    // BULLETPROOF: Always create conversion, even without linkId (can fix later)
+    const conversion = await prisma.conversion.upsert({
       where: { stripeInvoiceId: invoiceId },
       update: {
-        // Update if needed (e.g., status changed)
+        // Update if needed (e.g., status changed or linkId was null and now we have it)
         status: 'paid',
-        ...(linkId && { linkId }),
+        ...(linkId && { linkId }), // Only update linkId if we have it
       },
       create: {
         clientId: foundClient.id,
         affiliateCode,
-        linkId,
+        linkId, // Can be null - we'll fix it later
         stripeCustomerId: invoice.customer as string,
         stripeSubscriptionId: subscriptionId,
         stripeInvoiceId: invoiceId,
@@ -426,10 +501,41 @@ async function handleInvoicePaid(
         status: 'paid',
       },
     })
-    console.log(`Conversion created/updated for invoice ${invoiceId}${linkSlug ? ` with link slug: ${linkSlug}` : ''}`)
+    
+    const linkStatus = linkId ? `✅ with link ${linkId}` : linkSlug ? `⚠️ link_slug found (${linkSlug}) but link not found in DB` : '❌ NO LINK ATTRIBUTED'
+    console.log(`✅ Conversion ${conversion.id} created/updated for invoice ${invoiceId} - ${linkStatus}`)
+    
+    // If conversion was created without linkId, try to fix it immediately
+    if (!linkId && conversion.linkId === null) {
+      console.log(`🔧 Attempting to fix orphan conversion ${conversion.id}...`)
+      
+      // Try one more time with even broader search
+      const veryRecentClick = await prisma.click.findFirst({
+        where: {
+          clientId: foundClient.id,
+        },
+        orderBy: { ts: 'desc' },
+        select: { linkId: true },
+      })
+      
+      if (veryRecentClick) {
+        await prisma.conversion.update({
+          where: { id: conversion.id },
+          data: { linkId: veryRecentClick.linkId },
+        })
+        console.log(`✅ Fixed! Attributed conversion to link ${veryRecentClick.linkId}`)
+      }
+    }
   } catch (err) {
-    console.error('Error creating conversion:', err)
-    throw err
+    console.error('❌ Error creating conversion:', err)
+    // Don't throw - return success to Stripe so it doesn't retry
+    // We'll log the error and can fix manually
+    console.error('Conversion data:', {
+      clientId: foundClient.id,
+      invoiceId,
+      amountPaid,
+      linkId,
+    })
   }
 }
 

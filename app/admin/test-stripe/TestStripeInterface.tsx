@@ -93,8 +93,134 @@ export default function TestStripeInterface({
     }
   }
 
+  const [diagnosticData, setDiagnosticData] = useState<any>(null)
+  const [loadingDiagnostic, setLoadingDiagnostic] = useState(false)
+  const [clipperCodeInput, setClipperCodeInput] = useState('mflp')
+
+  async function checkSale(clipperCode?: string) {
+    const code = clipperCode || clipperCodeInput || 'mflp'
+    setLoadingDiagnostic(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/check-sale?clipperCode=${code}`)
+      if (!res.ok) {
+        const errorData = await res.json()
+        setError(errorData.error || 'Failed to check sale')
+        return
+      }
+      const data = await res.json()
+      setDiagnosticData(data)
+    } catch (err) {
+      setError('Failed to check sale. Make sure the API endpoint exists.')
+    } finally {
+      setLoadingDiagnostic(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {/* Quick Sale Check - ALWAYS VISIBLE */}
+      <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border-2 border-blue-700 p-6 shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">🔍</span>
+          <h2 className="text-2xl font-bold text-white">Quick Sale Check</h2>
+        </div>
+        <p className="text-sm text-gray-300 mb-4">
+          Check if a sale was tracked for a specific clipper. Enter the clipper dashboard code below.
+        </p>
+        <div className="flex gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-sm text-gray-400 mb-2">Clipper Dashboard Code</label>
+            <input
+              type="text"
+              value={clipperCodeInput}
+              onChange={(e) => setClipperCodeInput(e.target.value)}
+              placeholder="mflp"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  checkSale()
+                }
+              }}
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+          <button
+            onClick={() => checkSale()}
+            disabled={loadingDiagnostic}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+          >
+            {loadingDiagnostic ? 'Checking...' : 'Check Sale'}
+          </button>
+        </div>
+
+        {diagnosticData && (
+          <div className="mt-6 space-y-4">
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-white mb-2">Clipper: {diagnosticData.clipper.name} ({diagnosticData.clipper.dashboardCode})</h3>
+              <p className="text-xs text-gray-400">Total Links: {diagnosticData.clipper.totalLinks}</p>
+            </div>
+
+            {diagnosticData.conversions.recent.length > 0 ? (
+              <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-green-400 mb-2">
+                  ✅ Found {diagnosticData.conversions.recent.length} conversion(s)
+                </h3>
+                {diagnosticData.conversions.recent.map((conv: any, i: number) => (
+                  <div key={i} className="text-sm text-gray-300 mt-2">
+                    <div className="flex items-center justify-between">
+                      <span>
+                        ${conv.amount} {conv.currency.toUpperCase()}
+                      </span>
+                      <span className={conv.hasLink ? 'text-green-400' : 'text-yellow-400'}>
+                        {conv.hasLink ? `✅ Link: ${conv.linkSlug}` : '⚠️ No link'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(conv.paidAt).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4">
+                <p className="text-sm text-yellow-400">
+                  ⚠️ No conversions found in last 7 days
+                </p>
+              </div>
+            )}
+
+            {diagnosticData.webhooks.total === 0 && (
+              <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
+                <p className="text-sm text-red-400">
+                  ❌ No webhook events received! Check Stripe Dashboard → Webhooks
+                </p>
+              </div>
+            )}
+
+            {diagnosticData.conversions.orphan > 0 && (
+              <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4">
+                <p className="text-sm text-yellow-400 mb-2">
+                  ⚠️ {diagnosticData.conversions.orphan} conversion(s) without link attribution
+                </p>
+                <button
+                  onClick={async () => {
+                    const res = await fetch('/api/admin/auto-fix-orphans', { method: 'POST' })
+                    const data = await res.json()
+                    if (data.success) {
+                      alert(`Fixed ${data.fixed} conversion(s)!`)
+                      checkSale('mflp')
+                    }
+                  }}
+                  className="text-xs px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded"
+                >
+                  🔧 Auto-Fix Now
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Webhook Status Warning */}
       {recentEvents.length === 0 && (
         <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-6">
