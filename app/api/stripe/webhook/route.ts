@@ -291,7 +291,7 @@ async function handleInvoicePaid(
 
   // Get client - use the one found from webhook verification above, or find by account ID
   // If client wasn't found during webhook verification, try to find it now
-  let foundClient = client
+  let foundClient: { id: string; name: string; stripeAccountId: string | null } | null = client
   if (!foundClient) {
     if (accountId) {
       foundClient = await prisma.client.findFirst({
