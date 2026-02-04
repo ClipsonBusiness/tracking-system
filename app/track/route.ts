@@ -43,8 +43,16 @@ export async function GET(request: NextRequest) {
     
     // If beacon request, just record click and return OK (no redirect)
     if (isBeacon) {
-      await recordClick(request, link)
-      return new NextResponse('OK', { status: 200 })
+      console.log('Beacon request detected, recording click for slug:', actualSlug, 'linkId:', link.id)
+      try {
+        await recordClick(request, link)
+        console.log('✅ Click recorded successfully for slug:', actualSlug)
+        return new NextResponse('OK', { status: 200 })
+      } catch (error) {
+        console.error('❌ Error recording click for beacon request:', error)
+        // Still return 200 to avoid breaking the beacon
+        return new NextResponse('Error recording click', { status: 200 })
+      }
     }
     
     // Otherwise, redirect to destination (direct link visit)
