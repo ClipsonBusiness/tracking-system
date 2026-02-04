@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
   if (accountId) {
     client = await prisma.client.findFirst({
       where: { stripeAccountId: accountId },
+      select: { id: true, name: true, stripeAccountId: true, stripeWebhookSecret: true },
     })
     if (client) {
       webhookSecret = client.stripeWebhookSecret || null
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
       where: {
         stripeWebhookSecret: { not: null },
       },
+      select: { id: true, name: true, stripeAccountId: true, stripeWebhookSecret: true },
     })
 
     // Try each client's webhook secret to find the right one
@@ -294,6 +296,7 @@ async function handleInvoicePaid(
     if (accountId) {
       foundClient = await prisma.client.findFirst({
         where: { stripeAccountId: accountId },
+        select: { id: true, name: true, stripeAccountId: true },
       })
     }
     
@@ -302,6 +305,7 @@ async function handleInvoicePaid(
       // Find client that has this webhook secret stored
       foundClient = await prisma.client.findFirst({
         where: { stripeWebhookSecret: webhookSecret },
+        select: { id: true, name: true, stripeAccountId: true },
       })
     }
     
@@ -310,11 +314,14 @@ async function handleInvoicePaid(
       foundClient = await prisma.client.findFirst({
         where: { stripeWebhookSecret: { not: null } },
         orderBy: { createdAt: 'asc' },
+        select: { id: true, name: true, stripeAccountId: true },
       })
       
       // If still no client, use first client (for backward compatibility)
       if (!foundClient) {
-        foundClient = await prisma.client.findFirst()
+        foundClient = await prisma.client.findFirst({
+          select: { id: true, name: true, stripeAccountId: true },
+        })
       }
     }
   }
