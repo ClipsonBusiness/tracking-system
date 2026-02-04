@@ -96,6 +96,11 @@ export default function TestStripeInterface({
   const [diagnosticData, setDiagnosticData] = useState<any>(null)
   const [loadingDiagnostic, setLoadingDiagnostic] = useState(false)
   const [clipperCodeInput, setClipperCodeInput] = useState('mflp')
+  
+  // Script verification state
+  const [verificationDomain, setVerificationDomain] = useState('freeclipping.com')
+  const [verificationResult, setVerificationResult] = useState<any>(null)
+  const [verifying, setVerifying] = useState(false)
 
   async function checkSale(clipperCode?: string) {
     const code = clipperCode || clipperCodeInput || 'mflp'
@@ -117,8 +122,118 @@ export default function TestStripeInterface({
     }
   }
 
+  async function verifyTrackingScript() {
+    if (!verificationDomain.trim()) {
+      setError('Please enter a domain')
+      return
+    }
+    
+    setVerifying(true)
+    setVerificationResult(null)
+    setError('')
+    
+    try {
+      const res = await fetch(`/api/admin/verify-tracking-script?domain=${encodeURIComponent(verificationDomain)}`)
+      const data = await res.json()
+      setVerificationResult(data)
+    } catch (err) {
+      setError('Failed to verify script')
+    } finally {
+      setVerifying(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {/* Script Verification Tool */}
+      <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-lg border-2 border-purple-700 p-6 shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">🔍</span>
+          <h2 className="text-2xl font-bold text-white">Verify Tracking Script</h2>
+        </div>
+        <p className="text-sm text-gray-300 mb-4">
+          Check if the tracking script is present on a client&apos;s website.
+        </p>
+        <div className="flex gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-sm text-gray-400 mb-2">Domain (e.g., freeclipping.com)</label>
+            <input
+              type="text"
+              value={verificationDomain}
+              onChange={(e) => setVerificationDomain(e.target.value)}
+              placeholder="freeclipping.com"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  verifyTrackingScript()
+                }
+              }}
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-purple-500 focus:outline-none"
+            />
+          </div>
+          <button
+            onClick={verifyTrackingScript}
+            disabled={verifying}
+            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+          >
+            {verifying ? 'Checking...' : 'Verify Script'}
+          </button>
+        </div>
+
+        {verificationResult && (
+          <div className="mt-6 space-y-3">
+            <div className={`p-4 rounded-lg border-2 ${
+              verificationResult.found
+                ? 'bg-green-900/20 border-green-700'
+                : 'bg-red-900/20 border-red-700'
+            }`}>
+              <h3 className={`text-lg font-semibold mb-2 ${
+                verificationResult.found ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {verificationResult.status}
+              </h3>
+              <p className="text-sm text-gray-300 mb-3">
+                {verificationResult.message}
+              </p>
+              
+              {verificationResult.details && (
+                <div className="bg-gray-800/50 rounded p-3 space-y-1">
+                  <p className="text-xs text-gray-400">Verification Details:</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className={verificationResult.details.hasComment ? 'text-green-400' : 'text-red-400'}>
+                      {verificationResult.details.hasComment ? '✅' : '❌'} Comment found
+                    </div>
+                    <div className={verificationResult.details.hasCookieBased ? 'text-green-400' : 'text-red-400'}>
+                      {verificationResult.details.hasCookieBased ? '✅' : '❌'} Cookie-based version
+                    </div>
+                    <div className={verificationResult.details.hasCookieSetting ? 'text-green-400' : 'text-red-400'}>
+                      {verificationResult.details.hasCookieSetting ? '✅' : '❌'} Cookie setting code
+                    </div>
+                    <div className={verificationResult.details.hasExactPattern ? 'text-green-400' : 'text-red-400'}>
+                      {verificationResult.details.hasExactPattern ? '✅' : '❌'} Exact pattern match
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {verificationResult.scriptSnippet && (
+                <div className="mt-3 bg-gray-900 rounded p-3">
+                  <p className="text-xs text-gray-400 mb-2">Detected Script Snippet:</p>
+                  <pre className="text-xs text-green-400 overflow-x-auto">
+                    <code>{verificationResult.scriptSnippet}</code>
+                  </pre>
+                </div>
+              )}
+
+              {verificationResult.error && (
+                <p className="text-xs text-red-400 mt-2">
+                  Error: {verificationResult.error}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Quick Sale Check - ALWAYS VISIBLE */}
       <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border-2 border-blue-700 p-6 shadow-lg">
         <div className="flex items-center gap-3 mb-4">
