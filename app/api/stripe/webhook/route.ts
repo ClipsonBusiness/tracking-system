@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   const accountId = searchParams.get('account')
 
   // Find client by Stripe account ID or webhook secret
-  let client = null
+  let client: { id: string; name: string; stripeAccountId: string | null; stripeWebhookSecret: string | null } | null = null
   let webhookSecret: string | null = null
 
   // Try to find client by account ID first (if provided)
@@ -291,7 +291,7 @@ async function handleInvoicePaid(
 
   // Get client - use the one found from webhook verification above, or find by account ID
   // If client wasn't found during webhook verification, try to find it now
-  let foundClient: { id: string; name: string; stripeAccountId: string | null } | null = client
+  let foundClient: { id: string; name: string; stripeAccountId: string | null } | null = client ? { id: client.id, name: client.name, stripeAccountId: client.stripeAccountId } : null
   if (!foundClient) {
     if (accountId) {
       foundClient = await prisma.client.findFirst({
