@@ -25,12 +25,14 @@ export default async function AdminLayout({
         </div>
         <SidebarNav />
         <div className="p-4 border-t border-gray-700">
-          <Link
-            href="/login"
-            className="block text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            Logout
-          </Link>
+          <form action="/api/admin/logout" method="POST">
+            <button
+              type="submit"
+              className="block w-full text-left text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Logout
+            </button>
+          </form>
         </div>
       </aside>
 

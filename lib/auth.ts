@@ -1,8 +1,22 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { createHash, randomBytes } from 'crypto'
 
 // SECURITY: Require ADMIN_PASSWORD to be set in production
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'admin')
+
+// SECURITY: Generate a secure session token instead of storing password
+function generateSessionToken(): string {
+  return randomBytes(32).toString('hex')
+}
+
+// SECURITY: Create a hash of the password + session token for verification
+function createAuthHash(password: string, sessionToken: string): string {
+  return createHash('sha256').update(`${password}:${sessionToken}`).digest('hex')
+}
+
+// Store active sessions in memory (in production, use Redis or database)
+const activeSessions = new Map<string, { expiresAt: number }>()
 
 export async function checkAdminAuth(): Promise<boolean> {
   // SECURITY: In production, require ADMIN_PASSWORD to be set
@@ -12,8 +26,20 @@ export async function checkAdminAuth(): Promise<boolean> {
   }
   
   const cookieStore = await cookies()
-  const adminAuth = cookieStore.get('admin_auth')
-  return adminAuth?.value === ADMIN_PASSWORD && ADMIN_PASSWORD !== ''
+  const sessionToken = cookieStore.get('admin_session')?.value
+  
+  if (!sessionToken) {
+    return false
+  }
+  
+  // Check if session exists and is not expired
+  const session = activeSessions.get(sessionToken)
+  if (!session || session.expiresAt < Date.now()) {
+    activeSessions.delete(sessionToken)
+    return false
+  }
+  
+  return true
 }
 
 export async function requireAdminAuth() {
@@ -24,13 +50,39 @@ export async function requireAdminAuth() {
 }
 
 export async function setAdminAuth(password: string) {
+  // SECURITY: Don't store password in cookie - use session token instead
+  const sessionToken = generateSessionToken()
+  const expiresAt = Date.now() + (60 * 60 * 24 * 7 * 1000) // 7 days
+  
+  // Store session (in production, use Redis or database)
+  activeSessions.set(sessionToken, { expiresAt })
+  
+  // Clean up expired sessions periodically
+  if (activeSessions.size > 1000) {
+    const now = Date.now()
+    for (const [token, session] of activeSessions.entries()) {
+      if (session.expiresAt < now) {
+        activeSessions.delete(token)
+      }
+    }
+  }
+  
   const cookieStore = await cookies()
-  cookieStore.set('admin_auth', password, {
+  cookieStore.set('admin_session', sessionToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 7 days
   })
+}
+
+export async function clearAdminAuth() {
+  const cookieStore = await cookies()
+  const sessionToken = cookieStore.get('admin_session')?.value
+  if (sessionToken) {
+    activeSessions.delete(sessionToken)
+  }
+  cookieStore.delete('admin_session')
 }
 
 const CAMPAIGN_MANAGER_PASSWORD = process.env.CAMPAIGN_MANAGER_PASSWORD || 'clipsonadmin'
