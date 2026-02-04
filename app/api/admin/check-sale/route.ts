@@ -55,32 +55,18 @@ export async function GET(request: NextRequest) {
       link = clipper.links[0]
     }
 
-    // Get recent conversions for this client (last 7 days)
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    // Get recent conversions - extend to 30 days to catch the sale
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    const recentConversions = link
-      ? await prisma.conversion.findMany({
-          where: {
-            clientId: link.client.id,
-            paidAt: { gte: sevenDaysAgo },
-          },
-          include: {
-            link: {
-              select: { slug: true },
-            },
-          },
-          orderBy: { paidAt: 'desc' },
-        })
-      : []
-
-    // Get conversions for clipper's links
+    // Get conversions for clipper's links (most important - these are definitely attributed)
     const linkIds = clipper.links.map((l) => l.id)
     const clipperConversions =
       linkIds.length > 0
         ? await prisma.conversion.findMany({
             where: {
               linkId: { in: linkIds },
+              paidAt: { gte: thirtyDaysAgo },
             },
             include: {
               link: {
@@ -91,26 +77,55 @@ export async function GET(request: NextRequest) {
           })
         : []
 
-    // Get recent webhook events (last 7 days)
-    const recentEvents = await prisma.stripeEvent.findMany({
-      where: {
-        created: { gte: sevenDaysAgo },
-        type: { in: ['invoice.paid', 'checkout.session.completed'] },
-      },
-      orderBy: { created: 'desc' },
-      take: 10,
-    })
+    // Get ALL conversions for this client (including orphans) - last 30 days
+    const allClientConversions = link
+      ? await prisma.conversion.findMany({
+          where: {
+            clientId: link.client.id,
+            paidAt: { gte: thirtyDaysAgo },
+          },
+          include: {
+            link: {
+              select: { slug: true },
+            },
+          },
+          orderBy: { paidAt: 'desc' },
+        })
+      : []
 
-    // Count orphan conversions
+    // Count orphan conversions (no linkId) for this client
     const orphanCount = link
       ? await prisma.conversion.count({
           where: {
             clientId: link.client.id,
             linkId: null,
-            paidAt: { gte: sevenDaysAgo },
+            paidAt: { gte: thirtyDaysAgo },
           },
         })
       : 0
+
+    // Get orphan conversions with details
+    const orphanConversions = link
+      ? await prisma.conversion.findMany({
+          where: {
+            clientId: link.client.id,
+            linkId: null,
+            paidAt: { gte: thirtyDaysAgo },
+          },
+          orderBy: { paidAt: 'desc' },
+          take: 10,
+        })
+      : []
+
+    // Get recent webhook events (last 30 days)
+    const recentEvents = await prisma.stripeEvent.findMany({
+      where: {
+        created: { gte: thirtyDaysAgo },
+        type: { in: ['invoice.paid', 'checkout.session.completed'] },
+      },
+      orderBy: { created: 'desc' },
+      take: 20,
+    })
 
     return NextResponse.json({
       clipper: {
@@ -135,16 +150,33 @@ export async function GET(request: NextRequest) {
         clickCount: l.clicks.length,
       })),
       conversions: {
-        total: recentConversions.length,
-        forLink: clipperConversions.length,
+        // Conversions specifically linked to this clipper's links
+        forClipperLinks: clipperConversions.length,
+        // All conversions for the client (including orphans)
+        totalForClient: allClientConversions.length,
         orphan: orphanCount,
-        recent: recentConversions.map((c) => ({
-          amount: c.amountPaid / 100,
-          currency: c.currency,
-          paidAt: c.paidAt.toISOString(),
-          linkSlug: c.link?.slug || null,
-          hasLink: !!c.linkId,
-        })),
+        // Show conversions linked to clipper's links first, then all client conversions
+        recent: [
+          ...clipperConversions.map((c) => ({
+            amount: c.amountPaid / 100,
+            currency: c.currency,
+            paidAt: c.paidAt.toISOString(),
+            linkSlug: c.link?.slug || null,
+            hasLink: !!c.linkId,
+            isOrphan: false,
+          })),
+          // Add orphan conversions that aren't already shown
+          ...orphanConversions
+            .filter((oc) => !clipperConversions.some((cc) => cc.id === oc.id))
+            .map((c) => ({
+              amount: c.amountPaid / 100,
+              currency: c.currency,
+              paidAt: c.paidAt.toISOString(),
+              linkSlug: null,
+              hasLink: false,
+              isOrphan: true,
+            })),
+        ].sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime()),
       },
       webhooks: {
         total: recentEvents.length,
@@ -155,10 +187,14 @@ export async function GET(request: NextRequest) {
       },
       diagnosis: {
         hasWebhooks: recentEvents.length > 0,
-        hasConversions: recentConversions.length > 0,
+        hasConversions: allClientConversions.length > 0,
         hasLinkConversions: clipperConversions.length > 0,
         hasOrphans: orphanCount > 0,
         stripeConfigured: link ? !!link.client.stripeWebhookSecret : false,
+        // Additional diagnostic info
+        clientName: link?.client.name || 'N/A',
+        linkSlug: link?.slug || 'N/A',
+        timeWindow: '30 days',
       },
     })
   } catch (error: any) {

@@ -158,42 +158,110 @@ export default function TestStripeInterface({
             <div className="bg-gray-700/50 rounded-lg p-4">
               <h3 className="text-sm font-semibold text-white mb-2">Clipper: {diagnosticData.clipper.name} ({diagnosticData.clipper.dashboardCode})</h3>
               <p className="text-xs text-gray-400">Total Links: {diagnosticData.clipper.totalLinks}</p>
+              {diagnosticData.link && (
+                <div className="mt-2 pt-2 border-t border-gray-600">
+                  <p className="text-xs text-gray-400">
+                    Primary Link: <code className="text-blue-400">{diagnosticData.link.slug}</code>
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Client: {diagnosticData.link.client} | Clicks: {diagnosticData.link.clicks}
+                  </p>
+                </div>
+              )}
             </div>
 
             {diagnosticData.conversions.recent.length > 0 ? (
-              <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-green-400 mb-2">
-                  ✅ Found {diagnosticData.conversions.recent.length} conversion(s)
-                </h3>
-                {diagnosticData.conversions.recent.map((conv: any, i: number) => (
-                  <div key={i} className="text-sm text-gray-300 mt-2">
-                    <div className="flex items-center justify-between">
-                      <span>
-                        ${conv.amount} {conv.currency.toUpperCase()}
-                      </span>
-                      <span className={conv.hasLink ? 'text-green-400' : 'text-yellow-400'}>
-                        {conv.hasLink ? `✅ Link: ${conv.linkSlug}` : '⚠️ No link'}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(conv.paidAt).toLocaleString()}
-                    </div>
+              <div className="space-y-3">
+                {/* Conversions linked to clipper's links */}
+                {diagnosticData.conversions.forClipperLinks > 0 && (
+                  <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-green-400 mb-2">
+                      ✅ {diagnosticData.conversions.forClipperLinks} sale(s) tracked to this clipper's links
+                    </h3>
+                    {diagnosticData.conversions.recent
+                      .filter((conv: any) => conv.hasLink && !conv.isOrphan)
+                      .map((conv: any, i: number) => (
+                        <div key={i} className="text-sm text-gray-300 mt-2 p-2 bg-gray-800/50 rounded">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">
+                              ${conv.amount} {conv.currency.toUpperCase()}
+                            </span>
+                            <span className="text-green-400">
+                              ✅ Link: {conv.linkSlug}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {new Date(conv.paidAt).toLocaleString()}
+                          </div>
+                        </div>
+                      ))}
                   </div>
-                ))}
+                )}
+
+                {/* All conversions for client (including orphans) */}
+                {diagnosticData.conversions.totalForClient > 0 && (
+                  <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-blue-400 mb-2">
+                      📊 {diagnosticData.conversions.totalForClient} total sale(s) for client "{diagnosticData.diagnosis?.clientName || 'N/A'}" (last 30 days)
+                    </h3>
+                    {diagnosticData.conversions.recent.map((conv: any, i: number) => (
+                      <div key={i} className="text-sm text-gray-300 mt-2 p-2 bg-gray-800/50 rounded">
+                        <div className="flex items-center justify-between">
+                          <span>
+                            ${conv.amount} {conv.currency.toUpperCase()}
+                          </span>
+                          <span className={conv.hasLink ? 'text-green-400' : 'text-yellow-400'}>
+                            {conv.hasLink ? `✅ Link: ${conv.linkSlug}` : '⚠️ Orphan (no link)'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(conv.paidAt).toLocaleString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4">
-                <p className="text-sm text-yellow-400">
-                  ⚠️ No conversions found in last 7 days
+                <p className="text-sm text-yellow-400 mb-2">
+                  ⚠️ No conversions found in last 30 days
                 </p>
+                <p className="text-xs text-yellow-300">
+                  If you made a purchase, check:
+                </p>
+                <ul className="text-xs text-yellow-300 list-disc list-inside mt-1 space-y-1">
+                  <li>Webhook events below (should show invoice.paid)</li>
+                  <li>Stripe Dashboard → Webhooks (verify endpoint is configured)</li>
+                  <li>Client: {diagnosticData.diagnosis?.clientName || 'N/A'}</li>
+                </ul>
               </div>
             )}
 
-            {diagnosticData.webhooks.total === 0 && (
+            {diagnosticData.webhooks.total === 0 ? (
               <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-                <p className="text-sm text-red-400">
-                  ❌ No webhook events received! Check Stripe Dashboard → Webhooks
+                <p className="text-sm text-red-400 mb-2">
+                  ❌ No webhook events received in last 30 days!
                 </p>
+                <p className="text-xs text-red-300">
+                  This means Stripe isn't sending webhooks. Check Stripe Dashboard → Webhooks and verify the endpoint is configured.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-blue-400 mb-2">
+                  📡 {diagnosticData.webhooks.total} webhook event(s) received
+                </h3>
+                {diagnosticData.webhooks.events.slice(0, 5).map((event: any, i: number) => (
+                  <div key={i} className="text-xs text-gray-300 mt-1">
+                    <code className="text-blue-400">{event.type}</code> - {new Date(event.created).toLocaleString()}
+                  </div>
+                ))}
+                {diagnosticData.conversions.totalForClient === 0 && diagnosticData.webhooks.total > 0 && (
+                  <p className="text-xs text-yellow-400 mt-2">
+                    ⚠️ Webhooks received but no conversions created. Check webhook processing logs.
+                  </p>
+                )}
               </div>
             )}
 
