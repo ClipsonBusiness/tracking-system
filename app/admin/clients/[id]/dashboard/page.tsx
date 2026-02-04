@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
+import { requireAdminAuth } from '@/lib/auth'
 import Link from 'next/link'
 import GenerateClientLink from './GenerateClientLink'
 import LinkCard from './LinkCard'
@@ -12,6 +13,7 @@ export default async function ClientDashboardPage({
   params: { id: string }
   searchParams: { campaignId?: string }
 }) {
+  await requireAdminAuth()
   const clientId = params.id
   const campaignId = searchParams.campaignId
 
