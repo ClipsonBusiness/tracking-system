@@ -278,7 +278,9 @@ async function handleInvoicePaid(
                 affiliateCode = session.metadata.affiliate_code
                 console.warn(`⚠️ Checkout session ${session.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
               }
-                // Update subscription with the affiliate code for future invoices
+              
+              // Update subscription with the affiliate code for future invoices
+              if (affiliateCode) {
                 try {
                   await stripe.subscriptions.update(subscriptionId, {
                     metadata: {
@@ -304,7 +306,7 @@ async function handleInvoicePaid(
   if (!affiliateCode) {
     try {
       const customer = await stripe.customers.retrieve(invoice.customer)
-      if (!customer.deleted) {
+      if (customer && !customer.deleted && 'metadata' in customer) {
         if (customer.metadata?.ca_affiliate_id) {
           affiliateCode = customer.metadata.ca_affiliate_id
           hasRequiredMetadata = true
@@ -373,7 +375,7 @@ async function handleInvoicePaid(
     // Try to find by customer email domain or other metadata
     try {
       const customer = await stripe.customers.retrieve(invoice.customer as string)
-      if (customer && !customer.deleted && customer.email) {
+      if (customer && !customer.deleted && 'email' in customer && customer.email) {
         // Try to find client by custom domain matching email domain
         const emailDomain = customer.email.split('@')[1]
         const allClients = await prisma.client.findMany({
