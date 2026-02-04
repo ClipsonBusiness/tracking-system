@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdminAuth } from '@/lib/auth'
 
+// Route handler for checking click tracking statistics
 export async function GET(request: NextRequest) {
   try {
     await requireAdminAuth()
