@@ -345,7 +345,7 @@ async function handleInvoicePaid(
         for (const testClient of allClients) {
           if (testClient.customDomain && emailDomain.includes(testClient.customDomain.replace('https://', '').replace('http://', '').replace('www.', ''))) {
             foundClient = testClient
-            console.log(`Found client by email domain match: ${testClient.name}`)
+            console.log(`Found client by email domain match: ${testClient.name || 'Unknown'}`)
             break
           }
         }
@@ -362,7 +362,7 @@ async function handleInvoicePaid(
         select: { id: true, name: true, stripeAccountId: true },
       })
       if (foundClient) {
-        console.log(`Using fallback client: ${foundClient.name}`)
+        console.log(`Using fallback client: ${foundClient.name || 'Unknown'}`)
       }
     }
     
@@ -372,7 +372,7 @@ async function handleInvoicePaid(
         select: { id: true, name: true, stripeAccountId: true },
       })
       if (foundClient) {
-        console.warn(`WARNING: Using first available client as fallback: ${foundClient.name}`)
+        console.warn(`WARNING: Using first available client as fallback: ${foundClient.name || 'Unknown'}`)
       } else {
         console.error('CRITICAL: No clients exist in database!')
         return
