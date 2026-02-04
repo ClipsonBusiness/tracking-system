@@ -176,7 +176,7 @@ export default function TestStripeInterface({
                 {diagnosticData.conversions.forClipperLinks > 0 && (
                   <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
                     <h3 className="text-sm font-semibold text-green-400 mb-2">
-                      ✅ {diagnosticData.conversions.forClipperLinks} sale(s) tracked to this clipper's links
+                      ✅ {diagnosticData.conversions.forClipperLinks} sale(s) tracked to this clipper&apos;s links
                     </h3>
                     {diagnosticData.conversions.recent
                       .filter((conv: any) => conv.hasLink && !conv.isOrphan)
@@ -202,7 +202,7 @@ export default function TestStripeInterface({
                 {diagnosticData.conversions.totalForClient > 0 && (
                   <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
                     <h3 className="text-sm font-semibold text-blue-400 mb-2">
-                      📊 {diagnosticData.conversions.totalForClient} total sale(s) for client "{diagnosticData.diagnosis?.clientName || 'N/A'}" (last 30 days)
+                      📊 {diagnosticData.conversions.totalForClient} total sale(s) for client &quot;{diagnosticData.diagnosis?.clientName || 'N/A'}&quot; (last 30 days)
                     </h3>
                     {diagnosticData.conversions.recent.map((conv: any, i: number) => (
                       <div key={i} className="text-sm text-gray-300 mt-2 p-2 bg-gray-800/50 rounded">
@@ -244,7 +244,7 @@ export default function TestStripeInterface({
                   ❌ No webhook events received in last 30 days!
                 </p>
                 <p className="text-xs text-red-300">
-                  This means Stripe isn't sending webhooks. Check Stripe Dashboard → Webhooks and verify the endpoint is configured.
+                  This means Stripe isn&apos;t sending webhooks. Check Stripe Dashboard → Webhooks and verify the endpoint is configured.
                 </p>
               </div>
             ) : (

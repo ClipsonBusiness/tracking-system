@@ -153,7 +153,7 @@ export default function JavaScriptRedirectGuide({
             The cookie should be set (check browser DevTools → Application → Cookies). Users stay on your site - no redirect!
           </p>
           <p className="text-green-300 mt-2 text-xs">
-            ✅ <strong>Stripe-Compatible:</strong> The cookie is set on your domain, so it's available when users reach Stripe checkout. Make sure to read the <code className="bg-green-900/50 px-1 rounded">link_slug</code> cookie and pass it to Stripe checkout metadata.
+            ✅ <strong>Stripe-Compatible:</strong> The cookie is set on your domain, so it&apos;s available when users reach Stripe checkout. Make sure to read the <code className="bg-green-900/50 px-1 rounded">link_slug</code> cookie and pass it to Stripe checkout metadata.
           </p>
         </div>
       </div>
