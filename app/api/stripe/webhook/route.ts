@@ -293,7 +293,9 @@ async function handleInvoicePaid(
   // If client wasn't found during webhook verification, try to find it now
   let foundClient: { id: string; name: string; stripeAccountId: string | null } | null = null
   if (client) {
-    foundClient = { id: client.id, name: client.name, stripeAccountId: client.stripeAccountId }
+    // Type assertion needed because TypeScript doesn't always infer the full type
+    const clientWithName = client as { id: string; name: string; stripeAccountId: string | null; stripeWebhookSecret: string | null }
+    foundClient = { id: clientWithName.id, name: clientWithName.name || 'Unknown', stripeAccountId: clientWithName.stripeAccountId }
   }
   if (!foundClient) {
     if (accountId) {
