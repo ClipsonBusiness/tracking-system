@@ -26,6 +26,20 @@ export async function checkAdminAuth(): Promise<boolean> {
   }
   
   const cookieStore = await cookies()
+  
+  // SECURITY: Clear old admin_auth cookie if it exists (migration from old system)
+  const oldCookie = cookieStore.get('admin_auth')
+  if (oldCookie) {
+    cookieStore.set('admin_auth', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    })
+    return false // Force re-login with new system
+  }
+  
   const sessionToken = cookieStore.get('admin_session')?.value
   
   if (!sessionToken) {
@@ -70,6 +84,20 @@ export async function setAdminAuth(password: string) {
   }
   
   const cookieStore = await cookies()
+  
+  // SECURITY: Clear old admin_auth cookie if it exists (migration from old system)
+  const oldCookie = cookieStore.get('admin_auth')
+  if (oldCookie) {
+    cookieStore.set('admin_auth', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0, // Expire immediately
+      path: '/',
+    })
+  }
+  
+  // Set new secure session cookie
   cookieStore.set('admin_session', sessionToken, {
     httpOnly: true, // Prevents JavaScript access - cookie is invisible to JS
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
