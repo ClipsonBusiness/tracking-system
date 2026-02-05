@@ -57,13 +57,21 @@ export default function ClientSetupForm({
   // Only run on the client's domain
   const hostname = window.location.hostname;
   const domainMatch = hostname === '${cleanDomain}' || hostname === 'www.${cleanDomain}';
-  if (!domainMatch) return;
+  if (!domainMatch) {
+    console.log('[Clipson Tracking] Domain mismatch:', hostname, 'expected:', '${cleanDomain}');
+    return;
+  }
 
   // Check for ?ref= parameter
   const urlParams = new URLSearchParams(window.location.search);
   const refParam = urlParams.get('ref');
   
-  if (!refParam) return;
+  if (!refParam) {
+    console.log('[Clipson Tracking] No ref parameter found');
+    return;
+  }
+
+  console.log('[Clipson Tracking] Processing ref:', refParam);
 
   // Set cookie on client's domain (90 days expiry)
   // This cookie will be available when user reaches Stripe checkout
@@ -76,13 +84,20 @@ export default function ClientSetupForm({
     '; SameSite=Lax' + 
     (location.protocol === 'https:' ? '; Secure' : '');
 
+  console.log('[Clipson Tracking] Cookie set, sending beacon...');
+
   // Optionally record click on tracking server (non-blocking)
   // This helps with analytics but isn't required for attribution
+  const beaconUrl = '${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam) + '&beacon=true';
   try {
-    navigator.sendBeacon('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam) + '&beacon=true');
+    const sent = navigator.sendBeacon(beaconUrl);
+    console.log('[Clipson Tracking] Beacon sent:', sent, 'URL:', beaconUrl);
   } catch(e) {
+    console.error('[Clipson Tracking] sendBeacon failed, trying fetch:', e);
     // Fallback if sendBeacon not supported
-    fetch('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam) + '&beacon=true', { method: 'GET', keepalive: true }).catch(() => {});
+    fetch(beaconUrl, { method: 'GET', keepalive: true })
+      .then(() => console.log('[Clipson Tracking] Fetch fallback succeeded'))
+      .catch(err => console.error('[Clipson Tracking] Fetch fallback failed:', err));
   }
 })();
 </script>`
