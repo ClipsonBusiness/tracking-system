@@ -42,17 +42,32 @@ export async function checkAdminAuth(): Promise<boolean> {
   
   const sessionToken = cookieStore.get('admin_session')?.value
   
+  // Debug logging
+  console.log('checkAdminAuth:', {
+    sessionTokenExists: !!sessionToken,
+    sessionTokenLength: sessionToken?.length,
+    activeSessionsCount: activeSessions.size,
+  })
+  
   if (!sessionToken) {
+    console.log('❌ No session token found')
     return false
   }
   
   // Check if session exists and is not expired
   const session = activeSessions.get(sessionToken)
-  if (!session || session.expiresAt < Date.now()) {
+  if (!session) {
+    console.log('❌ Session not found in activeSessions map')
+    return false
+  }
+  
+  if (session.expiresAt < Date.now()) {
+    console.log('❌ Session expired')
     activeSessions.delete(sessionToken)
     return false
   }
   
+  console.log('✅ Admin auth check passed')
   return true
 }
 
@@ -70,6 +85,12 @@ export async function setAdminAuth(password: string) {
   
   // Store session (in production, use Redis or database)
   activeSessions.set(sessionToken, { expiresAt })
+  
+  console.log('setAdminAuth:', {
+    sessionTokenLength: sessionToken.length,
+    expiresAt: new Date(expiresAt).toISOString(),
+    activeSessionsCount: activeSessions.size,
+  })
   
   // Clean up expired sessions periodically
   if (activeSessions.size > 1000) {
@@ -98,13 +119,16 @@ export async function setAdminAuth(password: string) {
   }
   
   // Set new secure session cookie
+  // IMPORTANT: Use path: '/' instead of '/admin' to ensure cookie is available
   cookieStore.set('admin_session', sessionToken, {
     httpOnly: true, // Prevents JavaScript access - cookie is invisible to JS
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
     sameSite: 'lax', // Changed from 'strict' to 'lax' to allow redirects after login
     maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: '/admin', // Only sent for /admin routes, not visible on client domains
+    path: '/', // Changed from '/admin' to '/' to ensure cookie is available on all routes
   })
+  
+  console.log('✅ Admin session cookie set')
 }
 
 export async function clearAdminAuth() {
