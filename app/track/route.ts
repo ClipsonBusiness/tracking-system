@@ -47,11 +47,24 @@ export async function GET(request: NextRequest) {
       try {
         await recordClick(request, link)
         console.log('✅ Click recorded successfully for slug:', actualSlug)
-        return new NextResponse('OK', { status: 200 })
+        // Return with CORS headers to allow cross-origin beacon requests
+        return new NextResponse('OK', { 
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          }
+        })
       } catch (error) {
         console.error('❌ Error recording click for beacon request:', error)
         // Still return 200 to avoid breaking the beacon
-        return new NextResponse('Error recording click', { status: 200 })
+        return new NextResponse('Error recording click', { 
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+          }
+        })
       }
     }
     
