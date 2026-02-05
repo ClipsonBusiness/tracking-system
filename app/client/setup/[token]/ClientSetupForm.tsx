@@ -95,15 +95,31 @@ export default function ClientSetupForm({
   // Optionally record click on tracking server (non-blocking)
   // This helps with analytics but isn't required for attribution
   const beaconUrl = '${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam) + '&beacon=true';
-  try {
-    const sent = navigator.sendBeacon(beaconUrl);
-    console.log('[Clipson Tracking] Beacon sent:', sent, 'URL:', beaconUrl);
-  } catch(e) {
-    console.error('[Clipson Tracking] sendBeacon failed, trying fetch:', e);
-    // Fallback if sendBeacon not supported
-    fetch(beaconUrl, { method: 'GET', keepalive: true })
-      .then(() => console.log('[Clipson Tracking] Fetch fallback succeeded'))
-      .catch(err => console.error('[Clipson Tracking] Fetch fallback failed:', err));
+  console.log('[Clipson Tracking] Beacon URL:', beaconUrl);
+  
+  // Try sendBeacon first (most reliable for page unload)
+  if (navigator.sendBeacon) {
+    try {
+      const sent = navigator.sendBeacon(beaconUrl);
+      console.log('[Clipson Tracking] sendBeacon result:', sent);
+      if (!sent) {
+        console.warn('[Clipson Tracking] sendBeacon returned false, trying fetch fallback');
+        fetch(beaconUrl, { method: 'GET', keepalive: true, mode: 'no-cors' })
+          .then(() => console.log('[Clipson Tracking] Fetch fallback succeeded'))
+          .catch(err => console.error('[Clipson Tracking] Fetch fallback failed:', err));
+      }
+    } catch(e) {
+      console.error('[Clipson Tracking] sendBeacon exception:', e);
+      // Fallback to fetch
+      fetch(beaconUrl, { method: 'GET', keepalive: true, mode: 'no-cors' })
+        .then(() => console.log('[Clipson Tracking] Fetch fallback succeeded'))
+        .catch(err => console.error('[Clipson Tracking] Fetch fallback failed:', err));
+    }
+  } else {
+    console.warn('[Clipson Tracking] sendBeacon not supported, using fetch');
+    fetch(beaconUrl, { method: 'GET', keepalive: true, mode: 'no-cors' })
+      .then(() => console.log('[Clipson Tracking] Fetch succeeded'))
+      .catch(err => console.error('[Clipson Tracking] Fetch failed:', err));
   }
 })();
 </script>`
