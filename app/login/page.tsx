@@ -23,7 +23,7 @@ export default function LoginPage() {
 
       if (res.ok) {
         // Use window.location for full page reload to ensure cookie is available
-        window.location.href = '/admin/dashboard'
+        window.location.href = '/admin'
       } else {
         const data = await res.json().catch(() => ({}))
         setError(data.error || 'Invalid password')
