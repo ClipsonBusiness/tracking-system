@@ -141,9 +141,9 @@ export async function clearAdminAuth() {
   cookieStore.set('admin_session', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: 0, // Expire immediately
-    path: '/admin',
+    path: '/', // Match the path used when setting the cookie
   })
 }
 
