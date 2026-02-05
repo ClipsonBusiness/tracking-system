@@ -42,9 +42,15 @@ export default function ClientSetupForm({
   const [activeTab, setActiveTab] = useState<'checkout' | 'paymentintent'>('checkout')
   
   // Get tracking server URL - use appBaseUrl from server for consistency
-  const trackingServerUrl = appBaseUrl || (typeof window !== 'undefined' 
+  // Ensure we use www. subdomain to avoid redirects
+  let trackingServerUrl = appBaseUrl || (typeof window !== 'undefined' 
     ? window.location.origin 
-    : 'https://clipsonaffiliates.com')
+    : 'https://www.clipsonaffiliates.com')
+  
+  // Normalize to www. subdomain to avoid redirects
+  if (trackingServerUrl.includes('clipsonaffiliates.com') && !trackingServerUrl.includes('www.')) {
+    trackingServerUrl = trackingServerUrl.replace('clipsonaffiliates.com', 'www.clipsonaffiliates.com')
+  }
   
   // Generate JavaScript code when custom domain is entered
   // COOKIE-BASED VERSION: Sets cookie on client domain (Stripe-compatible)
