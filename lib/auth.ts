@@ -101,7 +101,7 @@ export async function setAdminAuth(password: string) {
   cookieStore.set('admin_session', sessionToken, {
     httpOnly: true, // Prevents JavaScript access - cookie is invisible to JS
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: 'strict', // Prevents CSRF attacks - cookie only sent on same-site requests
+    sameSite: 'lax', // Changed from 'strict' to 'lax' to allow redirects after login
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: '/admin', // Only sent for /admin routes, not visible on client domains
   })

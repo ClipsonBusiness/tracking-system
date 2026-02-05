@@ -29,17 +29,19 @@ export default function LoginPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
+      credentials: 'include', // Ensure cookies are sent/received
     })
 
     if (res.ok) {
+      // Use window.location for full page reload to ensure cookie is available
       if (loginType === 'admin') {
-        router.push('/admin/links')
+        window.location.href = '/admin/links'
       } else {
-        router.push('/campaign-manager/dashboard')
+        window.location.href = '/campaign-manager/dashboard'
       }
-      router.refresh()
     } else {
-      setError('Invalid password')
+      const data = await res.json().catch(() => ({}))
+      setError(data.error || 'Invalid password')
     }
   }
 
