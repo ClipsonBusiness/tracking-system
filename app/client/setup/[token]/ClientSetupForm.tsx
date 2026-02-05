@@ -334,7 +334,7 @@ export default function ClientSetupForm({
               <strong>Important:</strong> Click tracking alone does NOT track sales. Stripe must be told which affiliate generated each purchase.
             </p>
             <p className="text-xs text-red-200/80">
-              This code lives in your backend/server. This is NOT something our platform can do for you automatically.
+              Because Stripe requires this to happen inside your backend checkout code, this step must be completed by your developer.
             </p>
           </div>
         </div>
@@ -342,6 +342,14 @@ export default function ClientSetupForm({
         {/* SECTION 4A: Pass Affiliate ID Into Stripe Checkout */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-white mb-3">4A. Pass Affiliate ID Into Stripe Checkout (REQUIRED)</h3>
+          
+          {/* Payment Links Warning */}
+          <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-lg">
+            <p className="text-sm font-semibold text-red-300 mb-1">❗ Important:</p>
+            <p className="text-xs text-red-200">
+              <strong>Stripe Payment Links are not supported for affiliate sales tracking.</strong> You must use Stripe Checkout Sessions so affiliate metadata can be attached.
+            </p>
+          </div>
           
           <div className="mb-4">
             <p className="text-sm font-semibold text-white mb-2">Required Metadata Key:</p>
@@ -359,32 +367,38 @@ export default function ClientSetupForm({
 
           {/* Code Examples */}
           <div className="mb-4">
-            <p className="text-sm font-semibold text-white mb-3">Code Example (Stripe Checkout Sessions):</p>
+            <p className="text-sm font-semibold text-white mb-3">Code Example (Server-Side - Stripe Checkout Sessions):</p>
+            
+            {/* Warning */}
+            <div className="mb-3 p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg">
+              <p className="text-xs text-yellow-200">
+                ⚠️ <strong>Important:</strong> Stripe Checkout Sessions must be created on your backend (server). Do not use <code className="bg-yellow-900/50 px-1 rounded">document.cookie</code> in Stripe checkout code.
+              </p>
+            </div>
             
             <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
               <button
                 type="button"
                 onClick={() => {
-                  const code = `// Helper function to read cookies
-function getCookie(name) {
-  const value = \`; \${document.cookie}\`;
-  const parts = value.split(\`; \${name}=\`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
+                  const code = `// Server-side helper to read affiliate cookie
+function getAffiliateId(req) {
+  const cookie = req.headers.cookie
+    ?.split('; ')
+    .find(row => row.startsWith('ca_affiliate_id='));
+  return cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
 }
 
-// Read the affiliate ID from cookie (set by tracking script)
-const affiliateId = getCookie('ca_affiliate_id');
+// Inside your backend checkout endpoint
+const affiliateId = getAffiliateId(req);
 
-// When creating Stripe Checkout Session, include metadata:
 const session = await stripe.checkout.sessions.create({
   // ... your existing checkout config (line_items, mode, success_url, etc.) ...
   metadata: {
-    ca_affiliate_id: affiliateId || '', // Pass the affiliate ID to Stripe
+    ca_affiliate_id: affiliateId || '',
   },
   subscription_data: {
     metadata: {
-      ca_affiliate_id: affiliateId || '', // Also add to subscription for recurring payments
+      ca_affiliate_id: affiliateId || '',
     },
   },
 });`
@@ -396,26 +410,25 @@ const session = await stripe.checkout.sessions.create({
                 📋 Copy Code
               </button>
               <pre className="text-xs text-green-400 overflow-x-auto whitespace-pre-wrap">
-                <code>{`// Helper function to read cookies
-function getCookie(name) {
-  const value = \`; \${document.cookie}\`;
-  const parts = value.split(\`; \${name}=\`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
+                <code>{`// Server-side helper to read affiliate cookie
+function getAffiliateId(req) {
+  const cookie = req.headers.cookie
+    ?.split('; ')
+    .find(row => row.startsWith('ca_affiliate_id='));
+  return cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
 }
 
-// Read the affiliate ID from cookie (set by tracking script)
-const affiliateId = getCookie('ca_affiliate_id');
+// Inside your backend checkout endpoint
+const affiliateId = getAffiliateId(req);
 
-// When creating Stripe Checkout Session, include metadata:
 const session = await stripe.checkout.sessions.create({
   // ... your existing checkout config (line_items, mode, success_url, etc.) ...
   metadata: {
-    ca_affiliate_id: affiliateId || '', // Pass the affiliate ID to Stripe
+    ca_affiliate_id: affiliateId || '',
   },
   subscription_data: {
     metadata: {
-      ca_affiliate_id: affiliateId || '', // Also add to subscription for recurring payments
+      ca_affiliate_id: affiliateId || '',
     },
   },
 });`}</code>
