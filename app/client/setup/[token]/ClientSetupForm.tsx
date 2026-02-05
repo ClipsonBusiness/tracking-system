@@ -588,7 +588,7 @@ const session = await stripe.checkout.sessions.create({
                 I confirm that my Stripe checkout passes the affiliate ID as metadata
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                I have added the code from Section 4A to read the <code className="bg-gray-800 px-1 rounded">ca_affiliate_id</code> cookie and pass it to Stripe checkout metadata.
+                My developer has added the server-side code from Section 4A to read the <code className="bg-gray-800 px-1 rounded">ca_affiliate_id</code> cookie and pass it to Stripe checkout metadata.
               </p>
             </div>
           </label>
