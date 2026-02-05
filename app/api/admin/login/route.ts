@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { setAdminAuth } from '@/lib/auth'
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Tstn7117__'
 
 export async function POST(request: NextRequest) {
   try {
