@@ -140,3 +140,14 @@ model Clipper {
 
   @@map("clippers")
 }
+
+model AdminSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([token])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}

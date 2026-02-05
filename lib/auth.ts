@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createHash, randomBytes } from 'crypto'
+import { randomBytes } from 'crypto'
+import { prisma } from '@/lib/prisma'
 
 // SECURITY: Require ADMIN_PASSWORD to be set in production
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'admin')
@@ -9,14 +10,6 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === '
 function generateSessionToken(): string {
   return randomBytes(32).toString('hex')
 }
-
-// SECURITY: Create a hash of the password + session token for verification
-function createAuthHash(password: string, sessionToken: string): string {
-  return createHash('sha256').update(`${password}:${sessionToken}`).digest('hex')
-}
-
-// Store active sessions in memory (in production, use Redis or database)
-const activeSessions = new Map<string, { expiresAt: number }>()
 
 export async function checkAdminAuth(): Promise<boolean> {
   // SECURITY: In production, require ADMIN_PASSWORD to be set
@@ -42,33 +35,34 @@ export async function checkAdminAuth(): Promise<boolean> {
   
   const sessionToken = cookieStore.get('admin_session')?.value
   
-  // Debug logging
-  console.log('checkAdminAuth:', {
-    sessionTokenExists: !!sessionToken,
-    sessionTokenLength: sessionToken?.length,
-    activeSessionsCount: activeSessions.size,
-  })
-  
   if (!sessionToken) {
-    console.log('❌ No session token found')
     return false
   }
   
-  // Check if session exists and is not expired
-  const session = activeSessions.get(sessionToken)
-  if (!session) {
-    console.log('❌ Session not found in activeSessions map')
+  try {
+    // Check session in database (works across serverless instances)
+    const session = await prisma.adminSession.findUnique({
+      where: { token: sessionToken },
+    })
+    
+    if (!session) {
+      return false
+    }
+    
+    // Check if expired
+    if (session.expiresAt < new Date()) {
+      // Delete expired session
+      await prisma.adminSession.delete({
+        where: { token: sessionToken },
+      }).catch(() => {}) // Ignore errors
+      return false
+    }
+    
+    return true
+  } catch (error) {
+    console.error('Error checking admin auth:', error)
     return false
   }
-  
-  if (session.expiresAt < Date.now()) {
-    console.log('❌ Session expired')
-    activeSessions.delete(sessionToken)
-    return false
-  }
-  
-  console.log('✅ Admin auth check passed')
-  return true
 }
 
 export async function requireAdminAuth() {
@@ -81,27 +75,30 @@ export async function requireAdminAuth() {
 export async function setAdminAuth(password: string) {
   // SECURITY: Don't store password in cookie - use session token instead
   const sessionToken = generateSessionToken()
-  const expiresAt = Date.now() + (60 * 60 * 24 * 7 * 1000) // 7 days
+  const expiresAt = new Date(Date.now() + (60 * 60 * 24 * 7 * 1000)) // 7 days
   
-  // Store session (in production, use Redis or database)
-  activeSessions.set(sessionToken, { expiresAt })
-  
-  console.log('setAdminAuth:', {
-    sessionTokenLength: sessionToken.length,
-    expiresAt: new Date(expiresAt).toISOString(),
-    activeSessionsCount: activeSessions.size,
-  })
-  
-  // Clean up expired sessions periodically
-  if (activeSessions.size > 1000) {
-    const now = Date.now()
-    const tokensToDelete: string[] = []
-    activeSessions.forEach((session, token) => {
-      if (session.expiresAt < now) {
-        tokensToDelete.push(token)
-      }
+  // Store session in database (works across serverless instances)
+  try {
+    await prisma.adminSession.create({
+      data: {
+        token: sessionToken,
+        expiresAt: expiresAt,
+      },
     })
-    tokensToDelete.forEach(token => activeSessions.delete(token))
+    
+    // Clean up expired sessions periodically (run async, don't wait)
+    prisma.adminSession.deleteMany({
+      where: {
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+    }).catch(() => {}) // Ignore errors
+    
+    console.log('✅ Admin session stored in database')
+  } catch (error) {
+    console.error('Error storing admin session:', error)
+    throw error
   }
   
   const cookieStore = await cookies()
@@ -119,7 +116,6 @@ export async function setAdminAuth(password: string) {
   }
   
   // Set new secure session cookie
-  // IMPORTANT: Use path: '/' instead of '/admin' to ensure cookie is available
   cookieStore.set('admin_session', sessionToken, {
     httpOnly: true, // Prevents JavaScript access - cookie is invisible to JS
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
@@ -134,9 +130,14 @@ export async function setAdminAuth(password: string) {
 export async function clearAdminAuth() {
   const cookieStore = await cookies()
   const sessionToken = cookieStore.get('admin_session')?.value
+  
+  // Delete session from database
   if (sessionToken) {
-    activeSessions.delete(sessionToken)
+    await prisma.adminSession.deleteMany({
+      where: { token: sessionToken },
+    }).catch(() => {}) // Ignore errors
   }
+  
   // Delete cookie with same settings as when it was set
   cookieStore.set('admin_session', '', {
     httpOnly: true,
