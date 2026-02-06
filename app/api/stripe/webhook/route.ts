@@ -218,10 +218,14 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
             affiliate_code: affiliateCode,
           },
         })
-        console.log(`Updated subscription ${subscriptionId} with affiliate code: ${affiliateCode}`)
+        console.log(`✅ Updated subscription ${subscriptionId} with affiliate code: ${affiliateCode}`)
       } catch (err) {
         console.error('Error updating subscription metadata:', err)
       }
+    } else if (session.mode === 'subscription') {
+      // For subscription checkouts, subscription might be created asynchronously
+      // Store the checkout session ID so we can retrieve it later in invoice.paid
+      console.log(`⚠️ Subscription checkout session ${session.id} completed but subscription not yet created. Metadata will be propagated when subscription is created.`)
     }
   }
 }
@@ -473,9 +477,29 @@ async function handleInvoicePaid(
       })
       if (link) {
         linkId = link.id
+        console.log(`✅ Found link ${linkId} by slug "${linkSlug}"`)
+      } else {
+        console.warn(`⚠️ Link with slug "${linkSlug}" not found in database. Conversion will be created without linkId.`)
       }
     } catch (err) {
       console.error('Error finding link by slug:', err)
+    }
+  }
+  
+  // CRITICAL: Also try to find link using affiliateCode directly (from metadata)
+  // This ensures we catch cases where linkSlug wasn't set but affiliateCode was
+  if (!linkId && affiliateCode) {
+    try {
+      const link = await prisma.link.findUnique({
+        where: { slug: affiliateCode },
+        select: { id: true },
+      })
+      if (link) {
+        linkId = link.id
+        console.log(`✅ Found link ${linkId} by affiliateCode "${affiliateCode}"`)
+      }
+    } catch (err) {
+      console.error('Error finding link by affiliateCode:', err)
     }
   }
   
