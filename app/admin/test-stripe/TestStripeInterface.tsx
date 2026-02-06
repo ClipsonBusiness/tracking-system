@@ -1014,7 +1014,7 @@ export default function TestStripeInterface({
       <div className="bg-gray-800 rounded-lg p-6 mb-6">
         <h2 className="text-xl font-bold text-white mb-4">🔧 Fix Conversion Attribution</h2>
         <p className="text-gray-400 mb-4">
-          If a sale went through but isn't showing in the dashboard, use this tool to manually link it to the correct affiliate link.
+          If a sale went through but isn&apos;t showing in the dashboard, use this tool to manually link it to the correct affiliate link.
         </p>
         
         <div className="space-y-4">
