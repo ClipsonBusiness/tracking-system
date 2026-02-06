@@ -223,9 +223,14 @@ export default function ClientSetupForm({
             <p className="text-sm text-yellow-200 mb-2">
               This script captures the <code className="bg-yellow-900/50 px-1 rounded">?ref=</code> parameter from incoming affiliate links and stores the affiliate ID in a cookie on your domain.
             </p>
-            <p className="text-xs text-yellow-200/80">
+            <p className="text-xs text-yellow-200/80 mb-3">
               The cookie is named <code className="bg-yellow-900/50 px-1 rounded">ca_affiliate_id</code> and lasts for 90 days. This cookie will be available when users reach your Stripe checkout.
             </p>
+            <div className="bg-green-900/30 border border-green-700 rounded p-3">
+              <p className="text-xs text-green-200">
+                <strong>✅ Click Tracking:</strong> Once installed, this script automatically tracks all link clicks. No additional configuration needed for click tracking!
+              </p>
+            </div>
           </div>
         </div>
 
