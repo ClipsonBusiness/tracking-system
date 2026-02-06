@@ -775,13 +775,49 @@ async function handleInvoicePaid(
       : invoice.subscription?.id || null
 
   try {
-    // BULLETPROOF: Always create conversion, even without linkId (can fix later)
+    // Check if conversion was already created from checkout.session.completed
+    // For subscription checkouts, checkout.session.completed might create conversion with cs_ prefix
+    let existingConversion = await prisma.conversion.findUnique({
+      where: { stripeInvoiceId: invoiceId },
+    })
+    
+    // If not found, check for checkout session-based conversion (for subscription first payment)
+    if (!existingConversion && subscriptionId) {
+      try {
+        const checkoutSessions = await stripe.checkout.sessions.list({
+          subscription: subscriptionId,
+          limit: 1,
+        })
+        
+        if (checkoutSessions.data.length > 0) {
+          const sessionId = checkoutSessions.data[0].id
+          const checkoutSessionConversionId = `cs_${sessionId}`
+          existingConversion = await prisma.conversion.findUnique({
+            where: { stripeInvoiceId: checkoutSessionConversionId },
+          })
+          
+          // If found, update it to use the real invoice ID
+          if (existingConversion) {
+            console.log(`🔄 Updating conversion from checkout session ID to invoice ID: ${invoiceId}`)
+            await prisma.conversion.update({
+              where: { id: existingConversion.id },
+              data: { stripeInvoiceId: invoiceId },
+            })
+          }
+        }
+      } catch (err) {
+        console.error('Error checking for checkout session conversion:', err)
+      }
+    }
+    
+    // BULLETPROOF: Always create/update conversion, even without linkId (can fix later)
     const conversion = await prisma.conversion.upsert({
       where: { stripeInvoiceId: invoiceId },
       update: {
         // Update if needed (e.g., status changed or linkId was null and now we have it)
         status: 'paid',
         ...(linkId && { linkId }), // Only update linkId if we have it
+        ...(affiliateCode && !existingConversion?.affiliateCode && { affiliateCode }), // Update affiliate code if missing
       },
       create: {
         clientId: foundClient.id,
