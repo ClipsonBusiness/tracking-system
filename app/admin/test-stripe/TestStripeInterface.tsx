@@ -113,6 +113,9 @@ export default function TestStripeInterface({
   const [fixLinkSlug, setFixLinkSlug] = useState('yrcpz')
   const [fixingConversion, setFixingConversion] = useState(false)
   const [fixResult, setFixResult] = useState<string | null>(null)
+  const [invoiceId, setInvoiceId] = useState('')
+  const [checkoutSessionId, setCheckoutSessionId] = useState('')
+  const [creatingConversion, setCreatingConversion] = useState(false)
 
   async function checkSale(clipperCode?: string) {
     const code = clipperCode || clipperCodeInput || 'mflp'
@@ -1120,6 +1123,105 @@ export default function TestStripeInterface({
           
           {fixResult && (
             <div className={`p-4 rounded-lg ${fixResult.includes('✅') ? 'bg-green-900/30 text-green-300' : fixResult.includes('❌') ? 'bg-red-900/30 text-red-300' : 'bg-yellow-900/30 text-yellow-300'}`}>
+              {fixResult}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Manual Conversion Creation */}
+      <div className="bg-gray-800 rounded-lg p-6 mb-6">
+        <h2 className="text-xl font-bold text-white mb-4">➕ Manually Create Conversion</h2>
+        <p className="text-gray-400 mb-4">
+          If a sale happened but wasn&apos;t recorded, manually create it from Stripe invoice or checkout session ID.
+        </p>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Link Slug (e.g., yrcpz)
+            </label>
+            <input
+              type="text"
+              value={fixLinkSlug}
+              onChange={(e) => setFixLinkSlug(e.target.value)}
+              placeholder="yrcpz"
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Stripe Invoice ID (optional, e.g., in_1Sxpw1...)
+            </label>
+            <input
+              type="text"
+              value={invoiceId}
+              onChange={(e) => setInvoiceId(e.target.value)}
+              placeholder="in_1Sxpw1..."
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Stripe Checkout Session ID (optional, e.g., cs_live_a1CZTi...)
+            </label>
+            <input
+              type="text"
+              value={checkoutSessionId}
+              onChange={(e) => setCheckoutSessionId(e.target.value)}
+              placeholder="cs_live_a1CZTi..."
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+          
+          <button
+            onClick={async () => {
+              if (!fixLinkSlug.trim() || (!invoiceId.trim() && !checkoutSessionId.trim())) {
+                setFixResult('❌ Please provide link slug and either invoice ID or checkout session ID')
+                return
+              }
+              
+              setCreatingConversion(true)
+              setFixResult(null)
+              setError('')
+              
+              try {
+                const res = await fetch('/api/admin/create-conversion', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    linkSlug: fixLinkSlug.trim(),
+                    invoiceId: invoiceId.trim() || undefined,
+                    checkoutSessionId: checkoutSessionId.trim() || undefined,
+                  }),
+                })
+                
+                const data = await res.json()
+                
+                if (res.ok) {
+                  setFixResult(`✅ ${data.message}\nAmount: $${(data.conversion.amountPaid / 100).toFixed(2)} ${data.conversion.currency.toUpperCase()}\nPaid: ${new Date(data.conversion.paidAt).toLocaleString()}`)
+                  setInvoiceId('')
+                  setCheckoutSessionId('')
+                } else {
+                  setFixResult(`❌ ${data.error}`)
+                }
+              } catch (err) {
+                setError('Failed to create conversion')
+                setFixResult('❌ Error: ' + (err as Error).message)
+              } finally {
+                setCreatingConversion(false)
+              }
+            }}
+            disabled={creatingConversion || !fixLinkSlug.trim() || (!invoiceId.trim() && !checkoutSessionId.trim())}
+            className="w-full px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+          >
+            {creatingConversion ? 'Creating...' : '➕ Create Conversion'}
+          </button>
+          
+          {fixResult && (
+            <div className={`p-4 rounded-lg whitespace-pre-line ${fixResult.includes('✅') ? 'bg-green-900/30 text-green-300' : fixResult.includes('❌') ? 'bg-red-900/30 text-red-300' : 'bg-yellow-900/30 text-yellow-300'}`}>
               {fixResult}
             </div>
           )}
