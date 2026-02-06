@@ -114,7 +114,7 @@ export default function TestStripeInterface({
   const [fixingConversion, setFixingConversion] = useState(false)
   const [fixResult, setFixResult] = useState<string | null>(null)
   const [invoiceId, setInvoiceId] = useState('')
-  const [checkoutSessionId, setCheckoutSessionId] = useState('cs_live_a1CZTiElE9LlGcPxl8Yf1JvurRDrQSsJvjKIMv4rdvIj0aXWlLRs0UmsRD')
+  const [checkoutSessionId, setCheckoutSessionId] = useState('')
   const [paymentIntentId, setPaymentIntentId] = useState('pi_3Sxpw1LDafoVnYnR2A04Kqb2')
   const [creatingConversion, setCreatingConversion] = useState(false)
 

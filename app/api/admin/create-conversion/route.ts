@@ -69,25 +69,40 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch (err: any) {
-        return NextResponse.json(
-          { error: `Failed to retrieve checkout session: ${err.message}` },
-          { status: 400 }
-        )
+        // Don't fail if checkout session not found - try payment intent instead
+        console.warn(`Checkout session not found: ${err.message}, trying payment intent...`)
       }
     }
     
     // Try to get invoice from payment intent if paymentIntentId provided
+    // This is the most reliable method for subscription payments
     if (!invoice && paymentIntentId) {
       try {
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+        console.log(`✅ Found payment intent: ${paymentIntentId}`)
+        
         if (paymentIntent.invoice) {
           const invoiceIdFromPI = typeof paymentIntent.invoice === 'string'
             ? paymentIntent.invoice
             : paymentIntent.invoice.id
           try {
             invoice = await stripe.invoices.retrieve(invoiceIdFromPI)
+            console.log(`✅ Found invoice from payment intent: ${invoiceIdFromPI}`)
           } catch (err) {
             console.error('Error retrieving invoice from payment intent:', err)
+          }
+        } else {
+          // If no invoice on payment intent, try to find checkout session from payment intent
+          // Payment intents from checkout sessions have metadata
+          if (paymentIntent.metadata?.checkout_session_id) {
+            try {
+              checkoutSession = await stripe.checkout.sessions.retrieve(
+                paymentIntent.metadata.checkout_session_id
+              )
+              console.log(`✅ Found checkout session from payment intent metadata`)
+            } catch (err) {
+              console.warn('Could not retrieve checkout session from payment intent metadata')
+            }
           }
         }
       } catch (err: any) {
