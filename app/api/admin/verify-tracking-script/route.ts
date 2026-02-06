@@ -71,11 +71,13 @@ export async function GET(request: NextRequest) {
                             html.includes(`'${domainWithoutWww}'`) ||
                             html.includes(`"${domainWithoutWww}"`) ||
                             html.includes(`www.${domainWithoutWww}`)
+      // Check for cookie setting - support both old (link_slug) and new (ca_affiliate_id) cookie names
       const hasCookieSetting = html.includes('document.cookie') && 
-                              (html.includes('link_slug') || html.includes('linkSlug'))
+                              (html.includes('link_slug') || html.includes('linkSlug') || 
+                               html.includes('ca_affiliate_id'))
       
-      // More specific check - look for the exact pattern
-      const hasExactPattern = html.includes('link_slug=') && 
+      // More specific check - look for the exact pattern (support both cookie names)
+      const hasExactPattern = (html.includes('link_slug=') || html.includes('ca_affiliate_id=')) && 
                              html.includes('encodeURIComponent(refParam)')
       
       // Check for beacon call to tracking server
@@ -89,8 +91,8 @@ export async function GET(request: NextRequest) {
       // Extract the script if found
       let scriptSnippet = null
       if (found) {
-        // Try to extract the script block
-        const scriptMatch = html.match(/<script[^>]*>[\s\S]*?Clipson[\s\S]*?link_slug[\s\S]*?<\/script>/i)
+        // Try to extract the script block (support both cookie names)
+        const scriptMatch = html.match(/<script[^>]*>[\s\S]*?Clipson[\s\S]*?(?:link_slug|ca_affiliate_id)[\s\S]*?<\/script>/i)
         if (scriptMatch) {
           scriptSnippet = scriptMatch[0].substring(0, 500) // First 500 chars
         }
