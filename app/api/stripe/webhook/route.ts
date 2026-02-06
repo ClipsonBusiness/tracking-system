@@ -497,9 +497,33 @@ async function handleInvoicePaid(
       if (link) {
         linkId = link.id
         console.log(`✅ Found link ${linkId} by affiliateCode "${affiliateCode}"`)
+      } else {
+        console.error(`❌ CRITICAL: Link with slug "${affiliateCode}" NOT FOUND in database!`)
+        console.error(`   This means the conversion will be created without linkId and won't show in dashboard.`)
+        console.error(`   Please check if link slug "${affiliateCode}" exists in the database.`)
       }
     } catch (err) {
       console.error('Error finding link by affiliateCode:', err)
+    }
+  }
+  
+  // FINAL FALLBACK: If we still don't have linkId but have affiliateCode, 
+  // try to find ANY link with matching slug (case-insensitive search)
+  if (!linkId && affiliateCode) {
+    try {
+      // Get all links and find by slug (case-insensitive)
+      const allLinks = await prisma.link.findMany({
+        select: { id: true, slug: true },
+      })
+      const matchingLink = allLinks.find(
+        l => l.slug.toLowerCase() === affiliateCode.toLowerCase()
+      )
+      if (matchingLink) {
+        linkId = matchingLink.id
+        console.log(`✅ Found link ${linkId} by case-insensitive slug match "${affiliateCode}"`)
+      }
+    } catch (err) {
+      console.error('Error in case-insensitive link search:', err)
     }
   }
   
