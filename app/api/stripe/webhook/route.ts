@@ -269,46 +269,44 @@ async function handleInvoicePaid(
         console.warn(`⚠️ Subscription ${subscriptionId} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
       }
       
-      // If still no affiliate code, check the subscription's latest invoice's checkout session
-      if (!affiliateCode && subscription.latest_invoice) {
-        const latestInvoiceId = typeof subscription.latest_invoice === 'string'
-          ? subscription.latest_invoice
-          : subscription.latest_invoice.id
-        
-        if (latestInvoiceId === invoice.id) {
-          // This is the subscription's latest invoice, try to find checkout session
-          try {
-            const checkoutSessions = await stripe.checkout.sessions.list({
-              subscription: subscriptionId,
-              limit: 1,
-            })
+      // If still no affiliate code, try to find checkout session for this subscription
+      // Check all checkout sessions, not just the latest invoice
+      if (!affiliateCode) {
+        try {
+          const checkoutSessions = await stripe.checkout.sessions.list({
+            subscription: subscriptionId,
+            limit: 1,
+          })
+          
+          if (checkoutSessions.data.length > 0) {
+            const session = checkoutSessions.data[0]
+            if (session.metadata?.ca_affiliate_id) {
+              affiliateCode = session.metadata.ca_affiliate_id
+              hasRequiredMetadata = true
+              console.log(`✅ Found ca_affiliate_id="${affiliateCode}" from checkout session ${session.id}`)
+            } else if (session.metadata?.affiliate_code) {
+              affiliateCode = session.metadata.affiliate_code
+              console.warn(`⚠️ Checkout session ${session.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
+            }
             
-            if (checkoutSessions.data.length > 0) {
-              const session = checkoutSessions.data[0]
-              if (session.metadata?.ca_affiliate_id) {
-                affiliateCode = session.metadata.ca_affiliate_id
-                hasRequiredMetadata = true
-              } else if (session.metadata?.affiliate_code) {
-                affiliateCode = session.metadata.affiliate_code
-                console.warn(`⚠️ Checkout session ${session.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
-              }
-              
-              // Update subscription with the affiliate code for future invoices
-              if (affiliateCode) {
-                try {
-                  await stripe.subscriptions.update(subscriptionId, {
-                    metadata: {
-                      affiliate_code: affiliateCode,
-                    },
-                  })
-                } catch (err) {
-                  console.error('Error updating subscription metadata:', err)
-                }
+            // Update subscription with the affiliate code for future invoices
+            if (affiliateCode) {
+              try {
+                await stripe.subscriptions.update(subscriptionId, {
+                  metadata: {
+                    ca_affiliate_id: affiliateCode,
+                    // Keep affiliate_code for backward compatibility
+                    affiliate_code: affiliateCode,
+                  },
+                })
+                console.log(`✅ Updated subscription ${subscriptionId} with ca_affiliate_id="${affiliateCode}"`)
+              } catch (err) {
+                console.error('Error updating subscription metadata:', err)
               }
             }
-          } catch (err) {
-            console.error('Error retrieving checkout session:', err)
           }
+        } catch (err) {
+          console.error('Error retrieving checkout session:', err)
         }
       }
     } catch (err) {
