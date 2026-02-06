@@ -187,10 +187,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   
   if (affiliateCode) {
     // Update customer metadata if customer exists
+    // Use ca_affiliate_id (new standard) instead of affiliate_code
     if (session.customer && typeof session.customer === 'string') {
       try {
         await stripe.customers.update(session.customer, {
           metadata: {
+            ca_affiliate_id: affiliateCode,
+            // Keep affiliate_code for backward compatibility
             affiliate_code: affiliateCode,
           },
         })
@@ -201,6 +204,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     }
     
     // Update subscription metadata if subscription exists
+    // Use ca_affiliate_id (new standard) instead of affiliate_code
     if (session.subscription) {
       const subscriptionId = typeof session.subscription === 'string' 
         ? session.subscription 
@@ -209,6 +213,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       try {
         await stripe.subscriptions.update(subscriptionId, {
           metadata: {
+            ca_affiliate_id: affiliateCode,
+            // Keep affiliate_code for backward compatibility
             affiliate_code: affiliateCode,
           },
         })
