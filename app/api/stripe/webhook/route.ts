@@ -187,12 +187,15 @@ async function handleCheckoutSessionCompleted(
   const currency = session.currency || 'usd'
   
   // Only create conversion if payment was successful
-  if (session.payment_status !== 'paid' && session.payment_status !== 'complete') {
-    console.log(`⏳ Checkout session ${session.id} payment status is "${session.payment_status}", waiting for payment...`)
+  // For checkout.session.completed, payment_status is usually 'paid' or 'no_payment_required'
+  // The event itself fires when payment is complete, so we can proceed
+  if (session.payment_status === 'unpaid') {
+    console.log(`⏳ Checkout session ${session.id} payment status is "unpaid", waiting for payment...`)
     // Still propagate metadata for when payment completes
-  } else {
-    console.log(`💰 Payment confirmed for checkout session ${session.id}: $${(amountPaid / 100).toFixed(2)} ${currency.toUpperCase()}`)
+    return // Don't create conversion yet
   }
+  
+  console.log(`💰 Payment confirmed for checkout session ${session.id}: $${(amountPaid / 100).toFixed(2)} ${currency.toUpperCase()} (status: ${session.payment_status})`)
   
   // Find client
   let foundClient: { id: string; name: string; stripeAccountId: string | null } | null = null
