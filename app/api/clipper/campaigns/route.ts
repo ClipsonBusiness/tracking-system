@@ -3,13 +3,17 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    // Get ALL campaigns to check what we have
+    // Get ALL campaigns with their client info to check setup completion
     const allCampaigns = await prisma.campaign.findMany({
-      select: {
-        id: true,
-        name: true,
-        customDomain: true,
-        status: true,
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+            customDomain: true,
+            stripeWebhookSecret: true,
+          },
+        },
       },
     })
 
@@ -33,16 +37,45 @@ export async function GET() {
       }
     }
 
-    // Only show campaigns that are explicitly 'active'
-    // Exclude 'inactive' and null status campaigns
-    const activeCampaigns = allCampaigns.filter(c => c.status === 'active')
+    // Only show campaigns that:
+    // 1. Are explicitly 'active'
+    // 2. Have a client with completed setup (customDomain AND stripeWebhookSecret)
+    const readyCampaigns = allCampaigns.filter(c => {
+      const isActive = c.status === 'active'
+      const hasCustomDomain = !!c.client.customDomain && c.client.customDomain.trim() !== ''
+      const hasWebhookSecret = !!c.client.stripeWebhookSecret && c.client.stripeWebhookSecret.trim() !== ''
+      const clientSetupComplete = hasCustomDomain && hasWebhookSecret
+      
+      return isActive && clientSetupComplete
+    })
     
     // Log for debugging
+    const activeButNotReady = allCampaigns.filter(c => {
+      const isActive = c.status === 'active'
+      const hasCustomDomain = !!c.client.customDomain && c.client.customDomain.trim() !== ''
+      const hasWebhookSecret = !!c.client.stripeWebhookSecret && c.client.stripeWebhookSecret.trim() !== ''
+      const clientSetupComplete = hasCustomDomain && hasWebhookSecret
+      return isActive && !clientSetupComplete
+    })
+    
     const inactiveCount = allCampaigns.filter(c => c.status === 'inactive' || c.status === null).length
-    console.log(`Clipper API: Returning ${activeCampaigns.length} active campaigns, ${inactiveCount} inactive campaigns filtered out`)
+    
+    console.log(`Clipper API: Returning ${readyCampaigns.length} ready campaigns`)
+    console.log(`  - ${inactiveCount} inactive campaigns filtered out`)
+    if (activeButNotReady.length > 0) {
+      console.log(`  - ${activeButNotReady.length} active campaigns filtered out (client setup incomplete):`)
+      activeButNotReady.forEach(c => {
+        const hasDomain = !!c.client.customDomain && c.client.customDomain.trim() !== ''
+        const hasWebhook = !!c.client.stripeWebhookSecret && c.client.stripeWebhookSecret.trim() !== ''
+        console.log(`    • ${c.name}: domain=${hasDomain}, webhook=${hasWebhook}`)
+      })
+    }
 
     return NextResponse.json({ 
-      campaigns: activeCampaigns.map(({ status, ...campaign }) => campaign),
+      campaigns: readyCampaigns.map(({ status, client, ...campaign }) => ({
+        ...campaign,
+        customDomain: campaign.customDomain || client.customDomain,
+      })),
       // Add timestamp to help with cache-busting
       timestamp: new Date().toISOString(),
     })
