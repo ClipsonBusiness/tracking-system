@@ -1009,6 +1009,119 @@ export default function TestStripeInterface({
           </div>
         )}
       </div>
+
+      {/* Fix Conversion Section */}
+      <div className="bg-gray-800 rounded-lg p-6 mb-6">
+        <h2 className="text-xl font-bold text-white mb-4">🔧 Fix Conversion Attribution</h2>
+        <p className="text-gray-400 mb-4">
+          If a sale went through but isn't showing in the dashboard, use this tool to manually link it to the correct affiliate link.
+        </p>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Link Slug (e.g., yrcpz)
+            </label>
+            <input
+              type="text"
+              value={fixLinkSlug}
+              onChange={(e) => setFixLinkSlug(e.target.value)}
+              placeholder="yrcpz"
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+          
+          <div className="flex gap-4">
+            <button
+              onClick={async () => {
+                setFixingConversion(true)
+                setFixResult(null)
+                setError('')
+                
+                try {
+                  // First, check for orphan conversions
+                  const checkRes = await fetch('/api/admin/fix-conversion')
+                  const checkData = await checkRes.json()
+                  
+                  if (checkData.orphans && checkData.orphans.length > 0) {
+                    // Try to fix each orphan that matches the link slug
+                    let fixed = 0
+                    for (const orphan of checkData.orphans) {
+                      if (orphan.affiliateCode === fixLinkSlug || !orphan.affiliateCode) {
+                        const fixRes = await fetch('/api/admin/fix-conversion', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            invoiceId: orphan.invoiceId,
+                            linkSlug: fixLinkSlug,
+                          }),
+                        })
+                        
+                        if (fixRes.ok) {
+                          fixed++
+                        }
+                      }
+                    }
+                    
+                    if (fixed > 0) {
+                      setFixResult(`✅ Fixed ${fixed} conversion(s)! Refresh the dashboard to see the revenue.`)
+                    } else {
+                      setFixResult(`⚠️ Found ${checkData.orphans.length} orphan conversion(s), but none matched link slug "${fixLinkSlug}".`)
+                    }
+                  } else {
+                    setFixResult('✅ No orphan conversions found. All conversions are properly linked.')
+                  }
+                } catch (err) {
+                  setError('Failed to fix conversions')
+                  setFixResult('❌ Error: ' + (err as Error).message)
+                } finally {
+                  setFixingConversion(false)
+                }
+              }}
+              disabled={fixingConversion || !fixLinkSlug.trim()}
+              className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+            >
+              {fixingConversion ? 'Fixing...' : '🔧 Fix Orphan Conversions'}
+            </button>
+            
+            <button
+              onClick={async () => {
+                setFixingConversion(true)
+                setFixResult(null)
+                setError('')
+                
+                try {
+                  const res = await fetch(`/api/admin/fix-conversion?linkSlug=${encodeURIComponent(fixLinkSlug)}`)
+                  const data = await res.json()
+                  
+                  if (data.link) {
+                    const conversions = data.link.conversions || []
+                    const totalRevenue = conversions.reduce((sum: number, c: any) => sum + c.amountPaid, 0) / 100
+                    setFixResult(`✅ Link "${fixLinkSlug}" has ${conversions.length} conversion(s) totaling $${totalRevenue.toFixed(2)}`)
+                  } else {
+                    setFixResult(`❌ Link "${fixLinkSlug}" not found`)
+                  }
+                } catch (err) {
+                  setError('Failed to check conversions')
+                  setFixResult('❌ Error: ' + (err as Error).message)
+                } finally {
+                  setFixingConversion(false)
+                }
+              }}
+              disabled={fixingConversion || !fixLinkSlug.trim()}
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+            >
+              {fixingConversion ? 'Checking...' : '📊 Check Link Conversions'}
+            </button>
+          </div>
+          
+          {fixResult && (
+            <div className={`p-4 rounded-lg ${fixResult.includes('✅') ? 'bg-green-900/30 text-green-300' : fixResult.includes('❌') ? 'bg-red-900/30 text-red-300' : 'bg-yellow-900/30 text-yellow-300'}`}>
+              {fixResult}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
