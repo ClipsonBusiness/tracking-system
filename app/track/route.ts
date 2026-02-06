@@ -21,7 +21,8 @@ export async function OPTIONS() {
 // Route handler for tracking links with ?ref= query parameters
 // Handles: tracking-server.com/track?ref=xxxx
 // Can be called directly (redirects) or via beacon (just records click)
-export async function GET(request: NextRequest) {
+// Supports both GET (direct visits) and POST (beacon requests)
+async function handleTrackRequest(request: NextRequest, method: string) {
   try {
     const searchParams = request.nextUrl.searchParams
     
@@ -34,14 +35,15 @@ export async function GET(request: NextRequest) {
 
     const actualSlug = refParam
     
-    // Check if this is a beacon request (from JavaScript snippet)
-    // Beacons typically have specific headers or we can check for redirect=false
-    const isBeacon = searchParams.get('beacon') === 'true' || 
+    // POST requests are always beacon requests (from navigator.sendBeacon)
+    // GET requests with beacon=true are also beacon requests
+    const isBeacon = method === 'POST' || 
+                     searchParams.get('beacon') === 'true' || 
                      request.headers.get('user-agent')?.includes('beacon') ||
                      request.headers.get('purpose') === 'prefetch'
     
     // Debug logging
-    console.log('Track route hit with ref:', { actualSlug, isBeacon })
+    console.log('Track route hit with ref:', { actualSlug, isBeacon, method })
     
     // Find link by slug (direct lookup, no custom domain filtering needed here)
     const link = await prisma.link.findFirst({
@@ -83,6 +85,16 @@ export async function GET(request: NextRequest) {
     console.error('Error in track route redirect:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
+}
+
+// GET handler (direct visits or GET beacons)
+export async function GET(request: NextRequest) {
+  return handleTrackRequest(request, 'GET')
+}
+
+// POST handler (beacon requests from navigator.sendBeacon)
+export async function POST(request: NextRequest) {
+  return handleTrackRequest(request, 'POST')
 }
 
 // Extract click recording logic to a separate function
