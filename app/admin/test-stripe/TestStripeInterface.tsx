@@ -110,6 +110,9 @@ export default function TestStripeInterface({
   const [loadingClicks, setLoadingClicks] = useState(false)
   const [salesTestResult, setSalesTestResult] = useState<any>(null)
   const [loadingSalesTest, setLoadingSalesTest] = useState(false)
+  const [fixLinkSlug, setFixLinkSlug] = useState('yrcpz')
+  const [fixingConversion, setFixingConversion] = useState(false)
+  const [fixResult, setFixResult] = useState<string | null>(null)
 
   async function checkSale(clipperCode?: string) {
     const code = clipperCode || clipperCodeInput || 'mflp'
