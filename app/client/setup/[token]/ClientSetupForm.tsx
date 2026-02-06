@@ -351,11 +351,16 @@ export default function ClientSetupForm({
               Step 2: Stripe Sales Tracking (REQUIRED)
             </h2>
             <p className="text-sm text-red-200 mb-2">
-              <strong>Important:</strong> Click tracking alone does NOT track sales. Stripe must be told which affiliate generated each purchase.
+              <strong>Important:</strong> Click tracking works automatically, but sales tracking requires additional code. Stripe must be told which affiliate generated each purchase.
             </p>
-            <p className="text-xs text-red-200/80">
+            <p className="text-xs text-red-200/80 mb-3">
               Because Stripe requires this to happen inside your backend checkout code, this step must be completed by your developer.
             </p>
+            <div className="bg-red-900/30 border border-red-700 rounded p-3 mb-3">
+              <p className="text-xs text-red-200">
+                <strong>⚠️ Sales Tracking:</strong> Without this step, clicks will be tracked but sales will NOT be attributed to affiliates. Your developer must add the code below to your Stripe checkout.
+              </p>
+            </div>
           </div>
         </div>
 
