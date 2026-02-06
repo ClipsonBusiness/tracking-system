@@ -290,8 +290,9 @@ async function handleCheckoutSessionCompleted(
     }
   }
   
-  // CRITICAL: Create conversion for first payment if payment is complete
-  if (session.payment_status === 'paid' || session.payment_status === 'complete') {
+  // CRITICAL: Create conversion for first payment
+  // checkout.session.completed fires when payment is complete, so we can create conversion
+  if (session.payment_status !== 'unpaid') {
     // For subscription checkouts, we need to get the invoice ID
     let invoiceId: string | null = null
     let subscriptionId: string | null = null
