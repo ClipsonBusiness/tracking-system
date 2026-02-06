@@ -246,17 +246,48 @@ async function handleInvoicePaid(
   let affiliateCode: string | null = null
   let hasRequiredMetadata = false
 
-  // Try invoice metadata first - check for new standard
-  if (invoice.metadata?.ca_affiliate_id) {
+  // CRITICAL: For subscription invoices, check checkout session FIRST
+  // The checkout session is the source of truth for subscription checkouts
+  if (invoice.subscription) {
+    const subscriptionId =
+      typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : invoice.subscription.id
+
+    try {
+      // Check checkout session FIRST - this is where the metadata is set
+      const checkoutSessions = await stripe.checkout.sessions.list({
+        subscription: subscriptionId,
+        limit: 1,
+      })
+      
+      if (checkoutSessions.data.length > 0) {
+        const session = checkoutSessions.data[0]
+        if (session.metadata?.ca_affiliate_id) {
+          affiliateCode = session.metadata.ca_affiliate_id
+          hasRequiredMetadata = true
+          console.log(`✅ Found ca_affiliate_id="${affiliateCode}" from checkout session ${session.id} (PRIMARY CHECK)`)
+        } else if (session.metadata?.affiliate_code) {
+          affiliateCode = session.metadata.affiliate_code
+          console.warn(`⚠️ Checkout session ${session.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
+        }
+      }
+    } catch (err) {
+      console.error('Error retrieving checkout session (primary check):', err)
+    }
+  }
+
+  // Try invoice metadata - check for new standard
+  if (!affiliateCode && invoice.metadata?.ca_affiliate_id) {
     affiliateCode = invoice.metadata.ca_affiliate_id
     hasRequiredMetadata = true
-  } else if (invoice.metadata?.affiliate_code) {
+  } else if (!affiliateCode && invoice.metadata?.affiliate_code) {
     affiliateCode = invoice.metadata.affiliate_code
     // Old format - log warning
     console.warn(`⚠️ Invoice ${invoice.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
   }
 
-  // Try subscription metadata
+  // Try subscription metadata (fallback)
   if (!affiliateCode && invoice.subscription) {
     const subscriptionId =
       typeof invoice.subscription === 'string'
