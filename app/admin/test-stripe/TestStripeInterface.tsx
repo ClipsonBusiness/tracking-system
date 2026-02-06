@@ -114,7 +114,8 @@ export default function TestStripeInterface({
   const [fixingConversion, setFixingConversion] = useState(false)
   const [fixResult, setFixResult] = useState<string | null>(null)
   const [invoiceId, setInvoiceId] = useState('')
-  const [checkoutSessionId, setCheckoutSessionId] = useState('')
+  const [checkoutSessionId, setCheckoutSessionId] = useState('cs_live_a1CZTiElE9LlGcPxl8Yf1JvurRDrQSsJvjKIMv4rdvIj0aXWlLRs0UmsRD')
+  const [paymentIntentId, setPaymentIntentId] = useState('pi_3Sxpw1LDafoVnYnR2A04Kqb2')
   const [creatingConversion, setCreatingConversion] = useState(false)
 
   async function checkSale(clipperCode?: string) {
@@ -1176,10 +1177,23 @@ export default function TestStripeInterface({
             />
           </div>
           
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Stripe Payment Intent ID (optional, e.g., pi_3Sxpw1...)
+            </label>
+            <input
+              type="text"
+              value={paymentIntentId}
+              onChange={(e) => setPaymentIntentId(e.target.value)}
+              placeholder="pi_3Sxpw1..."
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+          
           <button
             onClick={async () => {
-              if (!fixLinkSlug.trim() || (!invoiceId.trim() && !checkoutSessionId.trim())) {
-                setFixResult('❌ Please provide link slug and either invoice ID or checkout session ID')
+              if (!fixLinkSlug.trim() || (!invoiceId.trim() && !checkoutSessionId.trim() && !paymentIntentId.trim())) {
+                setFixResult('❌ Please provide link slug and at least one: invoice ID, checkout session ID, or payment intent ID')
                 return
               }
               
@@ -1195,6 +1209,7 @@ export default function TestStripeInterface({
                     linkSlug: fixLinkSlug.trim(),
                     invoiceId: invoiceId.trim() || undefined,
                     checkoutSessionId: checkoutSessionId.trim() || undefined,
+                    paymentIntentId: paymentIntentId.trim() || undefined,
                   }),
                 })
                 

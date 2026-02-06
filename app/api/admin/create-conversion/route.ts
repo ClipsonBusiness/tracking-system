@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   await requireAdminAuth()
   
   try {
-    const { invoiceId, checkoutSessionId, linkSlug } = await request.json()
+    const { invoiceId, checkoutSessionId, paymentIntentId, linkSlug } = await request.json()
     
     if (!linkSlug) {
       return NextResponse.json(
@@ -76,9 +76,31 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Try to get invoice from payment intent if paymentIntentId provided
+    if (!invoice && paymentIntentId) {
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+        if (paymentIntent.invoice) {
+          const invoiceIdFromPI = typeof paymentIntent.invoice === 'string'
+            ? paymentIntent.invoice
+            : paymentIntent.invoice.id
+          try {
+            invoice = await stripe.invoices.retrieve(invoiceIdFromPI)
+          } catch (err) {
+            console.error('Error retrieving invoice from payment intent:', err)
+          }
+        }
+      } catch (err: any) {
+        return NextResponse.json(
+          { error: `Failed to retrieve payment intent: ${err.message}` },
+          { status: 400 }
+        )
+      }
+    }
+    
     if (!invoice && !checkoutSession) {
       return NextResponse.json(
-        { error: 'Must provide either invoiceId or checkoutSessionId' },
+        { error: 'Must provide invoiceId, checkoutSessionId, or paymentIntentId' },
         { status: 400 }
       )
     }
