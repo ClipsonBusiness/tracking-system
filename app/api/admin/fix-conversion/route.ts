@@ -134,10 +134,43 @@ export async function GET(request: NextRequest) {
             orderBy: { paidAt: 'desc' },
             take: 10,
           },
+          _count: {
+            select: { conversions: true },
+          },
         },
       })
       
-      return NextResponse.json({ link })
+      if (!link) {
+        return NextResponse.json({ 
+          error: `Link with slug "${linkSlug}" not found`,
+          link: null,
+        })
+      }
+      
+      // Get all conversions for this link (not just 10)
+      const allConversions = await prisma.conversion.findMany({
+        where: { linkId: link.id },
+        orderBy: { paidAt: 'desc' },
+      })
+      
+      const totalRevenue = allConversions.reduce((sum, c) => sum + c.amountPaid, 0) / 100
+      
+      return NextResponse.json({ 
+        link: {
+          id: link.id,
+          slug: link.slug,
+          conversionCount: allConversions.length,
+          totalRevenue,
+          conversions: allConversions.map(c => ({
+            id: c.id,
+            amountPaid: c.amountPaid,
+            currency: c.currency,
+            paidAt: c.paidAt,
+            affiliateCode: c.affiliateCode,
+            stripeInvoiceId: c.stripeInvoiceId,
+          })),
+        },
+      })
     }
     
     return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
