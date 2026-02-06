@@ -186,16 +186,10 @@ async function handleCheckoutSessionCompleted(
   const amountPaid = session.amount_total || 0
   const currency = session.currency || 'usd'
   
-  // Only create conversion if payment was successful
-  // For checkout.session.completed, payment_status is usually 'paid' or 'no_payment_required'
-  // The event itself fires when payment is complete, so we can proceed
-  if (session.payment_status === 'unpaid') {
-    console.log(`⏳ Checkout session ${session.id} payment status is "unpaid", waiting for payment...`)
-    // Still propagate metadata for when payment completes
-    return // Don't create conversion yet
-  }
-  
-  console.log(`💰 Payment confirmed for checkout session ${session.id}: $${(amountPaid / 100).toFixed(2)} ${currency.toUpperCase()} (status: ${session.payment_status})`)
+  // checkout.session.completed fires when payment is complete
+  // payment_status can be 'paid' or 'no_payment_required' (for free trials, etc.)
+  // Both indicate successful completion, so we proceed
+  console.log(`💰 Checkout session ${session.id} completed: $${(amountPaid / 100).toFixed(2)} ${currency.toUpperCase()} (status: ${session.payment_status})`)
   
   // Find client
   let foundClient: { id: string; name: string; stripeAccountId: string | null } | null = null
@@ -291,8 +285,9 @@ async function handleCheckoutSessionCompleted(
   }
   
   // CRITICAL: Create conversion for first payment
-  // checkout.session.completed fires when payment is complete, so we can create conversion
-  if (session.payment_status !== 'unpaid') {
+  // checkout.session.completed fires when payment is complete
+  // payment_status is 'paid' or 'no_payment_required' (both indicate success)
+  if (session.payment_status === 'paid' || session.payment_status === 'no_payment_required') {
     // For subscription checkouts, we need to get the invoice ID
     let invoiceId: string | null = null
     let subscriptionId: string | null = null
