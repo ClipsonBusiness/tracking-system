@@ -80,16 +80,31 @@ export default function ClientSetupForm({
     '; SameSite=Lax' + 
     (location.protocol === 'https:' ? '; Secure' : '');
 
-  // Optionally record click on tracking server (non-blocking)
+  // Record click on tracking server (non-blocking)
   const beaconUrl = '${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam) + '&beacon=true';
+  
+  // Try sendBeacon first (most reliable)
   if (navigator.sendBeacon) {
     try {
-      navigator.sendBeacon(beaconUrl);
+      const sent = navigator.sendBeacon(beaconUrl);
+      if (!sent) {
+        console.warn('[Clipson] sendBeacon failed, trying fetch fallback');
+        fetch(beaconUrl, { method: 'GET', keepalive: true }).catch(err => {
+          console.error('[Clipson] Beacon fetch failed:', err);
+        });
+      }
     } catch(e) {
-      fetch(beaconUrl, { method: 'GET', keepalive: true, mode: 'no-cors' }).catch(() => {});
+      console.error('[Clipson] sendBeacon error:', e);
+      // Fallback to fetch
+      fetch(beaconUrl, { method: 'GET', keepalive: true }).catch(err => {
+        console.error('[Clipson] Beacon fetch fallback failed:', err);
+      });
     }
   } else {
-    fetch(beaconUrl, { method: 'GET', keepalive: true, mode: 'no-cors' }).catch(() => {});
+    // Fallback if sendBeacon not supported
+    fetch(beaconUrl, { method: 'GET', keepalive: true }).catch(err => {
+      console.error('[Clipson] Beacon fetch failed:', err);
+    });
   }
 })();
 </script>`
