@@ -6,10 +6,10 @@ import { getCountryInfo } from '@/lib/country-utils'
 interface Link {
   id: string
   slug: string
-  destinationUrl: string
+  destinationUrl: string | null
   createdAt: Date
   campaign: { name: string; customDomain: string | null; commissionPercent: number | null } | null
-  client: { name: string; customDomain: string | null }
+  client: { name: string; customDomain: string | null } | null
 }
 
 interface ClipperDashboardProps {
