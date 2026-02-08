@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
         : null,
       allLinks: clipper.links.map((l) => ({
         slug: l.slug,
-        client: l.client.name,
+        client: l.client?.name || 'N/A',
         clickCount: l.clicks.length,
       })),
       conversions: {
