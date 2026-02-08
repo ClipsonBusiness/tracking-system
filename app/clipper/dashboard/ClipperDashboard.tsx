@@ -290,7 +290,7 @@ export default function ClipperDashboard({
                       <div className="flex items-center gap-2">
                         <code className="flex-1 text-xs text-green-400 bg-gray-800 px-2 py-1 rounded break-all">
                           {(() => {
-                            const customDomain = link.campaign?.customDomain || link.client.customDomain
+                            const customDomain = link.campaign?.customDomain || link.client?.customDomain
                             if (customDomain && customDomain.trim() !== '') {
                               const cleanDomain = customDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '')
                               return `https://${cleanDomain}/?ref=${link.slug}`
@@ -300,7 +300,7 @@ export default function ClipperDashboard({
                         </code>
                         <button
                           onClick={() => {
-                            const customDomain = link.campaign?.customDomain || link.client.customDomain
+                            const customDomain = link.campaign?.customDomain || link.client?.customDomain
                             let fullUrl
                             if (customDomain && customDomain.trim() !== '') {
                               const cleanDomain = customDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '')
