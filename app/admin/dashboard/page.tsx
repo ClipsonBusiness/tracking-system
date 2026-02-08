@@ -302,7 +302,19 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
     </div>
-  )
+    )
+  } catch (error: any) {
+    console.error('Error loading admin dashboard:', error)
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-900/20 border border-red-500 rounded-lg p-6">
+          <h1 className="text-2xl font-bold text-red-400 mb-2">Error Loading Dashboard</h1>
+          <p className="text-gray-300">An error occurred while loading the dashboard data.</p>
+          <p className="text-sm text-gray-400 mt-2">Error: {error?.message || 'Unknown error'}</p>
+        </div>
+      </div>
+    )
+  }
 }
 
 function SummaryCard({
