@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 interface Clipper {
   id: string
-  dashboardCode: string
+  dashboardCode: string | null
   discordUsername: string | null
   socialMediaPage: string | null
   createdAt: Date
@@ -114,32 +114,34 @@ export default function ClipperList({
                   </div>
 
                   {/* Dashboard Code Section */}
-                  <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3 mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <p className="text-xs text-blue-300 mb-1">
-                          Dashboard Code:
-                        </p>
-                        <code className="text-blue-400 font-mono text-lg font-bold">
-                          {clipper.dashboardCode}
-                        </code>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => copyDashboardCode(clipper.dashboardCode)}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
-                        >
-                          Copy Code
-                        </button>
-                        <button
-                          onClick={() => copyDashboardUrl(clipper.dashboardCode)}
-                          className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors"
-                        >
-                          Copy URL
-                        </button>
+                  {clipper.dashboardCode && (
+                    <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-blue-300 mb-1">
+                            Dashboard Code:
+                          </p>
+                          <code className="text-blue-400 font-mono text-lg font-bold">
+                            {clipper.dashboardCode}
+                          </code>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => copyDashboardCode(clipper.dashboardCode!)}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+                          >
+                            Copy Code
+                          </button>
+                          <button
+                            onClick={() => copyDashboardUrl(clipper.dashboardCode!)}
+                            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors"
+                          >
+                            Copy URL
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Stats */}
                   <div className="flex items-center gap-4 text-sm text-gray-400">
