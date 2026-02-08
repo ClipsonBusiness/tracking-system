@@ -43,7 +43,7 @@ export default async function AdminClippersPage({
         return (
           clipper.discordUsername?.toLowerCase().includes(searchLower) ||
           clipper.socialMediaPage?.toLowerCase().includes(searchLower) ||
-          clipper.dashboardCode.toLowerCase().includes(searchLower)
+          clipper.dashboardCode?.toLowerCase().includes(searchLower)
         )
       })
     : clippersWithStats
