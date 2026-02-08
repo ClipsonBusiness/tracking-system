@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     })
 
     const clipper = allClippers.find(
-      c => c.dashboardCode.toUpperCase() === clipperCode.toUpperCase()
+      c => c.dashboardCode && c.dashboardCode.toUpperCase() === clipperCode.toUpperCase()
     )
 
     if (!clipper) {
