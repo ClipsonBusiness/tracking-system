@@ -96,8 +96,38 @@ export async function setAdminAuth(password: string) {
     }).catch(() => {}) // Ignore errors
     
     console.log('✅ Admin session stored in database')
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error storing admin session:', error)
+    // Log more details about the error
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      meta: error?.meta,
+    })
+    // If it's a database connection issue, provide a helpful error message
+    if (error?.code === 'P2002') {
+      // Unique constraint violation - session token already exists (very unlikely)
+      console.error('Session token collision - generating new token')
+      // Retry with a new token
+      const newToken = generateSessionToken()
+      await prisma.adminSession.create({
+        data: {
+          token: newToken,
+          expiresAt: expiresAt,
+        },
+      })
+      // Use the new token
+      const cookieStore = await cookies()
+      cookieStore.set('admin_session', newToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      })
+      console.log('✅ Admin session stored with new token')
+      return
+    }
     throw error
   }
   
