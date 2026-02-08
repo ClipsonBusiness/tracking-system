@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 // Extract click recording logic to a separate function
 async function recordClick(
   request: NextRequest,
-  link: { id: string; clientId: string; destinationUrl: string; slug: string }
+  link: { id: string; clientId: string | null; destinationUrl: string | null; slug: string }
 ) {
   const searchParams = request.nextUrl.searchParams
   const cookieStore = await cookies()
@@ -135,7 +135,12 @@ async function recordClick(
   const utmMedium = searchParams.get('utm_medium') || null
   const utmCampaign = searchParams.get('utm_campaign') || null
 
-  // Store click
+  // Store click - only if clientId exists (required field)
+  if (!link.clientId) {
+    console.warn('Skipping click storage: link has no clientId')
+    return null
+  }
+
   try {
     const clickData = {
       linkId: link.id,
@@ -171,7 +176,7 @@ async function recordClick(
 
 async function handleLinkRedirect(
   request: NextRequest,
-  link: { id: string; clientId: string; destinationUrl: string; slug: string }
+  link: { id: string; clientId: string | null; destinationUrl: string | null; slug: string }
 ) {
   const searchParams = request.nextUrl.searchParams
   const cookieStore = await cookies()
@@ -212,7 +217,11 @@ async function handleLinkRedirect(
     // Continue with redirect even if click storage fails
   }
 
-  // Redirect to destination
-  return NextResponse.redirect(link.destinationUrl, { status: 302 })
+  // Redirect to destination - use link's destinationUrl or fallback to campaign's
+  const destinationUrl = link.destinationUrl
+  if (!destinationUrl) {
+    return new NextResponse('Link has no destination URL', { status: 404 })
+  }
+  return NextResponse.redirect(destinationUrl, { status: 302 })
 }
 
