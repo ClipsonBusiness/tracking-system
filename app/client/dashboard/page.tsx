@@ -226,10 +226,13 @@ export default async function ClientDashboardPage({
   } catch (error: any) {
     console.error('Error in ClientDashboardPage:', error)
     
-    // Check if it's a database connection error
+    // Check if it's a database connection error or table doesn't exist
     const isDbError = error?.message?.includes('Can\'t reach database server') || 
                      error?.message?.includes('database server') ||
-                     error?.code === 'P1001'
+                     error?.code === 'P1001' ||
+                     error?.message?.includes('does not exist') ||
+                     error?.message?.includes('relation') ||
+                     error?.message?.includes('table')
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
@@ -238,17 +241,29 @@ export default async function ClientDashboardPage({
           {isDbError ? (
             <div className="space-y-3">
               <p className="text-gray-400 mb-4">
-                Database connection failed. The database server may be down or unreachable.
+                {error?.message?.includes('does not exist') || error?.message?.includes('table')
+                  ? 'The database tables don&apos;t exist yet. Please contact your administrator to set up the database.'
+                  : 'Database connection failed. The database server may be down or unreachable.'}
               </p>
-              <div className="bg-red-900/30 border border-red-600 rounded p-3 text-sm text-red-200">
-                <p className="font-medium mb-2">🔧 Troubleshooting Steps:</p>
-                <ol className="list-decimal list-inside space-y-1 ml-2">
-                  <li>Check Railway dashboard - ensure PostgreSQL service is &quot;Online&quot;</li>
-                  <li>Verify DATABASE_URL environment variable is set correctly</li>
-                  <li>Check if the database service was paused (Railway pauses inactive services)</li>
-                  <li>Try refreshing the page</li>
-                </ol>
-              </div>
+              {error?.message?.includes('does not exist') || error?.message?.includes('table') ? (
+                <div className="bg-yellow-900/30 border border-yellow-600 rounded p-3 text-sm text-yellow-200">
+                  <p className="font-medium mb-2">⚠️ Database Setup Required</p>
+                  <p className="mb-2">The database tables need to be created. This is typically done by the administrator.</p>
+                  <p className="text-xs text-yellow-300 mt-2">
+                    Error: {error.message}
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-red-900/30 border border-red-600 rounded p-3 text-sm text-red-200">
+                  <p className="font-medium mb-2">🔧 Troubleshooting Steps:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Check Railway dashboard - ensure PostgreSQL service is &quot;Online&quot;</li>
+                    <li>Verify DATABASE_URL environment variable is set correctly</li>
+                    <li>Check if the database service was paused (Railway pauses inactive services)</li>
+                    <li>Try refreshing the page</li>
+                  </ol>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-gray-400 mb-4">
