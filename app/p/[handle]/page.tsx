@@ -16,7 +16,12 @@ export default async function LinkInBioPage({
     // Otherwise show all links with this handle
     const links = await prisma.link.findMany({
       where: { handle },
-      include: { client: true },
+      include: { 
+        client: true,
+        campaign: {
+          select: { destinationUrl: true }
+        }
+      },
       orderBy: { createdAt: 'desc' },
     })
 
