@@ -14,12 +14,12 @@ export default async function AdminCampaignsPage() {
   const host = headersList.get('host') || headersList.get('x-forwarded-host') || 'localhost:3000'
   const baseUrl = process.env.APP_BASE_URL || `${protocol}://${host}`
   try {
-    const clients = await prisma.client.findMany()
+    const clients = await prisma.client.findMany().catch(() => [])
     // Get ALL campaigns (including inactive) for admin view
     const allCampaigns = await prisma.campaign.findMany({
       include: { client: { select: { name: true } } },
       orderBy: { createdAt: 'desc' },
-    })
+    }).catch(() => [])
     
     // Separate active and inactive
     const campaigns = allCampaigns.filter(c => c.status === 'active')
