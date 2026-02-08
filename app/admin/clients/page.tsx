@@ -318,6 +318,33 @@ export default async function ClientsPage() {
         </div>
       )}
     </div>
-  )
+    )
+  } catch (error: any) {
+    console.error('Error loading clients:', error)
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Clients
+            </h1>
+            <p className="text-gray-400 text-sm mt-1">Manage your client accounts</p>
+          </div>
+        </div>
+        <div className="bg-red-900/20 border border-red-700 rounded-lg p-6">
+          <p className="text-red-400 font-semibold mb-2">Error loading clients: {error.message}</p>
+          <p className="text-sm text-red-300 mb-4">The database tables don&apos;t exist yet. Click the button below to create them.</p>
+          <form action="/api/admin/push-schema" method="POST">
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+            >
+              🔧 Push Database Schema
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
 }
 
