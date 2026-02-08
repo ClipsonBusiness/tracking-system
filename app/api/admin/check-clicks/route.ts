@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
       link: {
         slug: link.slug,
         destinationUrl: link.destinationUrl,
-        client: link.client.name,
+        client: link.client?.name || 'N/A',
         clipper: link.clipper?.discordUsername || 'N/A',
         campaign: link.campaign?.name || 'N/A',
       },
