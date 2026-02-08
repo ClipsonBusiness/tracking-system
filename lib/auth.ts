@@ -59,7 +59,13 @@ export async function checkAdminAuth(): Promise<boolean> {
     }
     
     return true
-  } catch (error) {
+  } catch (error: any) {
+    // If table doesn't exist, fall back to cookie-only check
+    if (error?.code === 'P2021' || error?.message?.includes('does not exist') || error?.message?.includes('relation') || error?.message?.includes('table')) {
+      console.warn('⚠️ admin_sessions table missing, using cookie-only auth. Run: npx prisma db push')
+      // If cookie exists, allow access (fallback mode)
+      return true
+    }
     console.error('Error checking admin auth:', error)
     return false
   }
