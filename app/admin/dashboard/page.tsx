@@ -6,19 +6,19 @@ export default async function AdminDashboardPage() {
   await requireAdminAuth()
   
   try {
-    // Get summary stats
+    // Get summary stats - with fallbacks if tables don't exist yet
     const [totalLinks, totalClicks, totalClients, totalCampaigns, totalSales, totalRevenue] = await Promise.all([
-      prisma.link.count(),
-      prisma.click.count(),
-      prisma.client.count(),
-      prisma.campaign.count(),
-      prisma.linkSale.count().catch(() => 0), // Fallback to 0 if table doesn't exist
+      prisma.link.count().catch(() => 0),
+      prisma.click.count().catch(() => 0),
+      prisma.client.count().catch(() => 0),
+      prisma.campaign.count().catch(() => 0),
+      prisma.linkSale.count().catch(() => 0),
       prisma.linkSale.aggregate({
         _sum: { amount: true },
-      }).catch(() => ({ _sum: { amount: null } })), // Fallback if table doesn't exist
+      }).catch(() => ({ _sum: { amount: null } })),
     ])
 
-    // Get recent links
+    // Get recent links - with fallback if table doesn't exist
     const recentLinks = await prisma.link.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
@@ -28,9 +28,9 @@ export default async function AdminDashboardPage() {
         clipper: { select: { dashboardCode: true, discordUsername: true, socialMediaPage: true } },
         _count: { select: { clicks: true } },
       },
-    })
+    }).catch(() => [])
 
-    // Get top clippers by clicks
+    // Get top clippers by clicks - with fallback if table doesn't exist
     const topClippers = await prisma.clipper.findMany({
       include: {
         links: {
@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
           },
         },
       },
-    })
+    }).catch(() => [])
 
     // Calculate total clicks per clipper
     const clipperStats = topClippers
@@ -60,7 +60,7 @@ export default async function AdminDashboardPage() {
       .sort((a, b) => b.totalClicks - a.totalClicks)
       .slice(0, 10)
 
-    // Get clients with campaigns
+    // Get clients with campaigns - with fallback if table doesn't exist
     const clients = await prisma.client.findMany({
       include: {
         campaigns: {
@@ -69,7 +69,7 @@ export default async function AdminDashboardPage() {
         },
       },
       orderBy: { name: 'asc' },
-    })
+    }).catch(() => [])
 
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
     // Handle Decimal type from Prisma - convert to number
