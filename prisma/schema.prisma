@@ -32,20 +32,21 @@ model Client {
 }
 
 model Link {
-  id             String   @id @default(cuid())
-  clientId       String   @map("client_id")
-  campaignId     String?  @map("campaign_id")
-  clipperId      String?  @map("clipper_id")
-  handle         String
-  slug           String   @unique
-  destinationUrl String   @map("destination_url")
-  createdAt      DateTime @default(now()) @map("created_at")
+  id          String   @id @default(cuid())
+  clientId    String?  @map("client_id")
+  campaignId  String?  @map("campaign_id")
+  clipperId   String?  @map("clipper_id")
+  handle      String?
+  slug        String   @unique
+  clicksCount Int      @default(0) @map("clicks_count")
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client      Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   campaign    Campaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  clipper     Clipper?     @relation(fields: [clipperId], references: [id], onDelete: SetNull)
+  clipper     Clipper?     @relation(fields: [clipperId], references: [id], onDelete: Cascade)
   clicks      Click[]
   conversions Conversion[]
+  linkSales   LinkSale[]
 
   @@map("links")
 }
@@ -131,14 +132,26 @@ model Campaign {
 
 model Clipper {
   id              String   @id @default(cuid())
-  dashboardCode   String   @unique // Unique 4-letter code like "abcd"
-  discordUsername String?  @map("discord_username") // Required for new clippers, optional for migration
-  socialMediaPage String?  @map("social_media_page") // Required for new clippers, optional for migration
+  dashboardCode   String?  @unique // Unique 4-letter code like "abcd"
+  discordUsername String   @map("discord_username")
+  socialMediaPage String   @map("social_media_page")
   createdAt       DateTime @default(now()) @map("created_at")
 
   links Link[]
 
   @@map("clippers")
+}
+
+model LinkSale {
+  id                     String   @id @default(cuid())
+  amount                  Decimal  @db.Decimal(10, 2)
+  stripeCheckoutSessionId String   @map("stripe_checkout_session_id")
+  linkId                  String   @map("link_id")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  link Link @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@map("link_sales")
 }
 
 model AdminSession {

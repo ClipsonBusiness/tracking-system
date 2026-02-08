@@ -163,56 +163,65 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Check if conversion already exists
-    const existing = await prisma.conversion.findUnique({
-      where: { stripeInvoiceId: uniqueId },
+    // Get checkout session ID - prefer from checkoutSession, fallback to payment intent metadata
+    let finalCheckoutSessionId: string | null = null
+    
+    if (checkoutSession) {
+      finalCheckoutSessionId = checkoutSession.id
+    } else if (paymentIntentId) {
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+        if (paymentIntent.metadata?.checkout_session_id) {
+          finalCheckoutSessionId = paymentIntent.metadata.checkout_session_id
+        }
+      } catch (err) {
+        console.error('Error retrieving payment intent for checkout session ID:', err)
+      }
+    }
+    
+    if (!finalCheckoutSessionId) {
+      return NextResponse.json(
+        { error: 'Could not determine checkout session ID. Please provide checkoutSessionId or paymentIntentId with checkout_session_id metadata.' },
+        { status: 400 }
+      )
+    }
+    
+    // Check if link sale already exists
+    const existing = await prisma.linkSale.findFirst({
+      where: { stripeCheckoutSessionId: finalCheckoutSessionId },
     })
     
     if (existing) {
-      // Update existing conversion to link it
-      const updated = await prisma.conversion.update({
-        where: { id: existing.id },
-        data: { linkId: link.id },
-      })
-      
       return NextResponse.json({
         success: true,
-        message: `Updated existing conversion ${existing.id} and linked to ${linkSlug}`,
-        conversion: {
-          id: updated.id,
-          linkId: updated.linkId,
-          amountPaid: updated.amountPaid,
-          currency: updated.currency,
-          paidAt: updated.paidAt,
+        message: `Link sale already exists for checkout session ${finalCheckoutSessionId}`,
+        linkSale: {
+          id: existing.id,
+          linkId: existing.linkId,
+          amount: existing.amount,
+          createdAt: existing.createdAt,
         },
       })
     }
     
-    // Create new conversion
-    const conversion = await prisma.conversion.create({
+    // Create new link sale
+    const amountInDollars = amountPaid / 100 // Convert from cents to dollars
+    const linkSale = await prisma.linkSale.create({
       data: {
-        clientId: link.client.id,
-        affiliateCode: linkSlug,
         linkId: link.id,
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscriptionId,
-        stripeInvoiceId: uniqueId,
-        amountPaid,
-        currency,
-        paidAt,
-        status: 'paid',
+        amount: amountInDollars,
+        stripeCheckoutSessionId: finalCheckoutSessionId,
       },
     })
     
     return NextResponse.json({
       success: true,
-      message: `Conversion created and linked to ${linkSlug}`,
-      conversion: {
-        id: conversion.id,
-        linkId: conversion.linkId,
-        amountPaid: conversion.amountPaid,
-        currency: conversion.currency,
-        paidAt: conversion.paidAt,
+      message: `Link sale created and linked to ${linkSlug}`,
+      linkSale: {
+        id: linkSale.id,
+        linkId: linkSale.linkId,
+        amount: linkSale.amount,
+        createdAt: linkSale.createdAt,
       },
     })
   } catch (err: any) {
