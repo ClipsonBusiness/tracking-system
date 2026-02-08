@@ -30,6 +30,5 @@ while (!schemaPushed && retries > 0) {
 
 // Start Next.js
 console.log('🚀 Starting Next.js server...');
-require('next/dist/bin/next');
 execSync('next start', { stdio: 'inherit' });
 
