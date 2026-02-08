@@ -20,7 +20,7 @@ export default async function ClipperDashboardPage({
     c => c.dashboardCode && c.dashboardCode.toUpperCase() === dashboardCode.toUpperCase()
   )
 
-  if (!clipper) {
+  if (!clipper || !clipper.dashboardCode) {
     redirect('/clipper?error=invalid_code')
   }
 
@@ -202,7 +202,7 @@ export default async function ClipperDashboardPage({
 
   return (
     <ClipperDashboard
-      dashboardCode={clipper.dashboardCode}
+      dashboardCode={clipper.dashboardCode!}
       links={links}
       totalClicks={totalClicks}
       clicksLast7Days={clicksLast7Days}
