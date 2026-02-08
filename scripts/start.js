@@ -5,7 +5,7 @@ console.log('🚀 Starting app...');
 // Run database push before starting
 try {
   console.log('📊 Pushing database schema...');
-  execSync('npx prisma db push --skip-generate', { stdio: 'inherit' });
+  execSync('npx prisma db push --skip-generate --accept-data-loss', { stdio: 'inherit' });
   console.log('✅ Database schema synced!');
 } catch (error) {
   console.error('⚠️ Database push failed, continuing anyway...');
