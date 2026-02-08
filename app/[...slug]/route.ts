@@ -116,7 +116,7 @@ export async function GET(
 
 async function handleLinkRedirect(
   request: NextRequest,
-  link: { id: string; clientId: string; destinationUrl: string; slug: string }
+  link: { id: string; clientId: string | null; destinationUrl: string; slug: string }
 ) {
   // Get affiliate code from query param or cookie
   const searchParams = request.nextUrl.searchParams
