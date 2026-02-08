@@ -4,17 +4,19 @@ import { requireAdminAuth } from '@/lib/auth'
 
 export default async function AdminDashboardPage() {
   await requireAdminAuth()
-  // Get summary stats
-  const [totalLinks, totalClicks, totalClients, totalCampaigns, totalSales, totalRevenue] = await Promise.all([
-    prisma.link.count(),
-    prisma.click.count(),
-    prisma.client.count(),
-    prisma.campaign.count(),
-    prisma.linkSale.count(),
-    prisma.linkSale.aggregate({
-      _sum: { amount: true },
-    }),
-  ])
+  
+  try {
+    // Get summary stats
+    const [totalLinks, totalClicks, totalClients, totalCampaigns, totalSales, totalRevenue] = await Promise.all([
+      prisma.link.count(),
+      prisma.click.count(),
+      prisma.client.count(),
+      prisma.campaign.count(),
+      prisma.linkSale.count().catch(() => 0), // Fallback to 0 if table doesn't exist
+      prisma.linkSale.aggregate({
+        _sum: { amount: true },
+      }).catch(() => ({ _sum: { amount: null } })), // Fallback if table doesn't exist
+    ])
 
   // Get recent links
   const recentLinks = await prisma.link.findMany({
@@ -69,10 +71,13 @@ export default async function AdminDashboardPage() {
     orderBy: { name: 'asc' },
   })
 
-  const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
-  const totalRevenueDollars = Number(totalRevenue._sum.amount || 0)
+    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
+    // Handle Decimal type from Prisma - convert to number
+    const totalRevenueDollars = totalRevenue._sum.amount 
+      ? Number(totalRevenue._sum.amount) 
+      : 0
 
-  return (
+    return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
         <div>
