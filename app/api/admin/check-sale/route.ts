@@ -190,7 +190,7 @@ export async function GET(request: NextRequest) {
         hasConversions: allClientConversions.length > 0,
         hasLinkConversions: clipperConversions.length > 0,
         hasOrphans: orphanCount > 0,
-        stripeConfigured: link ? !!link.client.stripeWebhookSecret : false,
+        stripeConfigured: link && link.client ? !!link.client.stripeWebhookSecret : false,
         // Additional diagnostic info
         clientName: link?.client.name || 'N/A',
         linkSlug: link?.slug || 'N/A',
