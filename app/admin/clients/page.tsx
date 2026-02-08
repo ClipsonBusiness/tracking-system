@@ -317,7 +317,7 @@ export default async function ClientsPage() {
           <p className="text-gray-400">No clients found.</p>
         </div>
       )}
-    </div>
+      </div>
     )
   } catch (error: any) {
     console.error('Error loading clients:', error)
