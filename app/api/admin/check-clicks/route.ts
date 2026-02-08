@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 
     // Determine the actual tracking link format (what clippers use)
     const trackingServerUrl = process.env.APP_BASE_URL || 'https://clipsonaffiliates.com'
-    const customDomain = link.campaign?.customDomain || link.client.customDomain
+    const customDomain = link.campaign?.customDomain || link.client?.customDomain
 
     // Clean custom domain
     let cleanCustomDomain = customDomain
