@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
       link: link
         ? {
             slug: link.slug,
-            client: link.client.name,
+            client: link.client?.name || 'N/A',
             clicks: link.clicks.length,
             recentClicks: link.clicks.map((c) => ({
               time: c.ts.toISOString(),
