@@ -7,9 +7,9 @@ interface LinkCardProps {
   link: {
     id: string
     slug: string
-    destinationUrl: string
+    destinationUrl: string | null
     createdAt: Date
-    campaign: { name: string } | null
+    campaign: { name: string; destinationUrl?: string | null } | null
     clipper: { 
       dashboardCode: string
       discordUsername: string | null
@@ -79,7 +79,7 @@ export default function LinkCard({ link, customDomainUrl, workingUrl, railwayUrl
             )}
           </div>
           <p className="text-sm text-gray-300 mb-2 truncate">
-            {link.destinationUrl}
+            {link.destinationUrl || link.campaign?.destinationUrl || 'No destination URL'}
           </p>
           <div className="flex items-center gap-4 text-xs text-gray-400">
             <span>
