@@ -11,7 +11,7 @@ interface LinkCardProps {
     createdAt: Date
     campaign: { name: string; destinationUrl?: string | null } | null
     clipper: { 
-      dashboardCode: string
+      dashboardCode: string | null
       discordUsername: string | null
       socialMediaPage: string | null
     } | null
