@@ -24,7 +24,7 @@ export default async function EditCampaignPage({
     redirect('/admin/campaigns')
   }
 
-  const clients = await prisma.client.findMany()
+  const clients = await prisma.client.findMany().catch(() => [])
 
   return (
     <div className="space-y-6">

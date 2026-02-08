@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       // Check if a client with this name already exists
       let newClient = await prisma.client.findFirst({
         where: { name: clientName },
-      })
+      }).catch(() => null)
       
       if (!newClient) {
         // Create new client with the campaign name and auto-generate access token
@@ -56,6 +56,12 @@ export async function POST(request: NextRequest) {
             name: clientName,
             clientAccessToken: clientToken,
           },
+        }).catch((err: any) => {
+          // If table doesn't exist, throw a helpful error
+          if (err?.message?.includes('does not exist') || err?.message?.includes('table')) {
+            throw new Error('Database tables do not exist. Please push the database schema first using the "Push Database Schema" button on the campaigns page.')
+          }
+          throw err
         })
       } else if (!newClient.clientAccessToken) {
         // If client exists but has no token, generate one
@@ -63,6 +69,11 @@ export async function POST(request: NextRequest) {
         newClient = await prisma.client.update({
           where: { id: newClient.id },
           data: { clientAccessToken: clientToken },
+        }).catch((err: any) => {
+          if (err?.message?.includes('does not exist') || err?.message?.includes('table')) {
+            throw new Error('Database tables do not exist. Please push the database schema first using the "Push Database Schema" button on the campaigns page.')
+          }
+          throw err
         })
       }
       
@@ -78,6 +89,12 @@ export async function POST(request: NextRequest) {
         commissionPercent: commissionPercent !== undefined && commissionPercent !== null && commissionPercent !== '' ? parseFloat(commissionPercent.toString()) : null,
         status: status || 'active',
       },
+    }).catch((err: any) => {
+      // If table doesn't exist, throw a helpful error
+      if (err?.message?.includes('does not exist') || err?.message?.includes('table')) {
+        throw new Error('Database tables do not exist. Please push the database schema first using the "Push Database Schema" button on the campaigns page.')
+      }
+      throw err
     })
 
     // Note: Stripe setup is handled by client in their setup form
@@ -89,7 +106,7 @@ export async function POST(request: NextRequest) {
       select: {
         clientAccessToken: true,
       },
-    })
+    }).catch(() => null)
 
     // Auto-generate access token if client doesn't have one
     if (!client?.clientAccessToken) {
@@ -121,8 +138,18 @@ export async function POST(request: NextRequest) {
       clientSetupUrl: setupUrl,
     })
   } catch (error: any) {
+    console.error('Error creating campaign:', error)
+    // Check if it's a table doesn't exist error
+    const isTableMissing = error?.message?.includes('does not exist') || 
+                          error?.message?.includes('table') ||
+                          error?.message?.includes('relation')
+    
     return NextResponse.json(
-      { error: error.message || 'Failed to create campaign' },
+      { 
+        error: isTableMissing 
+          ? 'Database tables do not exist. Please push the database schema first using the "Push Database Schema" button on the campaigns page.'
+          : (error.message || 'Failed to create campaign')
+      },
       { status: 500 }
     )
   }
