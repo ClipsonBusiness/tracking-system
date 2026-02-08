@@ -54,12 +54,25 @@ export async function GET(
       console.log('No custom domain match, trying direct slug lookup for:', actualSlug)
       const directLink = await prisma.link.findFirst({
         where: { slug: actualSlug },
-        select: { id: true, clientId: true, destinationUrl: true, slug: true },
+        select: { 
+          id: true, 
+          clientId: true, 
+          destinationUrl: true, 
+          slug: true,
+          campaign: {
+            select: { destinationUrl: true }
+          }
+        },
       })
       
       if (directLink) {
         console.log('Found link by slug:', actualSlug)
-        return handleLinkRedirect(request, directLink)
+        // Use link's destinationUrl or fallback to campaign's destinationUrl
+        const destinationUrl = directLink.destinationUrl || directLink.campaign?.destinationUrl
+        if (!destinationUrl) {
+          return new NextResponse('Link has no destination URL', { status: 404 })
+        }
+        return handleLinkRedirect(request, { ...directLink, destinationUrl })
       }
       
       return new NextResponse('Not found', { status: 404 })
@@ -71,7 +84,15 @@ export async function GET(
         slug: actualSlug,
         clientId: foundClient.id,
       },
-      select: { id: true, clientId: true, destinationUrl: true, slug: true },
+      select: { 
+        id: true, 
+        clientId: true, 
+        destinationUrl: true, 
+        slug: true,
+        campaign: {
+          select: { destinationUrl: true }
+        }
+      },
     })
     
     console.log('Link lookup:', { actualSlug, clientId: foundClient.id, found: !!link })
@@ -80,7 +101,13 @@ export async function GET(
       return new NextResponse('Link not found', { status: 404 })
     }
 
-    return handleLinkRedirect(request, link)
+    // Use link's destinationUrl or fallback to campaign's destinationUrl
+    const destinationUrl = link.destinationUrl || link.campaign?.destinationUrl
+    if (!destinationUrl) {
+      return new NextResponse('Link has no destination URL', { status: 404 })
+    }
+
+    return handleLinkRedirect(request, { ...link, destinationUrl })
   } catch (error) {
     console.error('Error in custom domain link redirect:', error)
     return new NextResponse('Internal Server Error', { status: 500 })

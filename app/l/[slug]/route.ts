@@ -11,10 +11,21 @@ export async function GET(
     const slug = params.slug
     const link = await prisma.link.findUnique({
       where: { slug },
+      include: {
+        campaign: {
+          select: { destinationUrl: true }
+        }
+      }
     })
 
     if (!link) {
       return new NextResponse('Link not found', { status: 404 })
+    }
+
+    // Use link's destinationUrl or fallback to campaign's destinationUrl
+    const destinationUrl = link.destinationUrl || link.campaign?.destinationUrl
+    if (!destinationUrl) {
+      return new NextResponse('Link has no destination URL', { status: 404 })
     }
 
     // Get affiliate code from query param or cookie
@@ -96,7 +107,7 @@ export async function GET(
     }
 
     // Redirect to destination
-    return NextResponse.redirect(link.destinationUrl, { status: 302 })
+    return NextResponse.redirect(destinationUrl, { status: 302 })
   } catch (error) {
     console.error('Error in link redirect:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
