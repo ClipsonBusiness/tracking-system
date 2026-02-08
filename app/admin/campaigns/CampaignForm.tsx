@@ -20,6 +20,8 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isDatabaseError, setIsDatabaseError] = useState(false)
+  const [pushingSchema, setPushingSchema] = useState(false)
   const [enableAffiliateProgram, setEnableAffiliateProgram] = useState(false)
   const [showDNSForm, setShowDNSForm] = useState(false)
   const [clientPortalUrl, setClientPortalUrl] = useState<string | null>(null)
@@ -83,10 +85,18 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
         }
       } else {
         const data = await res.json()
-        setError(data.error || 'Failed to create campaign')
+        const errorMessage = data.error || 'Failed to create campaign'
+        setError(errorMessage)
+        // Check if it's a database table error
+        setIsDatabaseError(
+          errorMessage.includes('does not exist') ||
+          errorMessage.includes('table') ||
+          errorMessage.includes('Database tables')
+        )
       }
     } catch (err) {
-      setError('Network error')
+      setError('Network error. Please check your connection and try again.')
+      setIsDatabaseError(false)
     } finally {
       setLoading(false)
     }
@@ -261,7 +271,47 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
         </div>
       </div>
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && (
+        <div className={`p-4 rounded-lg border ${
+          isDatabaseError 
+            ? 'bg-red-900/20 border-red-700' 
+            : 'bg-red-900/10 border-red-600'
+        }`}>
+          <p className="text-red-400 font-semibold mb-2">{error}</p>
+          {isDatabaseError && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  setPushingSchema(true)
+                  setError('')
+                  try {
+                    const res = await fetch('/api/admin/push-schema', {
+                      method: 'POST',
+                    })
+                    const data = await res.json()
+                    if (res.ok && data.success) {
+                      setError('')
+                      setIsDatabaseError(false)
+                      alert('✅ Database schema pushed successfully! You can now create campaigns.')
+                    } else {
+                      setError(data.error || 'Failed to push schema. Please try again.')
+                    }
+                  } catch (err) {
+                    setError('Failed to push schema. Please try again.')
+                  } finally {
+                    setPushingSchema(false)
+                  }
+                }}
+                disabled={pushingSchema}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {pushingSchema ? '⏳ Pushing Schema...' : '🔧 Push Database Schema'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Client Setup URL Display */}
       {(clientSetupUrl || clientPortalUrl) && (
