@@ -12,10 +12,10 @@ export default async function AdminDashboardPage() {
       prisma.click.count().catch(() => 0),
       prisma.client.count().catch(() => 0),
       prisma.campaign.count().catch(() => 0),
-      prisma.linkSale.count().catch(() => 0),
-      prisma.linkSale.aggregate({
-        _sum: { amount: true },
-      }).catch(() => ({ _sum: { amount: null } })),
+      prisma.conversion.count().catch(() => 0),
+      prisma.conversion.aggregate({
+        _sum: { amountPaid: true },
+      }).catch(() => ({ _sum: { amountPaid: null } })),
     ])
 
     // Get recent links - with fallback if table doesn't exist
@@ -72,9 +72,9 @@ export default async function AdminDashboardPage() {
     }).catch(() => [])
 
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
-    // Handle Decimal type from Prisma - convert to number
-    const totalRevenueDollars = totalRevenue._sum.amount 
-      ? Number(totalRevenue._sum.amount) 
+    // Handle amountPaid (in cents) - convert to dollars
+    const totalRevenueDollars = totalRevenue._sum.amountPaid 
+      ? totalRevenue._sum.amountPaid / 100 
       : 0
 
     return (

@@ -318,39 +318,60 @@ async function handleCheckoutSessionCompleted(
       invoiceId = typeof session.invoice === 'string' ? session.invoice : session.invoice.id
     }
     
-    // Create link_sale record using checkout session ID
-    const checkoutSessionId = session.id
-    const amount = amountPaid / 100 // Convert from cents to dollars
+    // Create conversion record for first payment
+    // We need invoice ID for Conversion model (it uses stripeInvoiceId as unique identifier)
+    if (!invoiceId) {
+      console.warn(`⚠️ Cannot create conversion: No invoice ID found for checkout session ${session.id}`)
+      return
+    }
     
-    if (!linkId) {
-      console.warn(`⚠️ Cannot create link_sale: No link found for slug "${affiliateCode}"`)
+    if (!foundClient) {
+      console.warn(`⚠️ Cannot create conversion: No client found`)
+      return
+    }
+    
+    // Get customer ID from session
+    const customerId = typeof session.customer === 'string' 
+      ? session.customer 
+      : session.customer?.id || null
+    
+    if (!customerId) {
+      console.warn(`⚠️ Cannot create conversion: No customer ID found in checkout session`)
       return
     }
     
     try {
-      // Check if sale already exists for this checkout session
-      const existingSale = await prisma.linkSale.findFirst({
-        where: { stripeCheckoutSessionId: checkoutSessionId },
+      // Check if conversion already exists for this invoice
+      const existingConversion = await prisma.conversion.findUnique({
+        where: { stripeInvoiceId: invoiceId },
       })
       
-      if (existingSale) {
-        console.log(`✅ Link sale already exists for checkout session ${checkoutSessionId}`)
+      if (existingConversion) {
+        console.log(`✅ Conversion already exists for invoice ${invoiceId}`)
         return
       }
       
-      const linkSale = await prisma.linkSale.create({
+      const conversion = await prisma.conversion.create({
         data: {
-          linkId,
-          amount,
-          stripeCheckoutSessionId: checkoutSessionId,
+          clientId: foundClient.id,
+          linkId: linkId || null,
+          affiliateCode: affiliateCode || null,
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscriptionId || null,
+          stripeInvoiceId: invoiceId,
+          amountPaid: amountPaid, // Already in cents
+          currency: currency.toLowerCase(),
+          paidAt: new Date(),
+          status: 'paid',
         },
       })
       
-      console.log(`✅ Link sale ${linkSale.id} created for checkout session ${checkoutSessionId}`)
-      console.log(`   Link: ${linkId} (slug: ${affiliateCode})`)
-      console.log(`   Amount: $${amount.toFixed(2)} ${currency.toUpperCase()}`)
+      console.log(`✅ Conversion ${conversion.id} created for checkout session ${session.id}`)
+      console.log(`   Invoice: ${invoiceId}`)
+      console.log(`   Link: ${linkId || 'none'} (slug: ${affiliateCode || 'unknown'})`)
+      console.log(`   Amount: $${(amountPaid / 100).toFixed(2)} ${currency.toUpperCase()}`)
     } catch (err) {
-      console.error('❌ Error creating link sale from checkout session:', err)
+      console.error('❌ Error creating conversion from checkout session:', err)
     }
   }
 }
@@ -742,70 +763,69 @@ async function handleInvoicePaid(
     }
   }
 
-  // Get checkout session ID from invoice metadata or by looking up subscription
-  let checkoutSessionId: string | null = null
+  // Create conversion record for recurring subscription payments
   const invoiceId = invoice.id
-  const amount = (invoice.amount_paid || 0) / 100 // Convert from cents to dollars
+  const amountPaid = invoice.amount_paid || 0 // Already in cents
+  const currency = invoice.currency || 'usd'
   const subscriptionId =
     typeof invoice.subscription === 'string'
       ? invoice.subscription
       : invoice.subscription?.id || null
 
-  // Try to get checkout session ID from invoice metadata
-  if (invoice.metadata?.checkout_session_id) {
-    checkoutSessionId = invoice.metadata.checkout_session_id
-  } else if (subscriptionId) {
-    // For subscription invoices, find the checkout session that created the subscription
-    try {
-      const checkoutSessions = await stripe.checkout.sessions.list({
-        subscription: subscriptionId,
-        limit: 1,
-      })
-      
-      if (checkoutSessions.data.length > 0) {
-        checkoutSessionId = checkoutSessions.data[0].id
-      }
-    } catch (err) {
-      console.error('Error finding checkout session for subscription:', err)
-    }
-  }
-
-  if (!checkoutSessionId) {
-    console.warn(`⚠️ Cannot create link_sale: No checkout session ID found for invoice ${invoiceId}`)
+  if (!foundClient) {
+    console.warn(`⚠️ Cannot create conversion: No client found for invoice ${invoiceId}`)
     return
   }
 
-  if (!linkId) {
-    console.warn(`⚠️ Cannot create link_sale: No link found for affiliate code "${affiliateCode}"`)
+  // Get customer ID from invoice
+  let customerId: string | null = null
+  if (invoice.customer) {
+    if (typeof invoice.customer === 'string') {
+      customerId = invoice.customer
+    } else {
+      // Type assertion needed because Stripe types can be complex
+      const customerObj = invoice.customer as { id: string }
+      customerId = customerObj.id
+    }
+  }
+
+  if (!customerId) {
+    console.warn(`⚠️ Cannot create conversion: No customer ID found in invoice`)
     return
   }
 
   try {
-    // Check if sale already exists for this checkout session
-    const existingSale = await prisma.linkSale.findFirst({
-      where: { stripeCheckoutSessionId: checkoutSessionId },
+    // Check if conversion already exists for this invoice
+    const existingConversion = await prisma.conversion.findUnique({
+      where: { stripeInvoiceId: invoiceId },
     })
     
-    if (existingSale) {
-      console.log(`✅ Link sale already exists for checkout session ${checkoutSessionId}`)
+    if (existingConversion) {
+      console.log(`✅ Conversion already exists for invoice ${invoiceId}`)
       return
     }
     
-    // Create link_sale record
-    const linkSale = await prisma.linkSale.create({
+    // Create conversion record
+    const conversion = await prisma.conversion.create({
       data: {
-        linkId,
-        amount,
-        stripeCheckoutSessionId: checkoutSessionId,
+        clientId: foundClient.id,
+        linkId: linkId || null,
+        affiliateCode: affiliateCode || null,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscriptionId || null,
+        stripeInvoiceId: invoiceId,
+        amountPaid: amountPaid, // Already in cents
+        currency: currency.toLowerCase(),
+        paidAt: new Date(invoice.created * 1000), // Convert Unix timestamp to Date
+        status: 'paid',
       },
     })
     
-    console.log(`✅ Link sale ${linkSale.id} created for invoice ${invoiceId}`)
-    console.log(`   Link: ${linkId} (slug: ${affiliateCode || 'unknown'})`)
-    console.log(`   Amount: $${amount.toFixed(2)}`)
-    console.log(`   Checkout Session: ${checkoutSessionId}`)
+    console.log(`✅ Conversion ${conversion.id} created for invoice ${invoiceId}`)
+    console.log(`   Link: ${linkId || 'none'} (slug: ${affiliateCode || 'unknown'})`)
+    console.log(`   Amount: $${(amountPaid / 100).toFixed(2)} ${currency.toUpperCase()}`)
   } catch (err) {
-    console.error('❌ Error creating link sale from invoice:', err)
+    console.error('❌ Error creating conversion from invoice:', err)
   }
 }
 

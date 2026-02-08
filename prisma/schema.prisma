@@ -47,7 +47,6 @@ model Link {
   clipper     Clipper?     @relation(fields: [clipperId], references: [id], onDelete: Cascade)
   clicks      Click[]
   conversions Conversion[]
-  linkSales   LinkSale[]
 
   @@map("links")
 }
@@ -141,18 +140,6 @@ model Clipper {
   links Link[]
 
   @@map("clippers")
-}
-
-model LinkSale {
-  id                     String   @id @default(cuid())
-  amount                  Decimal  @db.Decimal(10, 2)
-  stripeCheckoutSessionId String   @map("stripe_checkout_session_id")
-  linkId                  String   @map("link_id")
-  createdAt               DateTime @default(now()) @map("created_at")
-
-  link Link @relation(fields: [linkId], references: [id], onDelete: Cascade)
-
-  @@map("link_sales")
 }
 
 model AdminSession {
