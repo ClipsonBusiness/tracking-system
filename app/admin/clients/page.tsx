@@ -7,22 +7,24 @@ import ClientLoginInfo from './ClientLoginInfo'
 
 export default async function ClientsPage() {
   await requireAdminAuth()
-  // Get all clients with their campaigns and access tokens
-  const clients = await prisma.client.findMany({
-    select: {
-      id: true,
-      name: true,
-      password: true,
-      customDomain: true,
-      clientAccessToken: true,
-      stripeWebhookSecret: true,
-      stripeAccountId: true,
-      campaigns: {
-        orderBy: { createdAt: 'desc' },
+  
+  try {
+      // Get all clients with their campaigns and access tokens
+    const clients = await prisma.client.findMany({
+      select: {
+        id: true,
+        name: true,
+        password: true,
+        customDomain: true,
+        clientAccessToken: true,
+        stripeWebhookSecret: true,
+        stripeAccountId: true,
+        campaigns: {
+          orderBy: { createdAt: 'desc' },
+        },
       },
-    },
-    orderBy: { name: 'asc' },
-  })
+      orderBy: { name: 'asc' },
+    }).catch(() => [])
 
   // Get recent conversions and events for each client (for verification)
   const clientsWithStats = await Promise.all(
@@ -36,7 +38,7 @@ export default async function ClientsPage() {
             select: { slug: true },
           },
         },
-      })
+      }).catch(() => [])
 
       // Count orphan conversions (no linkId)
       const orphanCount = await prisma.conversion.count({
@@ -45,7 +47,7 @@ export default async function ClientsPage() {
           linkId: null,
           paidAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }, // Last 7 days
         },
-      })
+      }).catch(() => 0)
 
       // Get recent webhook events (we show all recent events since we can't reliably filter by client)
       // The conversions are the real indicator of whether tracking is working
@@ -57,7 +59,7 @@ export default async function ClientsPage() {
           type: true,
           created: true,
         },
-      })
+      }).catch(() => [])
 
       return {
         ...client,
