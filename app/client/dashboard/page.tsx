@@ -24,7 +24,7 @@ export default async function ClientDashboardPage({
       const client = await prisma.client.findUnique({
         where: { clientAccessToken: token },
         select: { id: true },
-      })
+      }).catch(() => null)
       
       if (!client) {
         redirect('/client/login?error=invalid_token')
@@ -53,34 +53,34 @@ export default async function ClientDashboardPage({
 
     // Find client by ID
     const client = await prisma.client.findUnique({
-    where: { id: clientId },
-    select: {
-      id: true,
-      name: true,
-      stripeAccountId: true,
-      stripeWebhookSecret: true,
-      stripeConnectedAt: true,
-      customDomain: true,
-    },
-  })
-
-  if (!client) {
-    redirect('/client/login?error=invalid_client')
-  }
-
-  // Connected if they have either account ID (OAuth) or webhook secret (manual)
-  const isStripeConnected = !!(client.stripeAccountId || client.stripeWebhookSecret)
-
-  // Get client's campaigns
-  const campaigns = await prisma.campaign.findMany({
-    where: { clientId: client.id },
-    include: {
-      _count: {
-        select: { links: true },
+      where: { id: clientId },
+      select: {
+        id: true,
+        name: true,
+        stripeAccountId: true,
+        stripeWebhookSecret: true,
+        stripeConnectedAt: true,
+        customDomain: true,
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+    }).catch(() => null)
+
+    if (!client) {
+      redirect('/client/login?error=invalid_client')
+    }
+
+    // Connected if they have either account ID (OAuth) or webhook secret (manual)
+    const isStripeConnected = !!(client.stripeAccountId || client.stripeWebhookSecret)
+
+    // Get client's campaigns
+    const campaigns = await prisma.campaign.findMany({
+      where: { clientId: client.id },
+      include: {
+        _count: {
+          select: { links: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    }).catch(() => [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
