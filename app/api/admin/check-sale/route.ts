@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         : []
 
     // Get ALL conversions for this client (including orphans) - last 30 days
-    const allClientConversions = link
+    const allClientConversions = link && link.client
       ? await prisma.conversion.findMany({
           where: {
             clientId: link.client.id,
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
       : []
 
     // Count orphan conversions (no linkId) for this client
-    const orphanCount = link
+    const orphanCount = link && link.client
       ? await prisma.conversion.count({
           where: {
             clientId: link.client.id,
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
       : 0
 
     // Get orphan conversions with details
-    const orphanConversions = link
+    const orphanConversions = link && link.client
       ? await prisma.conversion.findMany({
           where: {
             clientId: link.client.id,
