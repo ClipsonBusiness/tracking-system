@@ -104,31 +104,73 @@ export async function setAdminAuth(password: string) {
       code: error?.code,
       meta: error?.meta,
     })
-    // If it's a database connection issue, provide a helpful error message
-    if (error?.code === 'P2002') {
-      // Unique constraint violation - session token already exists (very unlikely)
-      console.error('Session token collision - generating new token')
-      // Retry with a new token
-      const newToken = generateSessionToken()
-      await prisma.adminSession.create({
-        data: {
-          token: newToken,
-          expiresAt: expiresAt,
-        },
-      })
-      // Use the new token
+    
+    // Check if it's a table doesn't exist error
+    if (error?.code === 'P2021' || error?.message?.includes('does not exist') || error?.message?.includes('relation') || error?.message?.includes('table')) {
+      console.error('❌ CRITICAL: admin_sessions table does not exist!')
+      console.error('Please run: npx prisma db push')
+      // Still set the cookie so login can work, but warn about it
       const cookieStore = await cookies()
-      cookieStore.set('admin_session', newToken, {
+      cookieStore.set('admin_session', sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 7,
         path: '/',
       })
-      console.log('✅ Admin session stored with new token')
+      console.warn('⚠️ Using cookie-only session (database table missing). Run: npx prisma db push')
       return
     }
-    throw error
+    
+    // If it's a unique constraint violation - session token already exists (very unlikely)
+    if (error?.code === 'P2002') {
+      console.error('Session token collision - generating new token')
+      // Retry with a new token
+      const newToken = generateSessionToken()
+      try {
+        await prisma.adminSession.create({
+          data: {
+            token: newToken,
+            expiresAt: expiresAt,
+          },
+        })
+        const cookieStore = await cookies()
+        cookieStore.set('admin_session', newToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7,
+          path: '/',
+        })
+        console.log('✅ Admin session stored with new token')
+        return
+      } catch (retryError) {
+        // If retry also fails, fall back to cookie-only
+        console.error('Retry also failed, using cookie-only session')
+        const cookieStore = await cookies()
+        cookieStore.set('admin_session', newToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7,
+          path: '/',
+        })
+        return
+      }
+    }
+    
+    // For other errors, still try to set cookie as fallback
+    console.error('Database session storage failed, using cookie-only fallback')
+    const cookieStore = await cookies()
+    cookieStore.set('admin_session', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    })
+    // Don't throw - allow login to proceed with cookie-only session
+    return
   }
   
   const cookieStore = await cookies()
