@@ -169,7 +169,7 @@ export default async function AdminDashboardPage() {
                           )}
                         </div>
                         <p className="text-sm text-gray-300 mb-2 truncate">
-                          {link.destinationUrl}
+                          {link.destinationUrl || 'No destination URL'}
                         </p>
                         <div className="flex items-center gap-4 text-xs text-gray-400">
                           <span>👆 {link._count.clicks} clicks</span>
@@ -217,7 +217,7 @@ export default async function AdminDashboardPage() {
                         <span className="text-lg font-bold text-white">#{index + 1}</span>
                         <div>
                           <p className="text-white font-semibold">
-                            {clipper.discordUsername || `Clipper ${clipper.dashboardCode}`}
+                            {clipper.discordUsername || (clipper.dashboardCode ? `Clipper ${clipper.dashboardCode}` : 'Clipper')}
                           </p>
                           {clipper.socialMediaPage && (
                             <p className="text-xs text-gray-400">
@@ -225,9 +225,11 @@ export default async function AdminDashboardPage() {
                             </p>
                           )}
                         </div>
-                        <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
-                          Code: {clipper.dashboardCode}
-                        </span>
+                        {clipper.dashboardCode && (
+                          <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
+                            Code: {clipper.dashboardCode}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-gray-400">
                         <span>👆 {clipper.totalClicks.toLocaleString()} clicks</span>
