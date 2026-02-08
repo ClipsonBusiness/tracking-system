@@ -18,58 +18,58 @@ export default async function AdminDashboardPage() {
       }).catch(() => ({ _sum: { amount: null } })), // Fallback if table doesn't exist
     ])
 
-  // Get recent links
-  const recentLinks = await prisma.link.findMany({
-    take: 5,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      client: { select: { name: true, customDomain: true } },
-      campaign: { select: { name: true } },
-      clipper: { select: { dashboardCode: true, discordUsername: true, socialMediaPage: true } },
-      _count: { select: { clicks: true } },
-    },
-  })
+    // Get recent links
+    const recentLinks = await prisma.link.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        client: { select: { name: true, customDomain: true } },
+        campaign: { select: { name: true } },
+        clipper: { select: { dashboardCode: true, discordUsername: true, socialMediaPage: true } },
+        _count: { select: { clicks: true } },
+      },
+    })
 
-  // Get top clippers by clicks
-  const topClippers = await prisma.clipper.findMany({
-    include: {
-      links: {
-        include: {
-          _count: {
-            select: { clicks: true },
+    // Get top clippers by clicks
+    const topClippers = await prisma.clipper.findMany({
+      include: {
+        links: {
+          include: {
+            _count: {
+              select: { clicks: true },
+            },
           },
         },
       },
-    },
-  })
-
-  // Calculate total clicks per clipper
-  const clipperStats = topClippers
-    .map((clipper) => {
-      const totalClicks = clipper.links.reduce(
-        (sum, link) => sum + link._count.clicks,
-        0
-      )
-      return {
-        ...clipper,
-        totalClicks,
-        linkCount: clipper.links.length,
-      }
     })
-    .filter((c) => c.totalClicks > 0)
-    .sort((a, b) => b.totalClicks - a.totalClicks)
-    .slice(0, 10)
 
-  // Get clients with campaigns
-  const clients = await prisma.client.findMany({
-    include: {
-      campaigns: {
-        take: 3,
-        orderBy: { createdAt: 'desc' },
+    // Calculate total clicks per clipper
+    const clipperStats = topClippers
+      .map((clipper) => {
+        const totalClicks = clipper.links.reduce(
+          (sum, link) => sum + link._count.clicks,
+          0
+        )
+        return {
+          ...clipper,
+          totalClicks,
+          linkCount: clipper.links.length,
+        }
+      })
+      .filter((c) => c.totalClicks > 0)
+      .sort((a, b) => b.totalClicks - a.totalClicks)
+      .slice(0, 10)
+
+    // Get clients with campaigns
+    const clients = await prisma.client.findMany({
+      include: {
+        campaigns: {
+          take: 3,
+          orderBy: { createdAt: 'desc' },
+        },
       },
-    },
-    orderBy: { name: 'asc' },
-  })
+      orderBy: { name: 'asc' },
+    })
 
     const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
     // Handle Decimal type from Prisma - convert to number
@@ -78,7 +78,7 @@ export default async function AdminDashboardPage() {
       : 0
 
     return (
-    <div className="space-y-6">
+      <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -301,7 +301,7 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
     )
   } catch (error: any) {
     console.error('Error loading admin dashboard:', error)
