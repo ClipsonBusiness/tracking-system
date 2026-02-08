@@ -93,7 +93,7 @@ export default async function AdminCampaignsPage() {
         </div>
         <div className="bg-red-900/20 border border-red-700 rounded-lg p-6">
           <p className="text-red-400 font-semibold mb-2">Error loading campaigns: {error.message}</p>
-          <p className="text-sm text-red-300 mb-4">The database tables don't exist yet. Click the button below to create them.</p>
+          <p className="text-sm text-red-300 mb-4">The database tables don&apos;t exist yet. Click the button below to create them.</p>
           <form action="/api/admin/push-schema" method="POST">
             <button
               type="submit"
