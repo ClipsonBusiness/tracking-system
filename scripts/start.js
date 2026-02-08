@@ -15,7 +15,11 @@ while (!schemaPushed && retries > 0) {
     retries--
     if (retries > 0) {
       console.error(`⚠️ Database push failed, retrying in 2 seconds... (${retries} retries left)`);
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Wait 2 seconds before retry (synchronous wait)
+      const start = Date.now()
+      while (Date.now() - start < 2000) {
+        // Busy wait
+      }
     } else {
       console.error('❌ Database push failed after 3 attempts');
       console.error('⚠️ Continuing anyway - tables may not exist yet');
