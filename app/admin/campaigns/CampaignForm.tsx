@@ -284,30 +284,39 @@ export default function CampaignForm({ clients }: { clients: Client[] }) {
                 type="button"
                 onClick={async () => {
                   setPushingSchema(true)
-                  setError('')
+                  const previousError = error
+                  setError('⏳ Pushing database schema... Please wait.')
                   try {
                     const res = await fetch('/api/admin/push-schema', {
                       method: 'POST',
                     })
                     const data = await res.json()
                     if (res.ok && data.success) {
-                      setError('')
+                      setError('✅ Database schema pushed successfully! Try creating the campaign again.')
                       setIsDatabaseError(false)
-                      alert('✅ Database schema pushed successfully! You can now create campaigns.')
+                      // Clear error after 5 seconds
+                      setTimeout(() => {
+                        setError('')
+                      }, 5000)
                     } else {
-                      setError(data.error || 'Failed to push schema. Please try again.')
+                      setError(data.error || data.details || 'Failed to push schema. Please check Railway logs or try manually via Railway Shell.')
+                      setIsDatabaseError(true)
                     }
-                  } catch (err) {
-                    setError('Failed to push schema. Please try again.')
+                  } catch (err: any) {
+                    setError(`Failed to push schema: ${err.message || 'Network error'}. Please try again or push manually via Railway Shell.`)
+                    setIsDatabaseError(true)
                   } finally {
                     setPushingSchema(false)
                   }
                 }}
                 disabled={pushingSchema}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {pushingSchema ? '⏳ Pushing Schema...' : '🔧 Push Database Schema'}
               </button>
+              <p className="text-xs text-gray-400 mt-2">
+                💡 If this doesn&apos;t work, you can also push the schema manually via Railway Shell: <code className="bg-gray-800 px-1 rounded">npx prisma db push --accept-data-loss</code>
+              </p>
             </div>
           )}
         </div>
