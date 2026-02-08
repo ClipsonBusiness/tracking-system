@@ -7,10 +7,10 @@ import { getCountryInfo } from '@/lib/country-utils'
 interface Link {
   id: string
   slug: string
-  destinationUrl: string
+  destinationUrl: string | null
   createdAt: Date
   campaign: { name: string; customDomain: string | null } | null
-  clipper: { discordUsername: string | null; dashboardCode: string } | null
+  clipper: { discordUsername: string | null; dashboardCode: string | null } | null
 }
 
 interface ClientAnalyticsDashboardProps {

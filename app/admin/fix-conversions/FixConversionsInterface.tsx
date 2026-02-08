@@ -17,7 +17,7 @@ interface Conversion {
 interface Link {
   slug: string
   clipper: {
-    dashboardCode: string
+    dashboardCode: string | null
     discordUsername: string | null
   } | null
 }

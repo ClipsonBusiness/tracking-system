@@ -17,7 +17,7 @@ export default async function ClipperDashboardPage({
   // SQLite doesn't support case-insensitive unique constraints by default
   const allClippers = await prisma.clipper.findMany()
   const clipper = allClippers.find(
-    c => c.dashboardCode.toUpperCase() === dashboardCode.toUpperCase()
+    c => c.dashboardCode && c.dashboardCode.toUpperCase() === dashboardCode.toUpperCase()
   )
 
   if (!clipper) {
