@@ -51,9 +51,11 @@ export default async function LinkInBioPage({
                 rel="noopener noreferrer"
                 className="block w-full bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 text-center text-lg font-semibold text-blue-600 hover:text-blue-700"
               >
-                {link.destinationUrl.length > 50 
-                  ? link.destinationUrl.substring(0, 50) + '...'
-                  : link.destinationUrl}
+                {link.destinationUrl
+                  ? (link.destinationUrl.length > 50 
+                      ? link.destinationUrl.substring(0, 50) + '...'
+                      : link.destinationUrl)
+                  : (link.campaign?.destinationUrl || 'No destination URL')}
               </a>
             )
           })}
