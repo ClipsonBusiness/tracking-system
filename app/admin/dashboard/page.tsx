@@ -10,9 +10,9 @@ export default async function AdminDashboardPage() {
     prisma.click.count(),
     prisma.client.count(),
     prisma.campaign.count(),
-    prisma.conversion.count(),
-    prisma.conversion.aggregate({
-      _sum: { amountPaid: true },
+    prisma.linkSale.count(),
+    prisma.linkSale.aggregate({
+      _sum: { amount: true },
     }),
   ])
 
@@ -70,7 +70,7 @@ export default async function AdminDashboardPage() {
   })
 
   const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
-  const totalRevenueDollars = (totalRevenue._sum.amountPaid || 0) / 100
+  const totalRevenueDollars = Number(totalRevenue._sum.amount || 0)
 
   return (
     <div className="space-y-6">
