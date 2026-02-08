@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
         hasOrphans: orphanCount > 0,
         stripeConfigured: link && link.client ? !!link.client.stripeWebhookSecret : false,
         // Additional diagnostic info
-        clientName: link?.client.name || 'N/A',
+        clientName: link?.client?.name || 'N/A',
         linkSlug: link?.slug || 'N/A',
         timeWindow: '30 days',
       },
