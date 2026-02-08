@@ -174,26 +174,31 @@ async function handleLinkRedirect(
   const utmCampaign = searchParams.get('utm_campaign') || null
 
   // Store click - await to ensure it's saved before redirect
-  try {
-    await prisma.click.create({
-      data: {
-        linkId: link.id,
-        clientId: link.clientId,
-        referer,
-        userAgent,
-        ipHash,
-        country,
-        city,
-        utmSource,
-        utmMedium,
-        utmCampaign,
-        affiliateCode,
-      },
-    })
-    console.log('Click stored successfully for link:', link.id)
-  } catch (err) {
-    console.error('Error storing click:', err)
-    // Continue with redirect even if click storage fails
+  // Only store click if clientId exists (required field)
+  if (link.clientId) {
+    try {
+      await prisma.click.create({
+        data: {
+          linkId: link.id,
+          clientId: link.clientId,
+          referer,
+          userAgent,
+          ipHash,
+          country,
+          city,
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          affiliateCode,
+        },
+      })
+      console.log('Click stored successfully for link:', link.id)
+    } catch (err) {
+      console.error('Error storing click:', err)
+      // Continue with redirect even if click storage fails
+    }
+  } else {
+    console.warn('Skipping click storage: link has no clientId')
   }
 
   // Redirect to destination
