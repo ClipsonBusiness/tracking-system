@@ -28,4 +28,3 @@ export default function ClientFilter({ clients }: { clients: Client[] }) {
     </select>
   )
 }
-

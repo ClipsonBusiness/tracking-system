@@ -7,11 +7,11 @@ interface LinkCardProps {
   link: {
     id: string
     slug: string
-    destinationUrl: string | null
+    destinationUrl: string
     createdAt: Date
-    campaign: { name: string; destinationUrl?: string | null } | null
+    campaign: { name: string } | null
     clipper: { 
-      dashboardCode: string | null
+      dashboardCode: string
       discordUsername: string | null
       socialMediaPage: string | null
     } | null
@@ -19,10 +19,9 @@ interface LinkCardProps {
   }
   customDomainUrl: string | null
   workingUrl: string
-  railwayUrl?: string
 }
 
-export default function LinkCard({ link, customDomainUrl, workingUrl, railwayUrl }: LinkCardProps) {
+export default function LinkCard({ link, customDomainUrl, workingUrl }: LinkCardProps) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
 
@@ -79,7 +78,7 @@ export default function LinkCard({ link, customDomainUrl, workingUrl, railwayUrl
             )}
           </div>
           <p className="text-sm text-gray-300 mb-2 truncate">
-            {link.destinationUrl || link.campaign?.destinationUrl || 'No destination URL'}
+            {link.destinationUrl}
           </p>
           <div className="flex items-center gap-4 text-xs text-gray-400">
             <span>
@@ -92,6 +91,21 @@ export default function LinkCard({ link, customDomainUrl, workingUrl, railwayUrl
           </div>
         </div>
         <div className="ml-4 flex flex-col items-end gap-2">
+          {customDomainUrl && (
+            <div className="text-right">
+              <p className="text-xs text-yellow-400 mb-1">
+                Custom Domain (may not work):
+              </p>
+              <a
+                href={customDomainUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-400 hover:text-yellow-300 text-sm break-all max-w-xs"
+              >
+                {customDomainUrl}
+              </a>
+            </div>
+          )}
           <div className="text-right">
             <p className="text-xs text-green-400 mb-1">
               ✅ Working URL:
@@ -105,21 +119,6 @@ export default function LinkCard({ link, customDomainUrl, workingUrl, railwayUrl
               {workingUrl}
             </a>
           </div>
-          {railwayUrl && customDomainUrl && railwayUrl !== workingUrl && (
-            <div className="text-right">
-              <p className="text-xs text-gray-400 mb-1">
-                Fallback URL:
-              </p>
-              <a
-                href={railwayUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-gray-300 text-sm break-all max-w-xs"
-              >
-                {railwayUrl}
-              </a>
-            </div>
-          )}
           <button
             onClick={handleDelete}
             disabled={deleting}

@@ -65,4 +65,3 @@ npx @railway/cli run npx prisma db push
 ```
 
 **That's it!** 🚀
-

@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'ClipSon Affiliates - Professional Affiliate Tracking Platform',
-  description: 'Tracked Links • Conversion Attribution • Stripe Integration',
+  title: 'Tracking System',
+  description: 'Tracked Links + Affiliate Attribution for Stripe Subscriptions',
 }
 
 export default function RootLayout({
@@ -17,4 +17,3 @@ export default function RootLayout({
     </html>
   )
 }
-

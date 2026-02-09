@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // So we need to search manually
     const allClippers = await prisma.clipper.findMany()
     const clipper = allClippers.find(
-      c => c.dashboardCode && c.dashboardCode.toUpperCase() === code.toUpperCase()
+      c => c.dashboardCode.toUpperCase() === code.toUpperCase()
     )
 
     if (!clipper) {

@@ -1,15 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { getCountryInfo } from '@/lib/country-utils'
 
 interface Link {
   id: string
   slug: string
-  destinationUrl: string | null
+  destinationUrl: string
   createdAt: Date
-  campaign: { name: string; customDomain: string | null; commissionPercent: number | null } | null
-  client: { name: string; customDomain: string | null } | null
+  campaign: { name: string } | null
+  client: { name: string }
 }
 
 interface ClipperDashboardProps {
@@ -18,10 +17,9 @@ interface ClipperDashboardProps {
   totalClicks: number
   clicksLast7Days: number
   clicksLast30Days: number
-  clicksByCountry: Array<{ country: string; count: number; city?: string | null }>
+  clicksByCountry: Array<{ country: string; count: number }>
   totalRevenue: number
   totalSales: number
-  commissionPercent: number | null
   recentClicks: Array<{
     id: string
     ts: Date
@@ -40,7 +38,6 @@ export default function ClipperDashboard({
   clicksByCountry,
   totalRevenue,
   totalSales,
-  commissionPercent,
   recentClicks,
   dailyClicksData,
 }: ClipperDashboardProps) {
@@ -49,7 +46,6 @@ export default function ClipperDashboard({
   const countryPercentages = clicksByCountry.map((c) => ({
     country: c.country,
     count: c.count,
-    city: c.city,
     percentage: totalCountryClicks > 0 ? ((c.count / totalCountryClicks) * 100).toFixed(1) : '0',
   }))
 
@@ -102,9 +98,7 @@ export default function ClipperDashboard({
           <StatCard
             title="Total Revenue"
             value={`$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            change={commissionPercent !== null && commissionPercent !== undefined 
-              ? `${commissionPercent}% you get` 
-              : "Tracked via conversions"}
+            change="Tracked via conversions"
             icon="💵"
           />
           <StatCard
@@ -222,45 +216,27 @@ export default function ClipperDashboard({
             <h2 className="text-2xl font-bold text-white mb-4">Clicks by Country</h2>
             <div className="space-y-3">
               {countryPercentages.length > 0 ? (
-                countryPercentages.map((item) => {
-                  const countryInfo = getCountryInfo(item.country)
-                  return (
-                    <div key={item.country} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-2xl flex-shrink-0">{countryInfo.flag}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-white font-medium truncate">
-                            {countryInfo.name}
-                          </div>
-                          {item.city && (
-                            <div className="text-xs text-gray-400 truncate">
-                              {item.city}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 flex-shrink-0">
-                        <div className="w-32 bg-gray-700 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full"
-                            style={{ width: `${item.percentage}%` }}
-                          />
-                        </div>
-                        <span className="text-gray-400 text-sm w-16 text-right">
-                          {item.count} ({item.percentage}%)
-                        </span>
-                      </div>
+                countryPercentages.map((item) => (
+                  <div key={item.country} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1">
+                      <span className="text-2xl">🌍</span>
+                      <span className="text-white font-medium">{item.country}</span>
                     </div>
-                  )
-                })
+                    <div className="flex items-center gap-4">
+                      <div className="w-32 bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full"
+                          style={{ width: `${item.percentage}%` }}
+                        />
+                      </div>
+                      <span className="text-gray-400 text-sm w-16 text-right">
+                        {item.count} ({item.percentage}%)
+                      </span>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <div className="text-gray-400 space-y-2">
-                  <p>No country data available</p>
-                  <p className="text-xs text-gray-500">
-                    Country detection requires Vercel geolocation headers or Cloudflare. 
-                    Once clicks are tracked, country data will appear here.
-                  </p>
-                </div>
+                <p className="text-gray-400">No country data available</p>
               )}
             </div>
           </div>
@@ -285,37 +261,20 @@ export default function ClipperDashboard({
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2 mt-2">
-                      {/* Full tracking link */}
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 text-xs text-green-400 bg-gray-800 px-2 py-1 rounded break-all">
-                          {(() => {
-                            const customDomain = link.campaign?.customDomain || link.client?.customDomain
-                            if (customDomain && customDomain.trim() !== '') {
-                              const cleanDomain = customDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '')
-                              return `https://${cleanDomain}/?ref=${link.slug}`
-                            }
-                            return `${baseUrl}/?ref=${link.slug}`
-                          })()}
-                        </code>
-                        <button
-                          onClick={() => {
-                            const customDomain = link.campaign?.customDomain || link.client?.customDomain
-                            let fullUrl
-                            if (customDomain && customDomain.trim() !== '') {
-                              const cleanDomain = customDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '')
-                              fullUrl = `https://${cleanDomain}/?ref=${link.slug}`
-                            } else {
-                              fullUrl = `${baseUrl}/?ref=${link.slug}`
-                            }
-                            navigator.clipboard.writeText(fullUrl)
-                            alert('Link copied!')
-                          }}
-                          className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded whitespace-nowrap"
-                        >
-                          Copy Link
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <code className="text-xs text-blue-400 bg-gray-800 px-2 py-1 rounded">
+                        /{link.slug}
+                      </code>
+                      <button
+                        onClick={() => {
+                          const fullUrl = `${baseUrl}/${link.slug}`
+                          navigator.clipboard.writeText(fullUrl)
+                          alert('Link copied!')
+                        }}
+                        className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                      >
+                        Copy
+                      </button>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
                       Created {new Date(link.createdAt).toLocaleDateString()}

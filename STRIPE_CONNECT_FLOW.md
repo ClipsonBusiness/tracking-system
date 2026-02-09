@@ -128,4 +128,3 @@ I can implement this for you! It will include:
 5. Client-facing UI
 
 Would you like me to build this?
-

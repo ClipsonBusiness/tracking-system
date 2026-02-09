@@ -135,56 +135,6 @@ export default function StripeConnectManual({
               <li>Affiliate attribution</li>
             </ul>
           </div>
-
-          {/* Important: Pass link_slug for per-clipper tracking */}
-          <div className="p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg mt-4">
-            <div className="flex items-start gap-2 mb-2">
-              <span className="text-xl">⚠️</span>
-              <div className="flex-1">
-                <p className="text-yellow-300 text-sm font-medium mb-1">
-                  For Accurate Per-Clipper Sales Tracking
-                </p>
-                <p className="text-yellow-200 text-xs mb-3">
-                  To track which clipper generated each sale, you need to pass the <code className="bg-yellow-900/50 px-1 rounded">link_slug</code> cookie to Stripe checkout metadata.
-                </p>
-                <details className="text-xs">
-                  <summary className="text-yellow-300 cursor-pointer hover:text-yellow-200 font-medium mb-2">
-                    📋 Click to see code example
-                  </summary>
-                  <div className="bg-gray-900 rounded p-3 mt-2">
-                    <p className="text-yellow-200 mb-2 font-medium">Add this to your Stripe checkout code:</p>
-                    <pre className="text-xs text-green-400 overflow-x-auto">
-{`// Read the link_slug cookie (set by tracking redirect)
-function getCookie(name) {
-  const value = \`; \${document.cookie}\`;
-  const parts = value.split(\`; \${name}=\`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-}
-
-const linkSlug = getCookie('link_slug');
-
-// When creating Stripe checkout session
-const session = await stripe.checkout.sessions.create({
-  // ... your existing checkout config ...
-  metadata: {
-    link_slug: linkSlug || '', // Add this!
-  },
-  subscription_data: {
-    metadata: {
-      link_slug: linkSlug || '', // Add this too!
-    },
-  },
-});`}
-                    </pre>
-                    <p className="text-yellow-200 text-xs mt-2">
-                      <strong>Note:</strong> Without this, the system will try to match sales to clippers by most recent click (less accurate).
-                    </p>
-                  </div>
-                </details>
-              </div>
-            </div>
-          </div>
           <div className="flex items-center gap-3 pt-4 border-t border-gray-600">
             <button
               onClick={() => setIsEditing(true)}

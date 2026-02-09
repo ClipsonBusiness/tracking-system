@@ -74,4 +74,3 @@ You're in the Variables tab and I see:
 ---
 
 **Expand that section first and let me know what you see!** 🔍
-

@@ -184,4 +184,3 @@ npx @railway/cli run npx prisma db seed
 ---
 
 **You're doing great!** Follow these steps and your app will be live! 🚀
-

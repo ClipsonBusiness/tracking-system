@@ -24,14 +24,13 @@ export async function POST(request: NextRequest) {
   const accountId = searchParams.get('account')
 
   // Find client by Stripe account ID or webhook secret
-  let client: { id: string; name: string; stripeAccountId: string | null; stripeWebhookSecret: string | null } | null = null
+  let client = null
   let webhookSecret: string | null = null
 
   // Try to find client by account ID first (if provided)
   if (accountId) {
     client = await prisma.client.findFirst({
       where: { stripeAccountId: accountId },
-      select: { id: true, name: true, stripeAccountId: true, stripeWebhookSecret: true },
     })
     if (client) {
       webhookSecret = client.stripeWebhookSecret || null
@@ -45,7 +44,6 @@ export async function POST(request: NextRequest) {
       where: {
         stripeWebhookSecret: { not: null },
       },
-      select: { id: true, name: true, stripeAccountId: true, stripeWebhookSecret: true },
     })
 
     // Try each client's webhook secret to find the right one
@@ -133,7 +131,7 @@ export async function POST(request: NextRequest) {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session, client, accountId, webhookSecret)
+        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session)
         break
 
       case 'customer.subscription.created':
@@ -164,214 +162,43 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ received: true })
 }
 
-async function handleCheckoutSessionCompleted(
-  session: Stripe.Checkout.Session,
-  client: { id: string; stripeAccountId: string | null } | null,
-  accountId: string | null,
-  webhookSecret: string | null
-) {
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('Checkout session completed:', session.id)
   
-  // Extract affiliate code from checkout session metadata
-  const affiliateCode = session.metadata?.ca_affiliate_id || session.metadata?.affiliate_code
+  // If affiliate code is in checkout session metadata, propagate it to customer and subscription
+  const affiliateCode = session.metadata?.affiliate_code
   
-  if (!affiliateCode) {
-    console.warn(`⚠️ WARNING: Checkout session ${session.id} missing required ca_affiliate_id metadata. Sales will not be attributed.`)
-    return
-  }
-  
-  console.log(`✅ Affiliate sale detected: affiliate_id="${affiliateCode}", session_id="${session.id}"`)
-  
-  // Get amount and currency
-  const amountPaid = session.amount_total || 0
-  const currency = session.currency || 'usd'
-  
-  // checkout.session.completed fires when payment is complete
-  // payment_status can be 'paid' or 'no_payment_required' (for free trials, etc.)
-  // Both indicate successful completion, so we proceed
-  console.log(`💰 Checkout session ${session.id} completed: $${(amountPaid / 100).toFixed(2)} ${currency.toUpperCase()} (status: ${session.payment_status})`)
-  
-  // Find client
-  let foundClient: { id: string; name: string; stripeAccountId: string | null } | null = null
-  if (client) {
-    const clientWithName = client as { id: string; name: string; stripeAccountId: string | null; stripeWebhookSecret: string | null }
-    foundClient = { id: clientWithName.id, name: clientWithName.name || 'Unknown', stripeAccountId: clientWithName.stripeAccountId }
-  }
-  
-  if (!foundClient) {
-    if (accountId) {
-      foundClient = await prisma.client.findFirst({
-        where: { stripeAccountId: accountId },
-        select: { id: true, name: true, stripeAccountId: true },
-      })
+  if (affiliateCode) {
+    // Update customer metadata if customer exists
+    if (session.customer && typeof session.customer === 'string') {
+      try {
+        await stripe.customers.update(session.customer, {
+          metadata: {
+            affiliate_code: affiliateCode,
+          },
+        })
+        console.log(`Updated customer ${session.customer} with affiliate code: ${affiliateCode}`)
+      } catch (err) {
+        console.error('Error updating customer metadata:', err)
+      }
     }
     
-    if (!foundClient && webhookSecret === process.env.STRIPE_WEBHOOK_SECRET) {
-      foundClient = await prisma.client.findFirst({
-        where: { stripeWebhookSecret: webhookSecret },
-        select: { id: true, name: true, stripeAccountId: true },
-      })
-    }
-    
-    if (!foundClient) {
-      foundClient = await prisma.client.findFirst({
-        where: { stripeWebhookSecret: { not: null } },
-        orderBy: { createdAt: 'asc' },
-        select: { id: true, name: true, stripeAccountId: true },
-      })
-    }
-    
-    if (!foundClient) {
-      foundClient = await prisma.client.findFirst({
-        select: { id: true, name: true, stripeAccountId: true },
-      })
-    }
-  }
-  
-  if (!foundClient) {
-    console.error('❌ CRITICAL: No client found for checkout session. Cannot create conversion.')
-    return
-  }
-  
-  // Find link by affiliate code
-  let linkId: string | null = null
-  try {
-    const link = await prisma.link.findUnique({
-      where: { slug: affiliateCode },
-      select: { id: true },
-    })
-    if (link) {
-      linkId = link.id
-      console.log(`✅ Found link ${linkId} by slug "${affiliateCode}"`)
-    } else {
-      console.warn(`⚠️ Link with slug "${affiliateCode}" not found in database. Conversion will be created without linkId.`)
-    }
-  } catch (err) {
-    console.error('Error finding link by slug:', err)
-  }
-  
-  // Update customer metadata if customer exists
-  if (session.customer && typeof session.customer === 'string') {
-    try {
-      await stripe.customers.update(session.customer, {
-        metadata: {
-          ca_affiliate_id: affiliateCode,
-          affiliate_code: affiliateCode, // Backward compatibility
-        },
-      })
-      console.log(`✅ Updated customer ${session.customer} with affiliate code: ${affiliateCode}`)
-    } catch (err) {
-      console.error('Error updating customer metadata:', err)
-    }
-  }
-  
-  // Update subscription metadata if subscription exists
-  if (session.subscription) {
-    const subscriptionId = typeof session.subscription === 'string' 
-      ? session.subscription 
-      : session.subscription.id
-    
-    try {
-      await stripe.subscriptions.update(subscriptionId, {
-        metadata: {
-          ca_affiliate_id: affiliateCode,
-          affiliate_code: affiliateCode, // Backward compatibility
-        },
-      })
-      console.log(`✅ Updated subscription ${subscriptionId} with affiliate code: ${affiliateCode}`)
-    } catch (err) {
-      console.error('Error updating subscription metadata:', err)
-    }
-  }
-  
-  // CRITICAL: Create conversion for first payment
-  // checkout.session.completed fires when payment is complete
-  // payment_status is 'paid' or 'no_payment_required' (both indicate success)
-  if (session.payment_status === 'paid' || session.payment_status === 'no_payment_required') {
-    // For subscription checkouts, we need to get the invoice ID
-    let invoiceId: string | null = null
-    let subscriptionId: string | null = null
-    
+    // Update subscription metadata if subscription exists
     if (session.subscription) {
-      subscriptionId = typeof session.subscription === 'string' 
+      const subscriptionId = typeof session.subscription === 'string' 
         ? session.subscription 
         : session.subscription.id
       
-      // Try to get the invoice from the subscription
       try {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-        if (subscription.latest_invoice) {
-          const latestInvoiceId = typeof subscription.latest_invoice === 'string'
-            ? subscription.latest_invoice
-            : subscription.latest_invoice.id
-          
-          const invoice = await stripe.invoices.retrieve(latestInvoiceId)
-          if (invoice.status === 'paid') {
-            invoiceId = invoice.id
-          }
-        }
+        await stripe.subscriptions.update(subscriptionId, {
+          metadata: {
+            affiliate_code: affiliateCode,
+          },
+        })
+        console.log(`Updated subscription ${subscriptionId} with affiliate code: ${affiliateCode}`)
       } catch (err) {
-        console.error('Error retrieving invoice from subscription:', err)
+        console.error('Error updating subscription metadata:', err)
       }
-    } else if (session.invoice) {
-      // One-time payment
-      invoiceId = typeof session.invoice === 'string' ? session.invoice : session.invoice.id
-    }
-    
-    // Create conversion record for first payment
-    // We need invoice ID for Conversion model (it uses stripeInvoiceId as unique identifier)
-    if (!invoiceId) {
-      console.warn(`⚠️ Cannot create conversion: No invoice ID found for checkout session ${session.id}`)
-      return
-    }
-    
-    if (!foundClient) {
-      console.warn(`⚠️ Cannot create conversion: No client found`)
-      return
-    }
-    
-    // Get customer ID from session
-    const customerId = typeof session.customer === 'string' 
-      ? session.customer 
-      : session.customer?.id || null
-    
-    if (!customerId) {
-      console.warn(`⚠️ Cannot create conversion: No customer ID found in checkout session`)
-      return
-    }
-    
-    try {
-      // Check if conversion already exists for this invoice
-      const existingConversion = await prisma.conversion.findUnique({
-        where: { stripeInvoiceId: invoiceId },
-      })
-      
-      if (existingConversion) {
-        console.log(`✅ Conversion already exists for invoice ${invoiceId}`)
-        return
-      }
-      
-      const conversion = await prisma.conversion.create({
-        data: {
-          clientId: foundClient.id,
-          linkId: linkId || null,
-          affiliateCode: affiliateCode || null,
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscriptionId || null,
-          stripeInvoiceId: invoiceId,
-          amountPaid: amountPaid, // Already in cents
-          currency: currency.toLowerCase(),
-          paidAt: new Date(),
-          status: 'paid',
-        },
-      })
-      
-      console.log(`✅ Conversion ${conversion.id} created for checkout session ${session.id}`)
-      console.log(`   Invoice: ${invoiceId}`)
-      console.log(`   Link: ${linkId || 'none'} (slug: ${affiliateCode || 'unknown'})`)
-      console.log(`   Amount: $${(amountPaid / 100).toFixed(2)} ${currency.toUpperCase()}`)
-    } catch (err) {
-      console.error('❌ Error creating conversion from checkout session:', err)
     }
   }
 }
@@ -388,52 +215,14 @@ async function handleInvoicePaid(
   }
 
   // Extract affiliate code from metadata
-  // Check for new standard (ca_affiliate_id) first, then fallback to old (affiliate_code)
   let affiliateCode: string | null = null
-  let hasRequiredMetadata = false
 
-  // CRITICAL: For subscription invoices, check checkout session FIRST
-  // The checkout session is the source of truth for subscription checkouts
-  if (invoice.subscription) {
-    const subscriptionId =
-      typeof invoice.subscription === 'string'
-        ? invoice.subscription
-        : invoice.subscription.id
-
-    try {
-      // Check checkout session FIRST - this is where the metadata is set
-      const checkoutSessions = await stripe.checkout.sessions.list({
-        subscription: subscriptionId,
-        limit: 1,
-      })
-      
-      if (checkoutSessions.data.length > 0) {
-        const session = checkoutSessions.data[0]
-        if (session.metadata?.ca_affiliate_id) {
-          affiliateCode = session.metadata.ca_affiliate_id
-          hasRequiredMetadata = true
-          console.log(`✅ Found ca_affiliate_id="${affiliateCode}" from checkout session ${session.id} (PRIMARY CHECK)`)
-        } else if (session.metadata?.affiliate_code) {
-          affiliateCode = session.metadata.affiliate_code
-          console.warn(`⚠️ Checkout session ${session.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
-        }
-      }
-    } catch (err) {
-      console.error('Error retrieving checkout session (primary check):', err)
-    }
-  }
-
-  // Try invoice metadata - check for new standard
-  if (!affiliateCode && invoice.metadata?.ca_affiliate_id) {
-    affiliateCode = invoice.metadata.ca_affiliate_id
-    hasRequiredMetadata = true
-  } else if (!affiliateCode && invoice.metadata?.affiliate_code) {
+  // Try invoice metadata first
+  if (invoice.metadata?.affiliate_code) {
     affiliateCode = invoice.metadata.affiliate_code
-    // Old format - log warning
-    console.warn(`⚠️ Invoice ${invoice.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
   }
 
-  // Try subscription metadata (fallback)
+  // Try subscription metadata
   if (!affiliateCode && invoice.subscription) {
     const subscriptionId =
       typeof invoice.subscription === 'string'
@@ -442,52 +231,43 @@ async function handleInvoicePaid(
 
     try {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-      if (subscription.metadata?.ca_affiliate_id) {
-        affiliateCode = subscription.metadata.ca_affiliate_id
-        hasRequiredMetadata = true
-      } else if (subscription.metadata?.affiliate_code) {
+      if (subscription.metadata?.affiliate_code) {
         affiliateCode = subscription.metadata.affiliate_code
-        console.warn(`⚠️ Subscription ${subscriptionId} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
       }
       
-      // If still no affiliate code, try to find checkout session for this subscription
-      // Check all checkout sessions, not just the latest invoice
-      if (!affiliateCode) {
-        try {
-          const checkoutSessions = await stripe.checkout.sessions.list({
-            subscription: subscriptionId,
-            limit: 1,
-          })
-          
-          if (checkoutSessions.data.length > 0) {
-            const session = checkoutSessions.data[0]
-            if (session.metadata?.ca_affiliate_id) {
-              affiliateCode = session.metadata.ca_affiliate_id
-              hasRequiredMetadata = true
-              console.log(`✅ Found ca_affiliate_id="${affiliateCode}" from checkout session ${session.id}`)
-            } else if (session.metadata?.affiliate_code) {
-              affiliateCode = session.metadata.affiliate_code
-              console.warn(`⚠️ Checkout session ${session.id} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
-            }
+      // If still no affiliate code, check the subscription's latest invoice's checkout session
+      if (!affiliateCode && subscription.latest_invoice) {
+        const latestInvoiceId = typeof subscription.latest_invoice === 'string'
+          ? subscription.latest_invoice
+          : subscription.latest_invoice.id
+        
+        if (latestInvoiceId === invoice.id) {
+          // This is the subscription's latest invoice, try to find checkout session
+          try {
+            const checkoutSessions = await stripe.checkout.sessions.list({
+              subscription: subscriptionId,
+              limit: 1,
+            })
             
-            // Update subscription with the affiliate code for future invoices
-            if (affiliateCode) {
-              try {
-                await stripe.subscriptions.update(subscriptionId, {
-                  metadata: {
-                    ca_affiliate_id: affiliateCode,
-                    // Keep affiliate_code for backward compatibility
-                    affiliate_code: affiliateCode,
-                  },
-                })
-                console.log(`✅ Updated subscription ${subscriptionId} with ca_affiliate_id="${affiliateCode}"`)
-              } catch (err) {
-                console.error('Error updating subscription metadata:', err)
+            if (checkoutSessions.data.length > 0) {
+              const session = checkoutSessions.data[0]
+              if (session.metadata?.affiliate_code) {
+                affiliateCode = session.metadata.affiliate_code
+                // Update subscription with the affiliate code for future invoices
+                try {
+                  await stripe.subscriptions.update(subscriptionId, {
+                    metadata: {
+                      affiliate_code: affiliateCode,
+                    },
+                  })
+                } catch (err) {
+                  console.error('Error updating subscription metadata:', err)
+                }
               }
             }
+          } catch (err) {
+            console.error('Error retrieving checkout session:', err)
           }
-        } catch (err) {
-          console.error('Error retrieving checkout session:', err)
         }
       }
     } catch (err) {
@@ -499,38 +279,21 @@ async function handleInvoicePaid(
   if (!affiliateCode) {
     try {
       const customer = await stripe.customers.retrieve(invoice.customer)
-      if (customer && !customer.deleted && 'metadata' in customer) {
-        if (customer.metadata?.ca_affiliate_id) {
-          affiliateCode = customer.metadata.ca_affiliate_id
-          hasRequiredMetadata = true
-        } else if (customer.metadata?.affiliate_code) {
-          affiliateCode = customer.metadata.affiliate_code
-          console.warn(`⚠️ Customer ${invoice.customer} using deprecated affiliate_code metadata. Please use ca_affiliate_id instead.`)
-        }
+      if (!customer.deleted && customer.metadata?.affiliate_code) {
+        affiliateCode = customer.metadata.affiliate_code
       }
     } catch (err) {
       console.error('Error retrieving customer:', err)
     }
   }
 
-  // Log warning if required metadata is missing
-  if (!hasRequiredMetadata && !affiliateCode) {
-    console.warn(`❌ WARNING: Invoice ${invoice.id} missing required ca_affiliate_id metadata. Sale will be recorded as unattributed.`)
-  }
-
   // Get client - use the one found from webhook verification above, or find by account ID
   // If client wasn't found during webhook verification, try to find it now
-  let foundClient: { id: string; name: string; stripeAccountId: string | null } | null = null
-  if (client) {
-    // Type assertion needed because TypeScript doesn't always infer the full type
-    const clientWithName = client as { id: string; name: string; stripeAccountId: string | null; stripeWebhookSecret: string | null }
-    foundClient = { id: clientWithName.id, name: clientWithName.name || 'Unknown', stripeAccountId: clientWithName.stripeAccountId }
-  }
+  let foundClient = client
   if (!foundClient) {
     if (accountId) {
       foundClient = await prisma.client.findFirst({
         where: { stripeAccountId: accountId },
-        select: { id: true, name: true, stripeAccountId: true },
       })
     }
     
@@ -539,7 +302,6 @@ async function handleInvoicePaid(
       // Find client that has this webhook secret stored
       foundClient = await prisma.client.findFirst({
         where: { stripeWebhookSecret: webhookSecret },
-        select: { id: true, name: true, stripeAccountId: true },
       })
     }
     
@@ -548,284 +310,53 @@ async function handleInvoicePaid(
       foundClient = await prisma.client.findFirst({
         where: { stripeWebhookSecret: { not: null } },
         orderBy: { createdAt: 'asc' },
-        select: { id: true, name: true, stripeAccountId: true },
       })
       
       // If still no client, use first client (for backward compatibility)
       if (!foundClient) {
-        foundClient = await prisma.client.findFirst({
-          select: { id: true, name: true, stripeAccountId: true },
-        })
+        foundClient = await prisma.client.findFirst()
       }
     }
   }
   
   if (!foundClient) {
-    // BULLETPROOF: Try to find client by checking invoice metadata or customer email
-    // This ensures we NEVER lose a conversion
-    console.error('No client found for conversion, trying additional methods...')
-    
-    // Try to find by customer email domain or other metadata
-    try {
-      const customer = await stripe.customers.retrieve(invoice.customer as string)
-      if (customer && !customer.deleted && 'email' in customer && customer.email) {
-        // Try to find client by custom domain matching email domain
-        const emailDomain = customer.email.split('@')[1]
-        const allClients = await prisma.client.findMany({
-          where: { customDomain: { not: null } },
-          select: { id: true, name: true, customDomain: true, stripeAccountId: true },
-        })
-        
-        for (const testClient of allClients) {
-          if (testClient.customDomain && emailDomain.includes(testClient.customDomain.replace('https://', '').replace('http://', '').replace('www.', ''))) {
-            foundClient = testClient
-            console.log(`Found client by email domain match: ${testClient.name || 'Unknown'}`)
-            break
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error retrieving customer for client matching:', err)
-    }
-    
-    // Last resort: Use first client with webhook secret (most likely the right one)
-    if (!foundClient) {
-      foundClient = await prisma.client.findFirst({
-        where: { stripeWebhookSecret: { not: null } },
-        orderBy: { createdAt: 'asc' },
-        select: { id: true, name: true, stripeAccountId: true },
-      })
-      if (foundClient) {
-        console.log(`Using fallback client: ${foundClient.name || 'Unknown'}`)
-      }
-    }
-    
-    // If STILL no client, create conversion with first client (better than losing it)
-    if (!foundClient) {
-      foundClient = await prisma.client.findFirst({
-        select: { id: true, name: true, stripeAccountId: true },
-      })
-      if (foundClient) {
-        console.warn(`WARNING: Using first available client as fallback: ${foundClient.name || 'Unknown'}`)
-      } else {
-        console.error('CRITICAL: No clients exist in database!')
-        return
-      }
-    }
+    console.error('No client found for conversion')
+    return
   }
 
-  // Try to find the link that generated this conversion
-  // We'll match by finding the most recent click for this customer
-  let linkId: string | null = null
-  
-  // First, try to get link slug from metadata (if client passes it in checkout)
-  // Support both ca_affiliate_id (new standard) and link_slug (legacy)
-  let linkSlug: string | null = null
-  if (invoice.metadata?.ca_affiliate_id) {
-    linkSlug = invoice.metadata.ca_affiliate_id
-  } else if (invoice.metadata?.link_slug) {
-    linkSlug = invoice.metadata.link_slug
-  } else if (invoice.subscription) {
-    const subscriptionId =
-      typeof invoice.subscription === 'string'
-        ? invoice.subscription
-        : invoice.subscription?.id || null
-    
-    if (subscriptionId) {
-      try {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-        if (subscription.metadata?.ca_affiliate_id) {
-          linkSlug = subscription.metadata.ca_affiliate_id
-        } else if (subscription.metadata?.link_slug) {
-          linkSlug = subscription.metadata.link_slug
-        }
-      } catch (err) {
-        console.error('Error retrieving subscription for link_slug:', err)
-      }
-    }
-  }
-  
-  // If we have link slug from metadata, find the link
-  if (linkSlug) {
-    try {
-      const link = await prisma.link.findUnique({
-        where: { slug: linkSlug },
-        select: { id: true },
-      })
-      if (link) {
-        linkId = link.id
-        console.log(`✅ Found link ${linkId} by slug "${linkSlug}"`)
-      } else {
-        console.warn(`⚠️ Link with slug "${linkSlug}" not found in database. Conversion will be created without linkId.`)
-      }
-    } catch (err) {
-      console.error('Error finding link by slug:', err)
-    }
-  }
-  
-  // CRITICAL: Also try to find link using affiliateCode directly (from metadata)
-  // This ensures we catch cases where linkSlug wasn't set but affiliateCode was
-  if (!linkId && affiliateCode) {
-    try {
-      const link = await prisma.link.findUnique({
-        where: { slug: affiliateCode },
-        select: { id: true },
-      })
-      if (link) {
-        linkId = link.id
-        console.log(`✅ Found link ${linkId} by affiliateCode "${affiliateCode}"`)
-      } else {
-        console.error(`❌ CRITICAL: Link with slug "${affiliateCode}" NOT FOUND in database!`)
-        console.error(`   This means the conversion will be created without linkId and won't show in dashboard.`)
-        console.error(`   Please check if link slug "${affiliateCode}" exists in the database.`)
-      }
-    } catch (err) {
-      console.error('Error finding link by affiliateCode:', err)
-    }
-  }
-  
-  // FINAL FALLBACK: If we still don't have linkId but have affiliateCode, 
-  // try to find ANY link with matching slug (case-insensitive search)
-  if (!linkId && affiliateCode) {
-    try {
-      // Get all links and find by slug (case-insensitive)
-      const allLinks = await prisma.link.findMany({
-        select: { id: true, slug: true },
-      })
-      const matchingLink = allLinks.find(
-        l => l.slug.toLowerCase() === affiliateCode.toLowerCase()
-      )
-      if (matchingLink) {
-        linkId = matchingLink.id
-        console.log(`✅ Found link ${linkId} by case-insensitive slug match "${affiliateCode}"`)
-      }
-    } catch (err) {
-      console.error('Error in case-insensitive link search:', err)
-    }
-  }
-  
-  // If no link from metadata, try to match by finding most recent click for this customer
-  // We'll match by finding the most recent click that happened BEFORE the purchase
-  if (!linkId && invoice.customer && typeof invoice.customer === 'string') {
-    try {
-      const customer = await stripe.customers.retrieve(invoice.customer)
-      if (!customer.deleted) {
-        // Get the purchase time from the invoice
-        const paidAt = invoice.status_transitions.paid_at 
-          ? new Date(invoice.status_transitions.paid_at * 1000)
-          : new Date()
-        
-        // Find the most recent click for this client that happened BEFORE the purchase
-        // This ensures we attribute to the click that actually led to the sale
-        const sixtyDaysAgo = new Date(paidAt)
-        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
-        
-        const recentClick = await prisma.click.findFirst({
-          where: {
-            clientId: foundClient.id,
-            ts: { 
-              gte: sixtyDaysAgo,
-              lte: paidAt, // Click must be BEFORE purchase
-            },
-          },
-          orderBy: { ts: 'desc' },
-          select: { linkId: true },
-        })
-        
-        if (recentClick) {
-          linkId = recentClick.linkId
-          console.log(`✅ Matched conversion to link ${linkId} by most recent click before purchase`)
-        } else {
-          // BULLETPROOF: Try broader time window (90 days) and any click, not just before purchase
-          // This catches edge cases where timing is off
-          const ninetyDaysAgo = new Date(paidAt)
-          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-          
-          const anyRecentClick = await prisma.click.findFirst({
-            where: {
-              clientId: foundClient.id,
-              ts: { gte: ninetyDaysAgo },
-            },
-            orderBy: { ts: 'desc' },
-            select: { linkId: true },
-          })
-          
-          if (anyRecentClick) {
-            linkId = anyRecentClick.linkId
-            console.log(`⚠️ Matched conversion to link ${linkId} by most recent click (90-day window, may be after purchase)`)
-          } else {
-            console.log(`❌ No click found within 90 days for client ${foundClient.id}`)
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error matching conversion to link:', err)
-    }
-  }
-
-  // Create conversion record for recurring subscription payments
+  // Create conversion with idempotency check
   const invoiceId = invoice.id
-  const amountPaid = invoice.amount_paid || 0 // Already in cents
+  const amountPaid = invoice.amount_paid || 0
   const currency = invoice.currency || 'usd'
+  const paidAt = new Date(invoice.status_transitions.paid_at! * 1000)
   const subscriptionId =
     typeof invoice.subscription === 'string'
       ? invoice.subscription
       : invoice.subscription?.id || null
 
-  if (!foundClient) {
-    console.warn(`⚠️ Cannot create conversion: No client found for invoice ${invoiceId}`)
-    return
-  }
-
-  // Get customer ID from invoice
-  let customerId: string | null = null
-  if (invoice.customer) {
-    if (typeof invoice.customer === 'string') {
-      customerId = invoice.customer
-    } else {
-      // Type assertion needed because Stripe types can be complex
-      const customerObj = invoice.customer as { id: string }
-      customerId = customerObj.id
-    }
-  }
-
-  if (!customerId) {
-    console.warn(`⚠️ Cannot create conversion: No customer ID found in invoice`)
-    return
-  }
-
   try {
-    // Check if conversion already exists for this invoice
-    const existingConversion = await prisma.conversion.findUnique({
+    await prisma.conversion.upsert({
       where: { stripeInvoiceId: invoiceId },
-    })
-    
-    if (existingConversion) {
-      console.log(`✅ Conversion already exists for invoice ${invoiceId}`)
-      return
-    }
-    
-    // Create conversion record
-    const conversion = await prisma.conversion.create({
-      data: {
+      update: {
+        // Update if needed (e.g., status changed)
+        status: 'paid',
+      },
+      create: {
         clientId: foundClient.id,
-        linkId: linkId || null,
-        affiliateCode: affiliateCode || null,
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscriptionId || null,
+        affiliateCode,
+        stripeCustomerId: invoice.customer as string,
+        stripeSubscriptionId: subscriptionId,
         stripeInvoiceId: invoiceId,
-        amountPaid: amountPaid, // Already in cents
-        currency: currency.toLowerCase(),
-        paidAt: new Date(invoice.created * 1000), // Convert Unix timestamp to Date
+        amountPaid,
+        currency,
+        paidAt,
         status: 'paid',
       },
     })
-    
-    console.log(`✅ Conversion ${conversion.id} created for invoice ${invoiceId}`)
-    console.log(`   Link: ${linkId || 'none'} (slug: ${affiliateCode || 'unknown'})`)
-    console.log(`   Amount: $${(amountPaid / 100).toFixed(2)} ${currency.toUpperCase()}`)
+    console.log(`Conversion created/updated for invoice ${invoiceId}`)
   } catch (err) {
-    console.error('❌ Error creating conversion from invoice:', err)
+    console.error('Error creating conversion:', err)
+    throw err
   }
 }
 

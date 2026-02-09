@@ -96,4 +96,3 @@ In the JavaScript template above, replace:
 - `[YOUR-RAILWAY-URL]` with your actual Railway domain
 - `[Client Name]` with the client's name
 - `[Your Name]` with your name
-

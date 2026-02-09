@@ -48,7 +48,7 @@ export default async function JavaScriptRedirectPage({
           >
             ← Back to Dashboard
           </a>
-          <h1 className="text-3xl font-bold text-white">Cookie-Based Tracking Setup</h1>
+          <h1 className="text-3xl font-bold text-white">JavaScript Redirect Setup</h1>
           <p className="text-gray-400 mt-1">
             No DNS changes needed! Add this script to your website
           </p>
@@ -62,4 +62,3 @@ export default async function JavaScriptRedirectPage({
     </div>
   )
 }
-

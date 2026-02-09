@@ -40,4 +40,3 @@ Try accessing your link on the tracking server domain:
 - Or your production domain: `yourdomain.com/ddypf`
 
 This should work immediately and redirect to `https://lowbackability.com/`!
-

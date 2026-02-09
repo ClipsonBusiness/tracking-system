@@ -158,4 +158,3 @@ Your tracking system is now deployed and ready to use! 🎉
 ---
 
 **Ready? Let's go!** 🚀
-

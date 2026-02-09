@@ -133,4 +133,3 @@ const response = await fetch('/api/stripe/create-checkout-session', {
 **Create Affiliate**: Admin → Affiliates → Add Code → Show Share Link
 **View Analytics**: Admin → Statistics
 **Configure Domain**: Admin → Settings → Set Custom Domain
-

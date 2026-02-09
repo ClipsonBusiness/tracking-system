@@ -61,4 +61,3 @@ npx prisma db push
 ---
 
 **Go to Shell tab now and run the command!** 🚀
-

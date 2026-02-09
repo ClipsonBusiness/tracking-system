@@ -78,4 +78,3 @@
 4. Refresh browser
 
 **That's usually it!** ✅
-

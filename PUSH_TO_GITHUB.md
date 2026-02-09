@@ -100,4 +100,3 @@ origin  https://github.com/ClipsonBusiness/tracking-system.git (push)
 ---
 
 **Choose the option that works best for you!** 🚀
-

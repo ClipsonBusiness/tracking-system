@@ -14,39 +14,31 @@ export default function JavaScriptRedirectGuide({
   const [copied, setCopied] = useState(false)
 
   // Generate the JavaScript code
-  // COOKIE-BASED VERSION: Sets cookie on client domain (Stripe-compatible)
-  const jsCode = `<!-- Clipson Affiliate Tracking (Cookie-Based - Stripe Compatible) -->
+  const jsCode = `<!-- Tracking Link Redirect Script -->
+<!-- Add this to your website's <head> or before </body> -->
 <script>
 (function() {
-  // Only run on the client's domain
-  const hostname = window.location.hostname;
-  const domainMatch = hostname === '${customDomain}' || hostname === 'www.${customDomain}';
-  if (!domainMatch) return;
+  // Only run on your custom domain
+  if (window.location.hostname !== '${customDomain}' && 
+      window.location.hostname !== 'www.${customDomain}') {
+    return;
+  }
 
-  // Check for ?ref= parameter
-  const urlParams = new URLSearchParams(window.location.search);
-  const refParam = urlParams.get('ref');
+  // Get the current path (e.g., /xxxxx)
+  const path = window.location.pathname;
   
-  if (!refParam) return;
+  // Skip if it's a root path or common paths
+  if (path === '/' || path.startsWith('/api/') || path.startsWith('/_next/')) {
+    return;
+  }
 
-  // Set cookie on client's domain (90 days expiry)
-  // This cookie will be available when user reaches Stripe checkout
-  const expiryDays = 90;
-  const expiryDate = new Date();
-  expiryDate.setTime(expiryDate.getTime() + (expiryDays * 24 * 60 * 60 * 1000));
-  document.cookie = 'link_slug=' + encodeURIComponent(refParam) + 
-    '; expires=' + expiryDate.toUTCString() + 
-    '; path=/' + 
-    '; SameSite=Lax' + 
-    (location.protocol === 'https:' ? '; Secure' : '');
-
-  // Optionally record click on tracking server (non-blocking)
-  // This helps with analytics but isn't required for attribution
-  try {
-    navigator.sendBeacon('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam));
-  } catch(e) {
-    // Fallback if sendBeacon not supported
-    fetch('${trackingServerUrl}/track?ref=' + encodeURIComponent(refParam), { method: 'GET', keepalive: true }).catch(() => {});
+  // Extract slug from path (remove leading slash)
+  const slug = path.substring(1);
+  
+  // If there's a slug, redirect to tracking server
+  if (slug && slug.length > 0) {
+    const trackingUrl = '${trackingServerUrl}/' + slug;
+    window.location.href = trackingUrl;
   }
 })();
 </script>`
@@ -74,14 +66,14 @@ export default function JavaScriptRedirectGuide({
             <span className="flex-shrink-0 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-xs font-bold">2</span>
             <div>
               <p className="font-medium text-white">Script detects tracking links</p>
-              <p className="text-gray-400 mt-1">When someone visits <code className="bg-gray-800 px-1 rounded">{customDomain}/?ref=xxxxx</code>, the script sets a cookie on your domain (users stay on your site)</p>
+              <p className="text-gray-400 mt-1">When someone visits <code className="bg-gray-800 px-1 rounded">{customDomain}/xxxxx</code>, the script automatically redirects to the tracking server</p>
             </div>
           </li>
           <li className="flex items-start gap-3">
             <span className="flex-shrink-0 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center text-xs font-bold">3</span>
             <div>
-              <p className="font-medium text-white">Cookie available for Stripe checkout</p>
-              <p className="text-gray-400 mt-1">The cookie persists on your domain, so Stripe checkout can read it for sales attribution. No redirects - users stay on your site!</p>
+              <p className="font-medium text-white">Tracking works instantly</p>
+              <p className="text-gray-400 mt-1">No DNS changes, no server access needed - just add the script!</p>
             </div>
           </li>
         </ol>
@@ -147,13 +139,10 @@ export default function JavaScriptRedirectGuide({
         <div className="space-y-2 text-sm text-gray-300">
           <p>After adding the script, test it by visiting:</p>
           <code className="block bg-gray-900 px-4 py-2 rounded text-green-400">
-            https://{customDomain}/?ref=test123
+            https://{customDomain}/test123
           </code>
           <p className="text-gray-400 mt-2">
-            The cookie should be set (check browser DevTools → Application → Cookies). Users stay on your site - no redirect!
-          </p>
-          <p className="text-green-300 mt-2 text-xs">
-            ✅ <strong>Stripe-Compatible:</strong> The cookie is set on your domain, so it&apos;s available when users reach Stripe checkout. Make sure to read the <code className="bg-green-900/50 px-1 rounded">link_slug</code> cookie and pass it to Stripe checkout metadata.
+            It should redirect to the tracking server and then to your destination URL.
           </p>
         </div>
       </div>
@@ -183,4 +172,3 @@ export default function JavaScriptRedirectGuide({
     </div>
   )
 }
-

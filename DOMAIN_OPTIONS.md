@@ -68,4 +68,3 @@ Just deploy and use your server's domain directly!
 - `yourbrand.com`
 
 All tracking features work the same regardless of domain!
-

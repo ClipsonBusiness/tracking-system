@@ -147,4 +147,3 @@ The webhook handler now:
 ---
 
 **Your automated Stripe Connect flow is ready!** 🚀
-

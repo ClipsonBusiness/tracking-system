@@ -55,4 +55,3 @@ After adding the variable:
 ---
 
 **That's it!** 🔐
-

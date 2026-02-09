@@ -271,4 +271,3 @@ railway up
 ---
 
 **That's it!** Your app should be live on Railway! 🚂
-

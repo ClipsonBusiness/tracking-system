@@ -214,4 +214,3 @@ Which do you prefer?
 - **You configure:** Either automatically (API) or via instructions
 
 **The web interface lets clients provide DNS details without you needing direct access!**
-

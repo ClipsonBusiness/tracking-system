@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import Logo from '@/components/Logo'
 
 interface Campaign {
   id: string
@@ -38,37 +37,19 @@ export default function ClipperPage() {
     }
   }, [searchParams, router])
 
-  // Load campaigns on mount and refresh periodically
+  // Load campaigns on mount
   useEffect(() => {
-    function loadCampaigns() {
-      setLoadingCampaigns(true)
-      // Add cache-busting timestamp and no-cache headers
-      fetch(`/api/clipper/campaigns?t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
+    fetch('/api/clipper/campaigns')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error) {
+          setError(data.error)
+        } else if (data.campaigns) {
+          setCampaigns(data.campaigns)
+        }
       })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.error) {
-            setError(data.error)
-          } else if (data.campaigns) {
-            setCampaigns(data.campaigns)
-            setError('') // Clear any previous errors
-          }
-        })
-        .catch(() => setError('Failed to load campaigns'))
-        .finally(() => setLoadingCampaigns(false))
-    }
-
-    // Load immediately
-    loadCampaigns()
-
-    // Refresh every 5 seconds to pick up deleted campaigns quickly
-    const interval = setInterval(loadCampaigns, 5000)
-
-    return () => clearInterval(interval)
+      .catch(() => setError('Failed to load campaigns'))
+      .finally(() => setLoadingCampaigns(false))
   }, [])
 
   async function handleGenerateLink() {
@@ -118,13 +99,7 @@ export default function ClipperPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Logo size="xl" />
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-            ClipSon Affiliates
-          </h1>
-          <p className="text-gray-300 text-lg mb-1">Clipper Portal</p>
+          <h1 className="text-4xl font-bold text-white mb-2">Clipper Portal</h1>
           <p className="text-gray-400">Generate your unique tracking links</p>
         </div>
 
@@ -145,36 +120,14 @@ export default function ClipperPage() {
         </div>
 
         {/* Generate Link Section */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-8 shadow-2xl">
+        <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-6">Generate New Link</h2>
 
           <div className="space-y-6">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="campaign" className="block text-sm font-medium text-gray-300">
-                  Select Campaign *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoadingCampaigns(true)
-                    fetch(`/api/clipper/campaigns?t=${Date.now()}`, {
-                      cache: 'no-store',
-                      headers: { 'Cache-Control': 'no-cache' },
-                    })
-                      .then((res) => res.json())
-                      .then((data) => {
-                        if (data.campaigns) {
-                          setCampaigns(data.campaigns)
-                        }
-                      })
-                      .finally(() => setLoadingCampaigns(false))
-                  }}
-                  className="text-xs text-blue-400 hover:text-blue-300 underline"
-                >
-                  🔄 Refresh
-                </button>
-              </div>
+              <label htmlFor="campaign" className="block text-sm font-medium text-gray-300 mb-2">
+                Select Campaign *
+              </label>
               <select
                 id="campaign"
                 value={selectedCampaignId}
@@ -191,7 +144,7 @@ export default function ClipperPage() {
                 ))}
               </select>
               <p className="text-xs text-gray-400 mt-1">
-                Select the campaign you want to generate a link for ({campaigns.length} active)
+                Select the campaign you want to generate a link for
               </p>
             </div>
 
@@ -240,7 +193,7 @@ export default function ClipperPage() {
             <button
               onClick={handleGenerateLink}
               disabled={generating || !selectedCampaignId || !discordUsername.trim() || !socialMediaPage.trim()}
-              className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {generating ? 'Generating...' : 'Generate Link'}
             </button>
@@ -273,59 +226,31 @@ export default function ClipperPage() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-blue-900/20 border-2 border-blue-600 rounded-lg">
-                  {/* Important Warning */}
-                  <div className="mb-4 p-3 bg-yellow-900/30 border border-yellow-600 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <span className="text-2xl">⚠️</span>
-                      <div>
-                        <p className="text-yellow-300 font-bold text-sm mb-1">SAVE YOUR DASHBOARD CODE NOW!</p>
-                        <p className="text-yellow-200 text-xs">
-                          This is your <strong>only way</strong> to access your analytics dashboard. 
-                          Write it down, save it in your notes, or take a screenshot. 
-                          You will need this code every time you want to view your stats.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
+                <div className="p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
                   <p className="text-sm text-blue-300 mb-2 font-semibold">Your Dashboard Code:</p>
                   <p className="text-xs text-blue-400 mb-3">
-                    Copy and save this code somewhere safe!
+                    Save this code to view your analytics dashboard!
                   </p>
                   <div className="flex items-center gap-2 mb-3">
-                    <code className="flex-1 px-3 py-2 bg-gray-800 rounded text-blue-400 text-2xl font-bold text-center tracking-wider border-2 border-blue-500">
+                    <code className="flex-1 px-3 py-2 bg-gray-800 rounded text-blue-400 text-2xl font-bold text-center tracking-wider">
                       {generatedLink.dashboardCode}
                     </code>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(generatedLink.dashboardCode)
-                        alert('Dashboard code copied! Make sure to save it!')
+                        alert('Dashboard code copied!')
                       }}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
                     >
-                      📋 Copy Code
+                      Copy Code
                     </button>
                   </div>
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/clipper/dashboard?code=${generatedLink.dashboardCode}`}
-                      className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm text-center font-medium"
-                    >
-                      Go to Dashboard →
-                    </Link>
-                    <button
-                      onClick={() => {
-                        const message = `Dashboard Code: ${generatedLink.dashboardCode}\n\nSave this code to access your analytics dashboard at:\n${window.location.origin}/clipper/dashboard/enter`
-                        navigator.clipboard.writeText(message)
-                        alert('Dashboard code and instructions copied!')
-                      }}
-                      className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm"
-                      title="Copy code with instructions"
-                    >
-                      📝 Copy All
-                    </button>
-                  </div>
+                  <Link
+                    href={`/clipper/dashboard?code=${generatedLink.dashboardCode}`}
+                    className="block w-full mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm text-center"
+                  >
+                    Go to Dashboard →
+                  </Link>
                 </div>
               </div>
             )}

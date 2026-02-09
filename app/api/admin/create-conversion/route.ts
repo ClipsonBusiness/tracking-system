@@ -187,14 +187,12 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const invoiceId = invoice.id
-    const amountPaid = invoice.amount_paid || 0 // Already in cents
-    const currency = invoice.currency || 'usd'
-    const customerId = typeof invoice.customer === 'string'
-      ? invoice.customer
-      : invoice.customer?.id || null
+    // Use invoice.id (may be different from request invoiceId if retrieved from checkout session)
+    const finalInvoiceId = invoice.id
     
-    if (!customerId) {
+    // Use the variables already set above (amountPaid, currency, customerId, subscriptionId, paidAt)
+    // But ensure customerId is not null
+    if (!customerId || customerId === 'unknown') {
       return NextResponse.json(
         { error: 'Invoice does not have a customer ID' },
         { status: 400 }
@@ -208,25 +206,21 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const subscriptionId = typeof invoice.subscription === 'string'
-      ? invoice.subscription
-      : invoice.subscription?.id || null
-    
     // Check if conversion already exists
     const existing = await prisma.conversion.findUnique({
-      where: { stripeInvoiceId: invoiceId },
+      where: { stripeInvoiceId: finalInvoiceId },
     })
     
     if (existing) {
       return NextResponse.json({
         success: true,
-        message: `Conversion already exists for invoice ${invoiceId}`,
+        message: `Conversion already exists for invoice ${finalInvoiceId}`,
         conversion: {
           id: existing.id,
           linkId: existing.linkId,
           amountPaid: existing.amountPaid,
           currency: existing.currency,
-          createdAt: existing.createdAt,
+          paidAt: existing.paidAt,
         },
       })
     }
@@ -239,7 +233,7 @@ export async function POST(request: NextRequest) {
         affiliateCode: linkSlug,
         stripeCustomerId: customerId,
         stripeSubscriptionId: subscriptionId || null,
-        stripeInvoiceId: invoiceId,
+        stripeInvoiceId: finalInvoiceId,
         amountPaid: amountPaid, // Already in cents
         currency: currency.toLowerCase(),
         paidAt: new Date(invoice.created * 1000), // Convert Unix timestamp to Date
@@ -255,7 +249,7 @@ export async function POST(request: NextRequest) {
         linkId: conversion.linkId,
         amountPaid: conversion.amountPaid,
         currency: conversion.currency,
-        createdAt: conversion.createdAt,
+        paidAt: conversion.paidAt,
       },
     })
   } catch (err: any) {

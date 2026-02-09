@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hashIP, getIPFromHeaders, getCountryFromHeaders, getCountryFromIP, getCityFromHeaders, getCityFromIP } from '@/lib/utils'
+import { hashIP, getIPFromHeaders, getCountryFromHeaders } from '@/lib/utils'
 import { cookies } from 'next/headers'
 
 export async function GET(
@@ -11,21 +11,10 @@ export async function GET(
     const slug = params.slug
     const link = await prisma.link.findUnique({
       where: { slug },
-      include: {
-        campaign: {
-          select: { destinationUrl: true }
-        }
-      }
     })
 
     if (!link) {
       return new NextResponse('Link not found', { status: 404 })
-    }
-
-    // Use link's destinationUrl or fallback to campaign's destinationUrl
-    const destinationUrl = link.destinationUrl || link.campaign?.destinationUrl
-    if (!destinationUrl) {
-      return new NextResponse('Link has no destination URL', { status: 404 })
     }
 
     // Get affiliate code from query param or cookie
@@ -47,34 +36,11 @@ export async function GET(
       affiliateCode = affFromQuery
     }
 
-    // Store link slug in cookie for conversion attribution
-    // This allows us to attribute sales to the specific clipper link
-    cookieStore.set('link_slug', link.slug, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 60, // 60 days
-    })
-
     // Capture click analytics
     const headers = request.headers
     const ip = getIPFromHeaders(headers)
     const ipHash = ip ? hashIP(ip) : null
-    
-    // Try to get country from headers first, then fallback to IP lookup
-    let country = getCountryFromHeaders(headers)
-    if (!country && ip) {
-      // Fallback to IP-based geolocation if headers don't provide country
-      country = await getCountryFromIP(ip)
-    }
-    
-    // Try to get city from headers first, then fallback to IP lookup
-    let city = getCityFromHeaders(headers)
-    if (!city && ip) {
-      // Fallback to IP-based geolocation if headers don't provide city
-      city = await getCityFromIP(ip)
-    }
-    
+    const country = getCountryFromHeaders(headers)
     const referer = headers.get('referer') || null
     const userAgent = headers.get('user-agent') || null
 
@@ -83,39 +49,30 @@ export async function GET(
     const utmMedium = searchParams.get('utm_medium') || null
     const utmCampaign = searchParams.get('utm_campaign') || null
 
-    // Store click - await to ensure it's saved before redirect
-    // Only store click if clientId exists (required field)
-    if (link.clientId) {
-      try {
-        await prisma.click.create({
-          data: {
-            linkId: link.id,
-            clientId: link.clientId,
-            referer,
-            userAgent,
-            ipHash,
-            country,
-            city,
-            utmSource,
-            utmMedium,
-            utmCampaign,
-            affiliateCode,
-          },
-        })
-        console.log('Click stored successfully for link:', link.id)
-      } catch (err) {
+    // Store click (fire and forget - don't block redirect)
+    prisma.click
+      .create({
+        data: {
+          linkId: link.id,
+          clientId: link.clientId,
+          referer,
+          userAgent,
+          ipHash,
+          country,
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          affiliateCode,
+        },
+      })
+      .catch((err) => {
         console.error('Error storing click:', err)
-        // Continue with redirect even if click storage fails
-      }
-    } else {
-      console.warn('Skipping click storage: link has no clientId')
-    }
+      })
 
     // Redirect to destination
-    return NextResponse.redirect(destinationUrl, { status: 302 })
+    return NextResponse.redirect(link.destinationUrl, { status: 302 })
   } catch (error) {
     console.error('Error in link redirect:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
-

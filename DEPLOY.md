@@ -176,4 +176,3 @@ Or use Vercel's database dashboard to run SQL directly.
 - Check Vercel docs: https://vercel.com/docs
 - Check Prisma docs: https://www.prisma.io/docs
 - Check Stripe docs: https://stripe.com/docs
-

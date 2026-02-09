@@ -98,9 +98,9 @@ export default function ClientDNSConfig({
             <div className="flex items-start gap-3 mb-2">
               <span className="text-2xl">✨</span>
               <div className="flex-1">
-                <h3 className="font-semibold text-green-300 mb-1">Option 1: Cookie-Based Tracking (Easiest - No DNS!)</h3>
+                <h3 className="font-semibold text-green-300 mb-1">Option 1: JavaScript Redirect (Easiest - No DNS!)</h3>
                 <p className="text-sm text-green-400 mb-3">
-                  Add a simple script to your website. Sets cookies on your domain for Stripe checkout attribution. Works immediately, no DNS changes needed!
+                  Add a simple script to your website. Works immediately, no DNS changes needed!
                 </p>
                 <a
                   href={`/client/dns/javascript-redirect?token=${token}`}

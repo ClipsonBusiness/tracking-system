@@ -7,7 +7,6 @@ interface Client {
   id: string
   name: string
   customDomain: string | null
-  password: string | null
 }
 
 export default function ClientEditForm({ client }: { client: Client }) {
@@ -15,14 +14,13 @@ export default function ClientEditForm({ client }: { client: Client }) {
   const [formData, setFormData] = useState({
     name: client.name,
     customDomain: client.customDomain || '',
-    password: client.password || '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [generatingToken, setGeneratingToken] = useState(false)
   const [clientToken, setClientToken] = useState<string | null>(null)
-  const [tokenUrls, setTokenUrls] = useState<{ dashboardUrl: string; getStartedUrl: string; setupUrl: string } | null>(null)
+  const [tokenUrls, setTokenUrls] = useState<{ dashboardUrl: string; getStartedUrl: string } | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -37,7 +35,6 @@ export default function ClientEditForm({ client }: { client: Client }) {
         body: JSON.stringify({
           name: formData.name.trim(),
           customDomain: formData.customDomain.trim() || null,
-          password: formData.password.trim() || null,
         }),
       })
 
@@ -72,11 +69,10 @@ export default function ClientEditForm({ client }: { client: Client }) {
       if (res.ok) {
         const data = await res.json()
         setClientToken(data.token)
-          setTokenUrls({
-            dashboardUrl: data.dashboardUrl,
-            getStartedUrl: data.getStartedUrl,
-            setupUrl: data.setupUrl || `${window.location.origin}/client/setup/${data.token}`,
-          })
+        setTokenUrls({
+          dashboardUrl: data.dashboardUrl,
+          getStartedUrl: data.getStartedUrl,
+        })
       } else {
         const data = await res.json()
         setError(data.error || 'Failed to generate token')
@@ -203,35 +199,11 @@ export default function ClientEditForm({ client }: { client: Client }) {
                         </button>
                       </div>
                     </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-yellow-400 mb-1">
-                        Setup URL (for JavaScript code):
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 text-sm text-yellow-400 bg-gray-900 px-3 py-2 rounded break-all">
-                          {tokenUrls.setupUrl}
-                        </code>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(tokenUrls.setupUrl)
-                            alert('Setup URL copied!')
-                          }}
-                          className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-sm"
-                        >
-                          📋 Copy
-                        </button>
-                      </div>
-                      <p className="text-xs text-yellow-300 mt-1">
-                        ⚠️ Use this URL to access the setup form where you can get the JavaScript tracking code to add to your website.
-                      </p>
-                    </div>
                   </>
                 )}
 
                 <p className="text-xs text-gray-400 mt-3">
-                  💡 <strong>Send these URLs to your client.</strong> They can use the Dashboard URL to access their portal, the Get Started URL for step-by-step setup, or the Setup URL to get the JavaScript tracking code.
+                  💡 <strong>Send these URLs to your client.</strong> They can use the Dashboard URL to access their portal, or the Get Started URL for step-by-step setup.
                 </p>
               </div>
             </div>
@@ -283,28 +255,6 @@ export default function ClientEditForm({ client }: { client: Client }) {
           <p className="text-xs text-gray-400 mt-1">
             Optional: Custom domain for this client&apos;s tracking links
           </p>
-        </div>
-
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-            Login Code (Password)
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            placeholder="Set login code for client access"
-            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <p className="text-xs text-gray-400 mt-1">
-            Required: Login code for client to access their dashboard at <code className="bg-gray-800 px-1 rounded">/client/login</code>. Clients only need this code (no username required).
-          </p>
-          {!formData.password && (
-            <p className="text-xs text-yellow-400 mt-1">
-              ⚠️ Password not set. Client cannot login until password is set.
-            </p>
-          )}
         </div>
 
         {error && (

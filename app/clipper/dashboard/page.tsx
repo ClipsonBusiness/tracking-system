@@ -17,10 +17,10 @@ export default async function ClipperDashboardPage({
   // SQLite doesn't support case-insensitive unique constraints by default
   const allClippers = await prisma.clipper.findMany()
   const clipper = allClippers.find(
-    c => c.dashboardCode && c.dashboardCode.toUpperCase() === dashboardCode.toUpperCase()
+    c => c.dashboardCode.toUpperCase() === dashboardCode.toUpperCase()
   )
 
-  if (!clipper || !clipper.dashboardCode) {
+  if (!clipper) {
     redirect('/clipper?error=invalid_code')
   }
 
@@ -29,30 +29,14 @@ export default async function ClipperDashboardPage({
     where: { clipperId: clipper.id },
     include: {
       campaign: {
-        select: { name: true, customDomain: true, commissionPercent: true },
+        select: { name: true },
       },
       client: {
-        select: { name: true, customDomain: true },
+        select: { name: true },
       },
     },
     orderBy: { createdAt: 'desc' },
   })
-  
-  // Get commission percentage from campaigns
-  // If multiple campaigns, use the first one with a commission set
-  // If all campaigns have the same commission, use that; otherwise use the first one
-  let commissionPercent: number | null = null
-  if (links.length > 0) {
-    const campaignsWithCommission = links
-      .map(l => l.campaign?.commissionPercent)
-      .filter((cp): cp is number => cp !== null && cp !== undefined)
-    
-    if (campaignsWithCommission.length > 0) {
-      // Use the first commission percentage found
-      // If all are the same, it doesn't matter; if different, we use the first
-      commissionPercent = campaignsWithCommission[0]
-    }
-  }
 
   // Get stats for this clipper
   const now = new Date()
@@ -80,71 +64,29 @@ export default async function ClipperDashboardPage({
     },
   }) : 0
 
-  // Clicks by country (with city aggregation)
-  const clicksByCountryRaw = linkIds.length > 0 ? await prisma.click.groupBy({
+  // Clicks by country
+  const clicksByCountry = linkIds.length > 0 ? await prisma.click.groupBy({
     by: ['country'],
     where: {
       linkId: { in: linkIds },
+      country: { not: null },
       ts: { gte: thirtyDaysAgo },
     },
     _count: true,
     orderBy: { _count: { country: 'desc' } },
     take: 10,
   }) : []
-  
-  // Get sample city for each country (most common city)
-  const clicksByCountry = await Promise.all(
-    clicksByCountryRaw.map(async (item) => {
-      if (!item.country || item.country === 'XX' || item.country === 'Unknown') {
-        return { country: item.country || 'Unknown', count: item._count, city: null }
-      }
-      
-      // Get most common city for this country (with error handling in case city column doesn't exist yet)
-      let city: string | null = null
-      try {
-        const cityData = await prisma.click.groupBy({
-          by: ['city'],
-          where: {
-            linkId: { in: linkIds },
-            country: item.country,
-            ts: { gte: thirtyDaysAgo },
-            city: { not: null },
-          },
-          _count: true,
-          orderBy: { _count: { city: 'desc' } },
-          take: 1,
-        })
-        city = cityData.length > 0 ? cityData[0].city : null
-      } catch (error) {
-        // If city column doesn't exist yet, just return null for city
-        console.warn('City column may not exist yet:', error)
-        city = null
-      }
-      
-      return {
-        country: item.country,
-        count: item._count,
-        city,
-      }
-    })
-  )
 
   // Revenue/Sales from conversions
-  // Get conversions linked to this clipper's links
+  // Get conversions for links associated with this clipper
   const conversions = linkIds.length > 0 ? await prisma.conversion.findMany({
     where: {
-      linkId: { in: linkIds },
-      status: 'paid', // Only count paid conversions
-    },
-    select: {
-      amountPaid: true,
-      paidAt: true,
+      clientId: { in: links.map(l => l.clientId) },
+      status: 'paid',
     },
   }) : []
-
-  // Calculate total revenue (convert from cents to dollars)
-  const totalRevenue = conversions.reduce((sum, conv) => sum + (conv.amountPaid / 100), 0)
-  // Count total sales (including $0 conversions from 100% coupons)
+  
+  const totalRevenue = conversions.reduce((sum, c) => sum + c.amountPaid, 0)
   const totalSales = conversions.length
 
   // Recent clicks
@@ -202,19 +144,17 @@ export default async function ClipperDashboardPage({
 
   return (
     <ClipperDashboard
-      dashboardCode={clipper.dashboardCode!}
+      dashboardCode={clipper.dashboardCode}
       links={links}
       totalClicks={totalClicks}
       clicksLast7Days={clicksLast7Days}
       clicksLast30Days={clicksLast30Days}
         clicksByCountry={clicksByCountry.map((c) => ({
           country: c.country || 'Unknown',
-          count: c.count || 0,
-          city: c.city,
+          count: c._count || 0,
         }))}
       totalRevenue={totalRevenue}
       totalSales={totalSales}
-      commissionPercent={commissionPercent}
       recentClicks={recentClicks}
       dailyClicksData={dailyClicksData}
     />

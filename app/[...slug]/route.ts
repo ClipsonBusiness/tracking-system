@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hashIP, getIPFromHeaders, getCountryFromHeaders, getCountryFromIP, getCityFromHeaders, getCityFromIP } from '@/lib/utils'
+import { hashIP, getIPFromHeaders, getCountryFromHeaders } from '@/lib/utils'
 import { cookies } from 'next/headers'
 
 // Catch-all route for custom domain tracking
@@ -54,25 +54,11 @@ export async function GET(
       console.log('No custom domain match, trying direct slug lookup for:', actualSlug)
       const directLink = await prisma.link.findFirst({
         where: { slug: actualSlug },
-        select: { 
-          id: true, 
-          clientId: true, 
-          destinationUrl: true, 
-          slug: true,
-          campaign: {
-            select: { destinationUrl: true }
-          }
-        },
       })
       
       if (directLink) {
         console.log('Found link by slug:', actualSlug)
-        // Use link's destinationUrl or fallback to campaign's destinationUrl
-        const destinationUrl = directLink.destinationUrl || directLink.campaign?.destinationUrl
-        if (!destinationUrl) {
-          return new NextResponse('Link has no destination URL', { status: 404 })
-        }
-        return handleLinkRedirect(request, { ...directLink, destinationUrl })
+        return handleLinkRedirect(request, directLink)
       }
       
       return new NextResponse('Not found', { status: 404 })
@@ -84,15 +70,6 @@ export async function GET(
         slug: actualSlug,
         clientId: foundClient.id,
       },
-      select: { 
-        id: true, 
-        clientId: true, 
-        destinationUrl: true, 
-        slug: true,
-        campaign: {
-          select: { destinationUrl: true }
-        }
-      },
     })
     
     console.log('Link lookup:', { actualSlug, clientId: foundClient.id, found: !!link })
@@ -101,13 +78,7 @@ export async function GET(
       return new NextResponse('Link not found', { status: 404 })
     }
 
-    // Use link's destinationUrl or fallback to campaign's destinationUrl
-    const destinationUrl = link.destinationUrl || link.campaign?.destinationUrl
-    if (!destinationUrl) {
-      return new NextResponse('Link has no destination URL', { status: 404 })
-    }
-
-    return handleLinkRedirect(request, { ...link, destinationUrl })
+    return handleLinkRedirect(request, link)
   } catch (error) {
     console.error('Error in custom domain link redirect:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
@@ -116,7 +87,7 @@ export async function GET(
 
 async function handleLinkRedirect(
   request: NextRequest,
-  link: { id: string; clientId: string | null; destinationUrl: string; slug: string }
+  link: { id: string; clientId: string; destinationUrl: string }
 ) {
   // Get affiliate code from query param or cookie
   const searchParams = request.nextUrl.searchParams
@@ -137,34 +108,11 @@ async function handleLinkRedirect(
     affiliateCode = affFromQuery
   }
 
-  // Store link slug in cookie for conversion attribution
-  // This allows us to attribute sales to the specific clipper link
-  cookieStore.set('link_slug', link.slug, {
-    httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 60, // 60 days
-  })
-
   // Capture click analytics
   const headers = request.headers
   const ip = getIPFromHeaders(headers)
   const ipHash = ip ? hashIP(ip) : null
-  
-  // Try to get country from headers first, then fallback to IP lookup
-  let country = getCountryFromHeaders(headers)
-  if (!country && ip) {
-    // Fallback to IP-based geolocation if headers don't provide country
-    country = await getCountryFromIP(ip)
-  }
-  
-  // Try to get city from headers first, then fallback to IP lookup
-  let city = getCityFromHeaders(headers)
-  if (!city && ip) {
-    // Fallback to IP-based geolocation if headers don't provide city
-    city = await getCityFromIP(ip)
-  }
-  
+  const country = getCountryFromHeaders(headers)
   const referer = headers.get('referer') || null
   const userAgent = headers.get('user-agent') || null
 
@@ -173,33 +121,25 @@ async function handleLinkRedirect(
   const utmMedium = searchParams.get('utm_medium') || null
   const utmCampaign = searchParams.get('utm_campaign') || null
 
-  // Store click - await to ensure it's saved before redirect
-  // Only store click if clientId exists (required field)
-  if (link.clientId) {
-    try {
-      await prisma.click.create({
-        data: {
-          linkId: link.id,
-          clientId: link.clientId,
-          referer,
-          userAgent,
-          ipHash,
-          country,
-          city,
-          utmSource,
-          utmMedium,
-          utmCampaign,
-          affiliateCode,
-        },
-      })
-      console.log('Click stored successfully for link:', link.id)
-    } catch (err) {
+  // Store click (fire and forget - don't block redirect)
+  prisma.click
+    .create({
+      data: {
+        linkId: link.id,
+        clientId: link.clientId,
+        referer,
+        userAgent,
+        ipHash,
+        country,
+        utmSource,
+        utmMedium,
+        utmCampaign,
+        affiliateCode,
+      },
+    })
+    .catch((err) => {
       console.error('Error storing click:', err)
-      // Continue with redirect even if click storage fails
-    }
-  } else {
-    console.warn('Skipping click storage: link has no clientId')
-  }
+    })
 
   // Redirect to destination
   return NextResponse.redirect(link.destinationUrl, { status: 302 })

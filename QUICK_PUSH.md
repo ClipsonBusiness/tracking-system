@@ -54,4 +54,3 @@ Railway will automatically build and deploy! 🎉
 ---
 
 **Get your token and let's push!** 🔐
-

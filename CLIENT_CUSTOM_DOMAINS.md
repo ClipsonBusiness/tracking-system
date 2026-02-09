@@ -225,4 +225,3 @@ Which option works best for you?
 4. **Result:** `lowbackability.com/fhkeo` works! ✅
 
 **That's it!** No DNS coordination needed.
-

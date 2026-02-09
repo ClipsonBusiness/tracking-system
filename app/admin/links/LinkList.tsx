@@ -6,15 +6,15 @@ import { useRouter } from 'next/navigation'
 interface Link {
   id: string
   slug: string
-  handle: string | null
-  destinationUrl: string | null
+  handle: string
+  destinationUrl: string
   createdAt: Date
   client: {
     name: string
     customDomain: string | null
-  } | null
+  }
   clipper: {
-    dashboardCode: string | null
+    dashboardCode: string
     discordUsername: string | null
     socialMediaPage: string | null
   } | null
@@ -91,7 +91,7 @@ export default function LinkList({
         const isClipperLink = !!link.clipper
         
         // Use ref= format for clipper links, clean format for others
-        const linkFormat = isClipperLink ? `?ref=${link.slug}` : link.slug
+        const linkFormat = isClipperLink ? `ref=${link.slug}` : link.slug
         
         const customDomainUrl = customDomain && customDomain.trim() !== ''
           ? `https://${customDomain}/${linkFormat}`
@@ -115,14 +115,14 @@ export default function LinkList({
                 />
                 <input
                   type="text"
-                  value={editData.handle ?? link.handle ?? ''}
+                  value={editData.handle ?? link.handle}
                   onChange={(e) => setEditData({ ...editData, handle: e.target.value })}
                   placeholder="Handle"
                   className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white"
                 />
                 <input
                   type="url"
-                  value={editData.destinationUrl ?? link.destinationUrl ?? ''}
+                  value={editData.destinationUrl ?? link.destinationUrl}
                   onChange={(e) => setEditData({ ...editData, destinationUrl: e.target.value })}
                   placeholder="Destination URL"
                   className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white"
@@ -150,11 +150,9 @@ export default function LinkList({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <h3 className="text-white font-medium truncate">
-                      {link.destinationUrl
-                        ? (link.destinationUrl.length > 60
-                            ? link.destinationUrl.substring(0, 60) + '...'
-                            : link.destinationUrl)
-                        : 'No destination URL'}
+                      {link.destinationUrl.length > 60
+                        ? link.destinationUrl.substring(0, 60) + '...'
+                        : link.destinationUrl}
                     </h3>
                     {link.clipper && (
                       <>

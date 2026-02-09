@@ -88,4 +88,3 @@ Once connected:
 ---
 
 **Let's connect to GitHub now!** 🚀
-

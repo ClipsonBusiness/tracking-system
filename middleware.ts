@@ -5,15 +5,6 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   const host = hostname.split(':')[0]
   const pathname = request.nextUrl.pathname
-  const searchParams = request.nextUrl.searchParams
-
-  // Handle root path with ?ref= parameter - rewrite to /track route
-  if (pathname === '/' && searchParams.has('ref')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/track'
-    // Preserve all query parameters including ref
-    return NextResponse.rewrite(url)
-  }
 
   // Skip middleware for API routes, admin routes, and static files
   if (
@@ -23,7 +14,6 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/l/') ||
     pathname.startsWith('/p/') ||
-    pathname.startsWith('/track') ||
     pathname === '/'
   ) {
     return NextResponse.next()
@@ -46,4 +36,3 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }
-

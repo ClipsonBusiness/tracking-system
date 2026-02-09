@@ -168,4 +168,3 @@ npx @railway/cli shell
 **Your project is deploying!** 🚂
 
 Check the Railway dashboard to monitor progress and complete the setup steps above.
-

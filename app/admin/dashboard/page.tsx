@@ -1,91 +1,79 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import { requireAdminAuth } from '@/lib/auth'
 
 export default async function AdminDashboardPage() {
-  await requireAdminAuth()
-  
-  try {
-    // Get summary stats - with fallbacks if tables don't exist yet
-    const [totalLinks, totalClicks, totalClients, totalCampaigns, totalSales, totalRevenue] = await Promise.all([
-      prisma.link.count().catch(() => 0),
-      prisma.click.count().catch(() => 0),
-      prisma.client.count().catch(() => 0),
-      prisma.campaign.count().catch(() => 0),
-      prisma.conversion.count().catch(() => 0),
-      prisma.conversion.aggregate({
-        _sum: { amountPaid: true },
-      }).catch(() => ({ _sum: { amountPaid: null } })),
-    ])
+  // Get summary stats
+  const [totalLinks, totalClicks, totalClients, totalCampaigns, totalSales, totalRevenue] = await Promise.all([
+    prisma.link.count(),
+    prisma.click.count(),
+    prisma.client.count(),
+    prisma.campaign.count(),
+    prisma.conversion.count(),
+    prisma.conversion.aggregate({
+      _sum: { amountPaid: true },
+    }),
+  ])
 
-    // Get recent links - with fallback if table doesn't exist
-    const recentLinks = await prisma.link.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        client: { select: { name: true, customDomain: true } },
-        campaign: { select: { name: true } },
-        clipper: { select: { dashboardCode: true, discordUsername: true, socialMediaPage: true } },
-        _count: { select: { clicks: true } },
-      },
-    }).catch(() => [])
+  // Get recent links
+  const recentLinks = await prisma.link.findMany({
+    take: 5,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      client: { select: { name: true, customDomain: true } },
+      campaign: { select: { name: true } },
+      clipper: { select: { dashboardCode: true, discordUsername: true, socialMediaPage: true } },
+      _count: { select: { clicks: true } },
+    },
+  })
 
-    // Get top clippers by clicks - with fallback if table doesn't exist
-    const topClippers = await prisma.clipper.findMany({
-      include: {
-        links: {
-          include: {
-            _count: {
-              select: { clicks: true },
-            },
+  // Get top clippers by clicks
+  const topClippers = await prisma.clipper.findMany({
+    include: {
+      links: {
+        include: {
+          _count: {
+            select: { clicks: true },
           },
         },
       },
-    }).catch(() => [])
+    },
+  })
 
-    // Calculate total clicks per clipper
-    const clipperStats = topClippers
-      .map((clipper) => {
-        const totalClicks = clipper.links.reduce(
-          (sum, link) => sum + link._count.clicks,
-          0
-        )
-        return {
-          ...clipper,
-          totalClicks,
-          linkCount: clipper.links.length,
-        }
-      })
-      .filter((c) => c.totalClicks > 0)
-      .sort((a, b) => b.totalClicks - a.totalClicks)
-      .slice(0, 10)
+  // Calculate total clicks per clipper
+  const clipperStats = topClippers
+    .map((clipper) => {
+      const totalClicks = clipper.links.reduce(
+        (sum, link) => sum + link._count.clicks,
+        0
+      )
+      return {
+        ...clipper,
+        totalClicks,
+        linkCount: clipper.links.length,
+      }
+    })
+    .filter((c) => c.totalClicks > 0)
+    .sort((a, b) => b.totalClicks - a.totalClicks)
+    .slice(0, 10)
 
-    // Get clients with campaigns - with fallback if table doesn't exist
-    const clients = await prisma.client.findMany({
-      include: {
-        campaigns: {
-          take: 3,
-          orderBy: { createdAt: 'desc' },
-        },
+  // Get clients with campaigns
+  const clients = await prisma.client.findMany({
+    include: {
+      campaigns: {
+        take: 3,
+        orderBy: { createdAt: 'desc' },
       },
-      orderBy: { name: 'asc' },
-    }).catch(() => [])
+    },
+    orderBy: { name: 'asc' },
+  })
 
-    const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
-    // Handle amountPaid (in cents) - convert to dollars
-    const totalRevenueDollars = totalRevenue._sum.amountPaid 
-      ? totalRevenue._sum.amountPaid / 100 
-      : 0
+  const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
+  const totalRevenueDollars = (totalRevenue._sum.amountPaid || 0) / 100
 
-    return (
-      <div className="space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Dashboard
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">ClipSon Affiliates Admin Panel</p>
-        </div>
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
       </div>
 
       {/* Summary Cards */}
@@ -174,7 +162,7 @@ export default async function AdminDashboardPage() {
                           )}
                         </div>
                         <p className="text-sm text-gray-300 mb-2 truncate">
-                          {link.destinationUrl || 'No destination URL'}
+                          {link.destinationUrl}
                         </p>
                         <div className="flex items-center gap-4 text-xs text-gray-400">
                           <span>👆 {link._count.clicks} clicks</span>
@@ -222,7 +210,7 @@ export default async function AdminDashboardPage() {
                         <span className="text-lg font-bold text-white">#{index + 1}</span>
                         <div>
                           <p className="text-white font-semibold">
-                            {clipper.discordUsername || (clipper.dashboardCode ? `Clipper ${clipper.dashboardCode}` : 'Clipper')}
+                            {clipper.discordUsername || `Clipper ${clipper.dashboardCode}`}
                           </p>
                           {clipper.socialMediaPage && (
                             <p className="text-xs text-gray-400">
@@ -230,11 +218,9 @@ export default async function AdminDashboardPage() {
                             </p>
                           )}
                         </div>
-                        {clipper.dashboardCode && (
-                          <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
-                            Code: {clipper.dashboardCode}
-                          </span>
-                        )}
+                        <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded">
+                          Code: {clipper.dashboardCode}
+                        </span>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-gray-400">
                         <span>👆 {clipper.totalClicks.toLocaleString()} clicks</span>
@@ -301,20 +287,8 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </div>
-      </div>
-    )
-  } catch (error: any) {
-    console.error('Error loading admin dashboard:', error)
-    return (
-      <div className="space-y-6">
-        <div className="bg-red-900/20 border border-red-500 rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-red-400 mb-2">Error Loading Dashboard</h1>
-          <p className="text-gray-300">An error occurred while loading the dashboard data.</p>
-          <p className="text-sm text-gray-400 mt-2">Error: {error?.message || 'Unknown error'}</p>
-        </div>
-      </div>
-    )
-  }
+    </div>
+  )
 }
 
 function SummaryCard({

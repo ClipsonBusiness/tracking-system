@@ -77,4 +77,3 @@ This fixes npm permissions permanently for all future global installs.
 **Use Solution 1 (npx)** - It's the easiest and doesn't require any setup or permissions!
 
 Just replace `railway` with `npx @railway/cli` in all commands.
-

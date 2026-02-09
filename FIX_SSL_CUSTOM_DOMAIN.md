@@ -163,4 +163,3 @@ If you need it working **RIGHT NOW** without waiting for SSL:
 - ✅ Client can do it themselves
 
 Then set up DNS + SSL later for a permanent solution.
-

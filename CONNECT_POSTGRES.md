@@ -103,4 +103,3 @@ Postgres is "Online" but `DATABASE_URL` is missing. This means they're not conne
 4. **If not, get Postgres connection string and add it manually**
 
 **Then push schema and you're done!** 🎉
-

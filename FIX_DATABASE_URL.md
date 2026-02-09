@@ -140,4 +140,3 @@ Railway should automatically set this when Postgres is connected, but it's missi
 ---
 
 **Check your Railway Architecture view first - is Postgres connected to your app?** 🔍
-

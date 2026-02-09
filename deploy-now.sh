@@ -31,4 +31,3 @@ echo "4. Push database: npx @railway/cli run npx prisma db push"
 echo "5. Add environment variables in Railway dashboard"
 echo "6. Deploy: git push (if connected) or npx @railway/cli up"
 echo ""
-

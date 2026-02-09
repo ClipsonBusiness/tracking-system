@@ -11,16 +11,15 @@ datasource db {
 }
 
 model Client {
-  id                  String    @id @default(cuid())
+  id                  String   @id @default(cuid())
   name                String
-  password            String? // For client login (optional, can be set by admin)
-  stripeAccountId     String?   @map("stripe_account_id")
-  stripeWebhookSecret String?   @map("stripe_webhook_secret")
+  stripeAccountId     String?  @map("stripe_account_id")
+  stripeWebhookSecret String?  @map("stripe_webhook_secret")
   stripeConnectedAt   DateTime? @map("stripe_connected_at")
-  customDomain        String?   @map("custom_domain") // e.g., "lowbackability.com"
-  clientAccessToken   String?   @unique @map("client_access_token") // For client dashboard access (legacy)
-  dnsScreenshot       String?   @map("dns_screenshot") // Base64 encoded screenshot or URL
-  createdAt           DateTime  @default(now()) @map("created_at")
+  customDomain        String?  @map("custom_domain") // e.g., "lowbackability.com"
+  clientAccessToken   String?  @unique @map("client_access_token") // For client dashboard access
+  dnsScreenshot       String?    @map("dns_screenshot") // Base64 encoded screenshot or URL
+  createdAt           DateTime @default(now()) @map("created_at")
 
   links       Link[]
   clicks      Click[]
@@ -33,20 +32,18 @@ model Client {
 
 model Link {
   id             String   @id @default(cuid())
-  clientId       String?  @map("client_id")
+  clientId       String   @map("client_id")
   campaignId     String?  @map("campaign_id")
   clipperId      String?  @map("clipper_id")
-  handle         String?
+  handle         String
   slug           String   @unique
-  destinationUrl String?  @map("destination_url") // Optional - can come from campaign
-  clicksCount    Int      @default(0) @map("clicks_count")
+  destinationUrl String   @map("destination_url")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  client      Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  campaign    Campaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  clipper     Clipper?     @relation(fields: [clipperId], references: [id], onDelete: Cascade)
-  clicks      Click[]
-  conversions Conversion[]
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  clipper  Clipper?  @relation(fields: [clipperId], references: [id], onDelete: SetNull)
+  clicks   Click[]
 
   @@map("links")
 }
@@ -60,7 +57,6 @@ model Click {
   userAgent     String?  @map("user_agent")
   ipHash        String?  @map("ip_hash")
   country       String?
-  city          String?
   utmSource     String?  @map("utm_source")
   utmMedium     String?  @map("utm_medium")
   utmCampaign   String?  @map("utm_campaign")
@@ -98,7 +94,6 @@ model StripeEvent {
 model Conversion {
   id                   String   @id @default(cuid())
   clientId             String   @map("client_id")
-  linkId               String?  @map("link_id") // Link that generated this conversion
   affiliateCode        String?  @map("affiliate_code")
   stripeCustomerId     String   @map("stripe_customer_id")
   stripeSubscriptionId String?  @map("stripe_subscription_id")
@@ -109,20 +104,18 @@ model Conversion {
   status               String   @default("paid") // paid, refunded
 
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  link   Link?  @relation(fields: [linkId], references: [id], onDelete: SetNull)
 
   @@map("conversions")
 }
 
 model Campaign {
-  id                String   @id @default(cuid())
-  clientId          String   @map("client_id")
-  name              String
-  destinationUrl    String   @map("destination_url")
-  customDomain      String?  @map("custom_domain") // e.g., "lowbackability.com"
-  commissionPercent Float?   @map("commission_percent") // Commission % for clippers
-  status            String   @default("active") // active, inactive
-  createdAt         DateTime @default(now()) @map("created_at")
+  id             String   @id @default(cuid())
+  clientId       String   @map("client_id")
+  name           String
+  destinationUrl String   @map("destination_url")
+  customDomain   String?  @map("custom_domain") // e.g., "lowbackability.com"
+  status         String   @default("active") // active, inactive
+  createdAt      DateTime @default(now()) @map("created_at")
 
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
   links  Link[]
@@ -132,23 +125,12 @@ model Campaign {
 
 model Clipper {
   id              String   @id @default(cuid())
-  dashboardCode   String?  @unique // Unique 4-letter code like "abcd"
-  discordUsername String   @map("discord_username")
-  socialMediaPage String   @map("social_media_page")
+  dashboardCode   String   @unique // Unique 4-letter code like "abcd"
+  discordUsername String?  @map("discord_username") // Required for new clippers, optional for migration
+  socialMediaPage String?  @map("social_media_page") // Required for new clippers, optional for migration
   createdAt       DateTime @default(now()) @map("created_at")
 
   links Link[]
 
   @@map("clippers")
-}
-
-model AdminSession {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@index([token])
-  @@index([expiresAt])
-  @@map("admin_sessions")
 }

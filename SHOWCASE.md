@@ -151,4 +151,3 @@ npm run db:seed
 ---
 
 **Enjoy showcasing your tracking system! 🚀**
-

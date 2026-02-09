@@ -164,4 +164,3 @@ Once you complete Steps 1-4, your app is fully functional!
 ---
 
 **Let's get it running!** 🎉
-

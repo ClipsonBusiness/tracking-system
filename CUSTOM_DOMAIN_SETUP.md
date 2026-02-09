@@ -70,4 +70,3 @@ curl -H "Host: lowbackability.com" http://localhost:3000/pynhl
 1. **For Testing**: Use a subdomain or test with Host header
 2. **For Production**: Set up reverse proxy or point domain to tracking server
 3. **Verify**: Check server logs to see if requests are reaching the catch-all route
-

@@ -158,4 +158,3 @@ if (window.location.pathname.startsWith('/ref=')) {
 - Want the best solution? → **Use DNS** (professional)
 
 **Default recommendation:** Start with JavaScript, offer DNS as upgrade.
-

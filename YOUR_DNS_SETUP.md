@@ -209,4 +209,3 @@ Once set up:
 - ✅ Affiliate codes work: `lowbackability.com/hfjem?aff=AFF001`
 
 **You're all set!** 🚀
-

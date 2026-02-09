@@ -187,4 +187,3 @@ Do clients have their own Stripe accounts?
 ---
 
 **Bottom line:** You need the **webhook secret** from whoever processes the payments. You don't need their Stripe secret key unless you're creating checkout sessions for them.
-

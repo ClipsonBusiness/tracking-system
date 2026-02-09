@@ -70,4 +70,3 @@ Your app is live at: `https://your-app.vercel.app`
 ---
 
 **Need help?** See `DEPLOY.md` for detailed instructions.
-

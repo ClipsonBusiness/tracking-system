@@ -56,4 +56,3 @@
 3. Look for Shell/Terminal option
 
 **Or tell me what you see in the Deployments tab!**
-

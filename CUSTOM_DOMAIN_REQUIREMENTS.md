@@ -182,4 +182,3 @@ location ~ ^/[a-z]{5}$ {
 ✅ **Railway URL works** - Always use this as fallback  
 
 The tracking system works perfectly with Railway URLs. Custom domains are optional and require client setup.
-

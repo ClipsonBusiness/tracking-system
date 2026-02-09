@@ -121,4 +121,3 @@ This usually means:
 ---
 
 **Start with Step 2 (push database schema) - that's the most common fix!**
-

@@ -155,4 +155,3 @@ APP_BASE_URL=https://your-app.vercel.app
 - Zero client coordination
 
 **That's it!** 🎉
-

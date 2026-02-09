@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { requireAdminAuth } from '@/lib/auth'
 import Link from 'next/link'
 import GenerateClientLink from './GenerateClientLink'
 import LinkCard from './LinkCard'
@@ -13,7 +12,6 @@ export default async function ClientDashboardPage({
   params: { id: string }
   searchParams: { campaignId?: string }
 }) {
-  await requireAdminAuth()
   const clientId = params.id
   const campaignId = searchParams.campaignId
 
@@ -236,14 +234,10 @@ export default async function ClientDashboardPage({
                       cleanCustomDomain = cleanCustomDomain.replace(/^\/+/, '')
                     }
                     
-                    // If custom domain exists, it's the working URL (since JS redirect is set up)
-                    // Railway URL is the fallback
                     const customDomainUrl = cleanCustomDomain
-                      ? `https://${cleanCustomDomain}/?ref=${link.slug}`
+                      ? `https://${cleanCustomDomain}/ref=${link.slug}`
                       : null
-                    const railwayUrl = `${baseUrl}/?ref=${link.slug}`
-                    // Custom domain is the working URL if it exists, otherwise use Railway
-                    const workingUrl = customDomainUrl || railwayUrl
+                    const workingUrl = `${baseUrl}/ref=${link.slug}`
 
                     return (
                       <LinkCard
@@ -251,7 +245,6 @@ export default async function ClientDashboardPage({
                         link={link}
                         customDomainUrl={customDomainUrl}
                         workingUrl={workingUrl}
-                        railwayUrl={railwayUrl}
                       />
                     )
                   })}

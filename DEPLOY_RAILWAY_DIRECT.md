@@ -145,4 +145,3 @@ If you want to use GitHub for automatic deployments later:
 - Verify PostgreSQL is added: `railway add postgresql`
 - Check DATABASE_URL is set: `railway variables`
 - Run migrations: `railway run npx prisma db push`
-

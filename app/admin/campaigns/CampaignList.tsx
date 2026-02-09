@@ -2,14 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 
 interface Campaign {
   id: string
   name: string
   destinationUrl: string
   customDomain: string | null
-  commissionPercent: number | null
   status: string
   createdAt: Date
   client: {
@@ -90,33 +88,19 @@ export default function CampaignList({ campaigns, baseUrl }: { campaigns: Campai
                     <span className="text-gray-500">Domain:</span>{' '}
                     <span className="text-green-400">{domain}</span>
                   </p>
-                  {campaign.commissionPercent !== null && campaign.commissionPercent !== undefined && (
-                    <p>
-                      <span className="text-gray-500">Commission:</span>{' '}
-                      <span className="text-yellow-400 font-semibold">{campaign.commissionPercent}%</span>
-                    </p>
-                  )}
                   <p className="mt-2">
                     <span className="text-gray-500">Example Link:</span>{' '}
                     <code className="text-blue-400 text-xs">{exampleLink}</code>
                   </p>
                 </div>
               </div>
-              <div className="ml-4 flex gap-2">
-                <Link
-                  href={`/admin/campaigns/${campaign.id}/edit`}
-                  className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                >
-                  Edit
-                </Link>
-                <button
-                  onClick={() => handleDelete(campaign.id)}
-                  disabled={deletingId === campaign.id}
-                  className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50"
-                >
-                  {deletingId === campaign.id ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
+              <button
+                onClick={() => handleDelete(campaign.id)}
+                disabled={deletingId === campaign.id}
+                className="ml-4 px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50"
+              >
+                {deletingId === campaign.id ? 'Deleting...' : 'Delete'}
+              </button>
             </div>
           </div>
         )

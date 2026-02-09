@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Logo from '@/components/Logo'
 
 export default function ClipperDashboardEnterPage() {
   const router = useRouter()
@@ -40,17 +39,9 @@ export default function ClipperDashboardEnterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
       <div className="max-w-md mx-auto">
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 p-8 shadow-2xl">
-          <div className="text-center mb-6">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Logo size="xl" />
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-              ClipSon Affiliates
-            </h1>
-            <p className="text-gray-300 text-lg mb-1">Clipper Dashboard</p>
-            <p className="text-gray-400 text-sm">Enter your dashboard code to view analytics</p>
-          </div>
+        <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 shadow-xl">
+          <h1 className="text-3xl font-bold text-white mb-2">Clipper Dashboard</h1>
+          <p className="text-gray-400 mb-8">Enter your dashboard code to view analytics</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -81,7 +72,7 @@ export default function ClipperDashboardEnterPage() {
             <button
               type="submit"
               disabled={loading || !dashboardCode.trim()}
-              className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Loading...' : 'View Dashboard'}
             </button>

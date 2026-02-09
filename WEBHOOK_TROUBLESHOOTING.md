@@ -151,4 +151,3 @@ This means Stripe webhooks aren't reaching your server. Here's how to fix it:
    stripe listen --forward-to localhost:3000/api/stripe/webhook
    stripe trigger invoice.paid
    ```
-

@@ -218,4 +218,3 @@ INSERT INTO clients (name, custom_domain) VALUES
 4. Share link-in-bio pages: `domain.com/p/handle`
 
 **Everything is tracked and organized per client!** 🎉
-

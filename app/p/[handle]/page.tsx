@@ -9,25 +9,19 @@ export default async function LinkInBioPage({
   params: { handle: string }
   searchParams?: { client?: string }
 }) {
-  try {
-    const handle = params.handle
+  const handle = params.handle
 
-    // If custom domain is used, filter by client
-    // Otherwise show all links with this handle
-    const links = await prisma.link.findMany({
-      where: { handle },
-      include: { 
-        client: true,
-        campaign: {
-          select: { destinationUrl: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+  // If custom domain is used, filter by client
+  // Otherwise show all links with this handle
+  const links = await prisma.link.findMany({
+    where: { handle },
+    include: { client: true },
+    orderBy: { createdAt: 'desc' },
+  })
 
-    if (links.length === 0) {
-      notFound()
-    }
+  if (links.length === 0) {
+    notFound()
+  }
 
   // Get client from custom domain if available
   // This ensures each client's link-in-bio only shows their links
@@ -45,8 +39,8 @@ export default async function LinkInBioPage({
             const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000'
             const customDomain = link.client?.customDomain
             const linkUrl = customDomain && customDomain.trim() !== ''
-              ? `https://${customDomain}/?ref=${link.slug}`
-              : `${baseUrl.replace(/\/l$/, '')}/?ref=${link.slug}`
+              ? `https://${customDomain}/ref=${link.slug}`
+              : `${baseUrl.replace(/\/l$/, '')}/ref=${link.slug}`
             
             return (
               <a
@@ -56,11 +50,9 @@ export default async function LinkInBioPage({
                 rel="noopener noreferrer"
                 className="block w-full bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 text-center text-lg font-semibold text-blue-600 hover:text-blue-700"
               >
-                {link.destinationUrl
-                  ? (link.destinationUrl.length > 50 
-                      ? link.destinationUrl.substring(0, 50) + '...'
-                      : link.destinationUrl)
-                  : (link.campaign?.destinationUrl || 'No destination URL')}
+                {link.destinationUrl.length > 50 
+                  ? link.destinationUrl.substring(0, 50) + '...'
+                  : link.destinationUrl}
               </a>
             )
           })}
@@ -68,9 +60,5 @@ export default async function LinkInBioPage({
       </div>
     </div>
   )
-  } catch (error: any) {
-    console.error('Error in LinkInBioPage:', error)
-    notFound()
-  }
 }
 

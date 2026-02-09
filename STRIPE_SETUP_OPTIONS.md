@@ -104,4 +104,3 @@ Send this to your clients:
 ---
 
 **Bottom line:** Manual webhook secret is easier and requires zero setup! The current implementation uses this method by default.
-

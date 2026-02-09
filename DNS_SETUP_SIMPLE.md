@@ -112,4 +112,3 @@ Once DNS propagates:
 If client can't do DNS, use JavaScript redirect instead (also already supported).
 
 But **DNS is better** - it's what you should use if possible!
-

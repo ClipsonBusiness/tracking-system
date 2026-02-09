@@ -1,70 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { checkClientAuth } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { token, name, customDomain, stripeWebhookSecret, stripeAccountId } = body
+    const { token, name, customDomain } = body
 
-    let clientId: string | null = null
-
-    // Try token-based authentication first (for setup pages)
-    if (token) {
-      const clientByToken = await prisma.client.findUnique({
-        where: { clientAccessToken: token },
-        select: { id: true },
-      })
-      if (clientByToken) {
-        clientId = clientByToken.id
-      }
-    }
-
-    // Fallback to cookie-based authentication
-    if (!clientId) {
-      clientId = await checkClientAuth()
-    }
-
-    if (!clientId) {
+    if (!token) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
+        { error: 'Access token required' },
         { status: 401 }
       )
     }
 
-    // Find client by ID
+    // Find client by access token
     const client = await prisma.client.findUnique({
-      where: { id: clientId },
+      where: { clientAccessToken: token },
     })
 
     if (!client) {
       return NextResponse.json(
-        { error: 'Client not found' },
-        { status: 404 }
+        { error: 'Invalid access token' },
+        { status: 401 }
       )
     }
 
-    // Update client details (safely handle null/undefined values)
+    // Update client details
     const updated = await prisma.client.update({
       where: { id: client.id },
       data: {
         ...(name && { name }),
-        ...(customDomain !== undefined && { 
-          customDomain: customDomain && typeof customDomain === 'string' ? customDomain.trim() || null : null 
-        }),
-        ...(stripeWebhookSecret !== undefined && {
-          stripeWebhookSecret: stripeWebhookSecret && typeof stripeWebhookSecret === 'string' 
-            ? stripeWebhookSecret.trim() || null 
-            : null,
-          ...(stripeWebhookSecret && typeof stripeWebhookSecret === 'string' && stripeWebhookSecret.trim() && { 
-            stripeConnectedAt: new Date() 
-          }),
-        }),
-        ...(stripeAccountId !== undefined && { 
-          stripeAccountId: stripeAccountId && typeof stripeAccountId === 'string' 
-            ? stripeAccountId.trim() || null 
-            : null 
-        }),
+        ...(customDomain !== undefined && { customDomain: customDomain.trim() || null }),
       },
     })
 
@@ -84,4 +50,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

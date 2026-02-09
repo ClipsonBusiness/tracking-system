@@ -76,4 +76,3 @@ postgresql://postgres:LEsjfKtIebCSfiQpJyJnwuPgkVODPwcM@postgres.railway.internal
 ---
 
 **Add the variable now, then push the schema!** 🚀
-

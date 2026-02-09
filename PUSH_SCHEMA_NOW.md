@@ -104,4 +104,3 @@ Once the schema is pushed:
 6. Try login again
 
 **That's it!** 🎉
-
